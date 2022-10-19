@@ -11,7 +11,6 @@ package types
 //	  ports:
 //	    www:
 //	      hostPort: 80
-//	      hostIP: 127.0.0.1
 //	      protocol: TCP
 //	      port: 8080
 //	containers:
