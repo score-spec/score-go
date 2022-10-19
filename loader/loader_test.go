@@ -1,7 +1,9 @@
 package loader
 
 import (
+	"bytes"
 	"errors"
+	"io"
 	"testing"
 
 	"github.com/score-spec/score-go/types"
@@ -11,23 +13,23 @@ import (
 func TestDecodeYaml(t *testing.T) {
 	var tests = []struct {
 		Name   string
-		Source []byte
+		Source io.Reader
 		Output types.WorkloadSpec
 		Error  error
 	}{
 		{
 			Name:   "Should handle empty input",
-			Source: []byte{},
-			Output: types.WorkloadSpec{},
+			Source: bytes.NewReader([]byte{}),
+			Error:  errors.New("EOF"),
 		},
 		{
 			Name:   "Should handle invalid YAML input",
-			Source: []byte("<NOT A VALID YAML>"),
+			Source: bytes.NewReader([]byte("<NOT A VALID YAML>")),
 			Error:  errors.New("cannot unmarshal"),
 		},
 		{
 			Name: "Should decode the SCORE spec",
-			Source: []byte(`
+			Source: bytes.NewReader([]byte(`
 ---
 apiVersion: score.sh/v1b1
 metadata:
@@ -97,7 +99,7 @@ resources:
       port:
         default: 5432
       user.name:
-`),
+`)),
 			Output: types.WorkloadSpec{
 				ApiVersion: "score.sh/v1b1",
 				Metadata: types.WorkloadMeta{
@@ -192,9 +194,9 @@ resources:
 			var srcMap map[string]interface{}
 			var spec types.WorkloadSpec
 
-			var err = ParseYAML(tt.Source, &srcMap)
+			var err = ParseYAML(&srcMap, tt.Source)
 			if err == nil {
-				err = MapSpec(srcMap, &spec)
+				err = MapSpec(&spec, srcMap)
 			}
 
 			if tt.Error != nil {

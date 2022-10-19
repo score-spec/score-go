@@ -2,6 +2,7 @@ package loader
 
 import (
 	"fmt"
+	"io"
 
 	"github.com/mitchellh/mapstructure"
 	"github.com/score-spec/score-go/types"
@@ -9,12 +10,12 @@ import (
 )
 
 // ParseYAML parses YAML into the target mapping structure.
-func ParseYAML(src []byte, dest *map[string]interface{}) error {
-	return yaml.Unmarshal(src, dest)
+func ParseYAML(dest *map[string]interface{}, r io.Reader) error {
+	return yaml.NewDecoder(r).Decode(dest)
 }
 
 // MapSpec converts the source mapping structure into the target WorkloadSpec.
-func MapSpec(src map[string]interface{}, dest *types.WorkloadSpec) error {
+func MapSpec(dest *types.WorkloadSpec, src map[string]interface{}) error {
 	mapper, err := mapstructure.NewDecoder(&mapstructure.DecoderConfig{
 		Result:  dest,
 		TagName: "json",
