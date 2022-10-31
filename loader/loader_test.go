@@ -31,7 +31,7 @@ func TestDecodeYaml(t *testing.T) {
 			Name: "Should decode the SCORE spec",
 			Source: bytes.NewReader([]byte(`
 ---
-apiVersion: score.sh/v1b1
+apiVersion: score.dev/v1b1
 metadata:
   name: hello-world
 
@@ -101,7 +101,7 @@ resources:
       user.name:
 `)),
 			Output: types.WorkloadSpec{
-				ApiVersion: "score.sh/v1b1",
+				ApiVersion: "score.dev/v1b1",
 				Metadata: types.WorkloadMeta{
 					Name: "hello-world",
 				},
