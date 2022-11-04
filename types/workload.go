@@ -11,7 +11,7 @@ package types
 //
 // YAML example:
 //
-//	apiVersion: score.sh/v1b1
+//	apiVersion: score.dev/v1b1
 //	metadata:
 //	  name: hello-world
 //	service:
