@@ -4,9 +4,9 @@ We'd love to accept your patches and contributions to this project. There are ju
 
 When contributing to this project, you must agree that you have authored the content, that you have the necessary rights to the content and that the content you contribute may be provided under the [APACHE LICENSE, VERSION 2.0](LICENSE).
 
-### **What do I need to know to help?**
+### What do I need to know to help?
 
-If you are looking to help to with a code contribution, our project uses Go Lang. If you don't feel ready to make a code contribution yet, no problem! You can also check out the documentation <https://github.com/score-spec/docs>.
+If you are looking to help to with a code contribution, our project uses Golang. If you don't feel ready to make a code contribution yet, no problem! You can also check out the documentation <https://github.com/score-spec/docs>.
 
 If you are interested in making a code contribution and would like to learn more about the technologies that we use, check out the list below.
 
@@ -14,18 +14,18 @@ If you are interested in making a code contribution and would like to learn more
 - [https://docs.docker.com/compose/](https://docs.docker.com/compose/)
 - [https://helm.sh/docs/](https://helm.sh/docs/)
 
-### **How do I make a contribution?**
+### How do I make a contribution?
 
 Never made an open-source contribution before? Wondering how contributions work in our project? Here's a quick rundown!
 
 1. Find an issue that you are interested in addressing or a feature that you would like to add.
-2. Fork the repository associated with the issue to your local GitHub organization. This means that you will have a copy of the repository under **your-GitHub-username/repository-name**.
-3. Clone the repository to your local machine using **git clone**.
-4. Create a new branch for your fix using **git checkout -b your-branch-name**.
+2. Fork the repository associated with the issue to your local GitHub organization. This means that you will have a copy of the repository under **your-GitHub-username/repository-name**.
+3. Clone the repository to your local machine using **git clone**.
+4. Create a new branch for your fix using **git checkout -b your-branch-name**.
 5. Make the appropriate changes for the issue you are trying to address or the feature that you want to add.
-6. Use **git add insert-paths-of-changed-files-here** to add the file contents of the changed files to the "snapshot" git uses to manage the state of the project, also known as the index.
-7. Use **git commit -s -m "Insert a brief message of the changes made here"** to store the contents of the index with a descriptive message.
-8. Push the changes to the remote repository using **git push origin your-branch-name**.
+6. Use **git add insert-paths-of-changed-files-here** to add the file contents of the changed files to the "snapshot" git uses to manage the state of the project, also known as the index.
+7. Use **git commit -s -m "Insert a brief message of the changes made here"** to store the contents of the index with a descriptive message.
+8. Push the changes to the remote repository using **git push origin your-branch-name**.
 9. Submit a pull request to the upstream repository.
 10. Title the pull request with a brief description of the changes made and the issue or bug number associated with your change. For example, you can title an issue like so, "Added more log outputting to resolve #4352".
 11. In the description of the pull request, explain the changes that you made, any issues you think exist with the pull request you made, and any questions you have for the maintainer. It's OK if your pull request is not perfect (no pull request is), the reviewer will be able to help you resolve any problems and improve it!
@@ -44,15 +44,15 @@ Score uses GitHub pull requests for this purpose.
 The general workflow for code contributions:
 
 1. Submit/find an issue in this repository.
-1. Clone the relevant repo.
-1. Make your code change.
-1. Write tests and update docs.
-1. Build and test locally.
-1. Submit a pull request.
-1. Iterate as needed.
-1. Your PR will be approved and merged.
+2. Clone the relevant repo.
+3. Make your code change.
+4. Write tests and update docs.
+5. Build and test locally.
+6. Submit a pull request.
+7. Iterate as needed.
+8. Your PR will be approved and merged.
 
-### **Where can I go for help?**
+### Where can I go for help?
 
 If you need help, you can create an issue.
 
