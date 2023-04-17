@@ -97,6 +97,9 @@ resources:
   data:
     type: volume
   db:
+    metadata:
+      annotations:
+        "my.org/version": "0.1"
     type: postgres
     properties:
       host:
@@ -184,6 +187,11 @@ resources:
 					"dns":  {Type: "dns"},
 					"data": {Type: "volume"},
 					"db": {
+						Metadata: types.ResourceMeta{
+							Annotations: map[string]string{
+								"my.org/version": "0.1",
+							},
+						},
 						Type: "postgres",
 						Properties: map[string]types.ResourcePropertySpec{
 							"host":      {Type: "string", Default: "localhost", Required: true},
