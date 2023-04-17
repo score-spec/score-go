@@ -97,6 +97,9 @@ resources:
   data:
     type: volume
   db:
+    metadata:
+      annotations:
+        "my.org/version": "0.1"
     type: postgres
     properties:
       host:
@@ -106,6 +109,14 @@ resources:
       port:
         default: 5432
       user.name:
+    params: {
+      extensions: {
+        uuid-ossp: {
+          schema: "uuid_schema",
+          version: "1.1"
+        }
+      }
+    }
 `)),
 			Output: types.WorkloadSpec{
 				ApiVersion: "score.dev/v1b1",
@@ -184,11 +195,24 @@ resources:
 					"dns":  {Type: "dns"},
 					"data": {Type: "volume"},
 					"db": {
+						Metadata: types.ResourceMeta{
+							Annotations: map[string]string{
+								"my.org/version": "0.1",
+							},
+						},
 						Type: "postgres",
 						Properties: map[string]types.ResourcePropertySpec{
 							"host":      {Type: "string", Default: "localhost", Required: true},
 							"port":      {Default: 5432},
 							"user.name": {},
+						},
+						Params: map[string]interface{}{
+							"extensions": map[string]interface{}{
+								"uuid-ossp": map[string]interface{}{
+									"schema":  "uuid_schema",
+									"version": "1.1",
+								},
+							},
 						},
 					},
 				},
