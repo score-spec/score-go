@@ -109,6 +109,14 @@ resources:
       port:
         default: 5432
       user.name:
+    params: {
+      extensions: {
+        uuid-ossp: {
+          schema: "uuid_schema",
+          version: "1.1"
+        }
+      }
+    }
 `)),
 			Output: types.WorkloadSpec{
 				ApiVersion: "score.dev/v1b1",
@@ -197,6 +205,14 @@ resources:
 							"host":      {Type: "string", Default: "localhost", Required: true},
 							"port":      {Default: 5432},
 							"user.name": {},
+						},
+						Params: map[string]interface{}{
+							"extensions": map[string]interface{}{
+								"uuid-ossp": map[string]interface{}{
+									"schema":  "uuid_schema",
+									"version": "1.1",
+								},
+							},
 						},
 					},
 				},

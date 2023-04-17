@@ -15,6 +15,7 @@ type ResourceSpec struct {
 	Metadata   ResourceMeta                    `json:"metadata,omitempty"`
 	Type       string                          `json:"type"`
 	Properties map[string]ResourcePropertySpec `json:"properties"`
+	Params     map[string]interface{}          `json:"params,omitempty"`
 }
 
 // ResourceMeta ia an additional resource metadata.
