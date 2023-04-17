@@ -18,7 +18,7 @@ type ResourceSpec struct {
 	Params     map[string]interface{}          `json:"params,omitempty"`
 }
 
-// ResourceMeta ia an additional resource metadata.
+// ResourceMeta is an additional resource metadata.
 type ResourceMeta struct {
 	Annotations map[string]string `json:"annotations,omitempty"`
 }
