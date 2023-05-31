@@ -233,7 +233,7 @@ const ScoreSchemaV1b1 = `
 					}
 				},
 				"httpProbe": {
-					"description": "An HTTP probe deails.",
+					"description": "An HTTP probe details.",
 					"type": "object",
 					"additionalProperties": false,
 					"required": [
@@ -241,11 +241,11 @@ const ScoreSchemaV1b1 = `
 					],
 					"properties": {
 						"path": {
-							"description": "The path of the HTTP probe enpoint.",
+							"description": "The path of the HTTP probe endpoint.",
 							"type": "string"
 						},
 						"port": {
-							"description": "The path of the HTTP probe enpoint.",
+							"description": "The path of the HTTP probe endpoint.",
 							"type": "number"
 						},
 						"httpHeaders": {
