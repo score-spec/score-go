@@ -108,9 +108,9 @@ resources:
 
 func TestSchema(t *testing.T) {
 	var tests = []struct {
-		Name  string
-		Src   map[string]interface{}
-		Error string
+		Name    string
+		Src     map[string]interface{}
+		Message string
 	}{
 		{
 			Name: "Valid input",
@@ -118,7 +118,7 @@ func TestSchema(t *testing.T) {
 				src := newTestDocument()
 				return src
 			}(),
-			Error: "",
+			Message: "",
 		},
 
 		// apiVersion
@@ -130,7 +130,7 @@ func TestSchema(t *testing.T) {
 				delete(src, "apiVersion")
 				return src
 			}(),
-			Error: "apiVersion is required",
+			Message: "apiVersion is required",
 		},
 		{
 			Name: "apiVersion is not set",
@@ -139,7 +139,7 @@ func TestSchema(t *testing.T) {
 				src["apiVersion"] = nil
 				return src
 			}(),
-			Error: "apiVersion: Invalid type",
+			Message: "apiVersion: Invalid type",
 		},
 		{
 			Name: "apiVersion is not a string",
@@ -148,7 +148,7 @@ func TestSchema(t *testing.T) {
 				src["apiVersion"] = 12
 				return src
 			}(),
-			Error: "apiVersion: Invalid type",
+			Message: "apiVersion: Invalid type",
 		},
 
 		// metadata
@@ -160,7 +160,7 @@ func TestSchema(t *testing.T) {
 				delete(src, "metadata")
 				return src
 			}(),
-			Error: "metadata is required",
+			Message: "metadata is required",
 		},
 		{
 			Name: "metadata is not set",
@@ -169,7 +169,7 @@ func TestSchema(t *testing.T) {
 				src["metadata"] = nil
 				return src
 			}(),
-			Error: "metadata: Invalid type",
+			Message: "metadata: Invalid type",
 		},
 		{
 			Name: "metadata.name is required",
@@ -178,7 +178,7 @@ func TestSchema(t *testing.T) {
 				delete(src["metadata"].(map[string]interface{}), "name")
 				return src
 			}(),
-			Error: "metadata: name is required",
+			Message: "metadata: name is required",
 		},
 		{
 			Name: "metadata.name is not a string",
@@ -187,7 +187,7 @@ func TestSchema(t *testing.T) {
 				src["metadata"].(map[string]interface{})["name"] = 12
 				return src
 			}(),
-			Error: "metadata.name: Invalid type",
+			Message: "metadata.name: Invalid type",
 		},
 
 		// service
@@ -199,7 +199,7 @@ func TestSchema(t *testing.T) {
 				src["service"] = nil
 				return src
 			}(),
-			Error: "service: Invalid type",
+			Message: "service: Invalid type",
 		},
 		{
 			Name: "service.ports is not set",
@@ -210,7 +210,7 @@ func TestSchema(t *testing.T) {
 				}
 				return src
 			}(),
-			Error: "service.ports: Invalid type",
+			Message: "service.ports: Invalid type",
 		},
 		{
 			Name: "service.ports is empty",
@@ -221,7 +221,7 @@ func TestSchema(t *testing.T) {
 				}
 				return src
 			}(),
-			Error: "service.ports: Must have at least 1 properties",
+			Message: "service.ports: Must have at least 1 properties",
 		},
 		{
 			Name: "service.ports.* is not set",
@@ -234,7 +234,7 @@ func TestSchema(t *testing.T) {
 				}
 				return src
 			}(),
-			Error: "service.ports.www: Invalid type",
+			Message: "service.ports.www: Invalid type",
 		},
 		{
 			Name: "service.ports.*.targetPort is missing",
@@ -247,7 +247,7 @@ func TestSchema(t *testing.T) {
 				}
 				return src
 			}(),
-			Error: "service.ports.www: targetPort is required",
+			Message: "service.ports.www: targetPort is required",
 		},
 		{
 			Name: "service.ports.*.targetPort is not a number",
@@ -262,7 +262,7 @@ func TestSchema(t *testing.T) {
 				}
 				return src
 			}(),
-			Error: "service.ports.www.targetPort: Invalid type",
+			Message: "service.ports.www.targetPort: Invalid type",
 		},
 		{
 			Name: "service.ports.*.port is optional",
@@ -277,7 +277,7 @@ func TestSchema(t *testing.T) {
 				}
 				return src
 			}(),
-			Error: "",
+			Message: "",
 		},
 		{
 			Name: "service.ports.*.port is not a number",
@@ -293,7 +293,7 @@ func TestSchema(t *testing.T) {
 				}
 				return src
 			}(),
-			Error: "service.ports.www.port: Invalid type",
+			Message: "service.ports.www.port: Invalid type",
 		},
 		{
 			Name: "service with multiple ports",
@@ -312,7 +312,7 @@ func TestSchema(t *testing.T) {
 				}
 				return src
 			}(),
-			Error: "",
+			Message: "",
 		},
 
 		// containers
@@ -324,7 +324,7 @@ func TestSchema(t *testing.T) {
 				delete(src, "containers")
 				return src
 			}(),
-			Error: "containers is required",
+			Message: "containers is required",
 		},
 		{
 			Name: "containers is not set",
@@ -333,7 +333,7 @@ func TestSchema(t *testing.T) {
 				src["containers"] = nil
 				return src
 			}(),
-			Error: "containers: Invalid type",
+			Message: "containers: Invalid type",
 		},
 		{
 			Name: "containers is empty",
@@ -342,7 +342,7 @@ func TestSchema(t *testing.T) {
 				src["containers"] = map[string]interface{}{}
 				return src
 			}(),
-			Error: "containers: Must have at least 1 properties",
+			Message: "containers: Must have at least 1 properties",
 		},
 		{
 			Name: "containers.* is not set",
@@ -351,7 +351,7 @@ func TestSchema(t *testing.T) {
 				src["containers"].(map[string]interface{})["hello"] = nil
 				return src
 			}(),
-			Error: "containers.hello: Invalid type",
+			Message: "containers.hello: Invalid type",
 		},
 
 		// containers.*.image
@@ -364,7 +364,7 @@ func TestSchema(t *testing.T) {
 				delete(hello, "image")
 				return src
 			}(),
-			Error: "containers.hello: image is required",
+			Message: "containers.hello: image is required",
 		},
 		{
 			Name: "containers.*.image is not set",
@@ -374,7 +374,7 @@ func TestSchema(t *testing.T) {
 				hello["image"] = nil
 				return src
 			}(),
-			Error: "containers.hello.image: Invalid type",
+			Message: "containers.hello.image: Invalid type",
 		},
 		{
 			Name: "containers.*.image is not a sring",
@@ -384,7 +384,7 @@ func TestSchema(t *testing.T) {
 				hello["image"] = 12
 				return src
 			}(),
-			Error: "containers.hello.image: Invalid type",
+			Message: "containers.hello.image: Invalid type",
 		},
 
 		// containers.*.command
@@ -397,7 +397,7 @@ func TestSchema(t *testing.T) {
 				hello["command"] = nil
 				return src
 			}(),
-			Error: "containers.hello.command: Invalid type",
+			Message: "containers.hello.command: Invalid type",
 		},
 		{
 			Name: "containers.*.command is empty",
@@ -407,7 +407,7 @@ func TestSchema(t *testing.T) {
 				hello["command"] = []string{}
 				return src
 			}(),
-			Error: "containers.hello.command: Array must have at least 1 items",
+			Message: "containers.hello.command: Array must have at least 1 items",
 		},
 
 		// containers.*.args
@@ -420,7 +420,7 @@ func TestSchema(t *testing.T) {
 				hello["args"] = nil
 				return src
 			}(),
-			Error: "containers.hello.args: Invalid type",
+			Message: "containers.hello.args: Invalid type",
 		},
 		{
 			Name: "containers.*.args is empty",
@@ -430,7 +430,7 @@ func TestSchema(t *testing.T) {
 				hello["args"] = []string{}
 				return src
 			}(),
-			Error: "containers.hello.args: Array must have at least 1 items",
+			Message: "containers.hello.args: Array must have at least 1 items",
 		},
 
 		// containers.*.variables
@@ -443,7 +443,7 @@ func TestSchema(t *testing.T) {
 				hello["variables"] = nil
 				return src
 			}(),
-			Error: "containers.hello.variables: Invalid type",
+			Message: "containers.hello.variables: Invalid type",
 		},
 		{
 			Name: "containers.*.variables is empty",
@@ -453,7 +453,7 @@ func TestSchema(t *testing.T) {
 				hello["variables"] = map[string]interface{}{}
 				return src
 			}(),
-			Error: "containers.hello.variables: Must have at least 1 properties",
+			Message: "containers.hello.variables: Must have at least 1 properties",
 		},
 		{
 			Name: "containers.*.variables.* is not set",
@@ -463,7 +463,7 @@ func TestSchema(t *testing.T) {
 				hello["variables"].(map[string]interface{})["FRIEND"] = nil
 				return src
 			}(),
-			Error: "containers.hello.variables.FRIEND: Invalid type",
+			Message: "containers.hello.variables.FRIEND: Invalid type",
 		},
 		{
 			Name: "containers.*.variables.* is not a string",
@@ -473,7 +473,7 @@ func TestSchema(t *testing.T) {
 				hello["variables"].(map[string]interface{})["FRIEND"] = 12
 				return src
 			}(),
-			Error: "containers.hello.variables.FRIEND: Invalid type",
+			Message: "containers.hello.variables.FRIEND: Invalid type",
 		},
 
 		// containers.*.files
@@ -486,7 +486,7 @@ func TestSchema(t *testing.T) {
 				hello["files"] = nil
 				return src
 			}(),
-			Error: "containers.hello.files: Invalid type",
+			Message: "containers.hello.files: Invalid type",
 		},
 		{
 			Name: "containers.*.files is empty",
@@ -496,7 +496,7 @@ func TestSchema(t *testing.T) {
 				hello["files"] = []interface{}{}
 				return src
 			}(),
-			Error: "containers.hello.files: Array must have at least 1 items",
+			Message: "containers.hello.files: Array must have at least 1 items",
 		},
 		{
 			Name: "containers.*.files.*.target is missing",
@@ -507,7 +507,7 @@ func TestSchema(t *testing.T) {
 				delete(file, "target")
 				return src
 			}(),
-			Error: "containers.hello.files.0: target is required",
+			Message: "containers.hello.files.0: target is required",
 		},
 		{
 			Name: "containers.*.files.*.target is not set",
@@ -518,7 +518,7 @@ func TestSchema(t *testing.T) {
 				file["target"] = nil
 				return src
 			}(),
-			Error: "containers.hello.files.0.target: Invalid type",
+			Message: "containers.hello.files.0.target: Invalid type",
 		},
 		{
 			Name: "containers.*.files.*.target is not a string",
@@ -529,7 +529,7 @@ func TestSchema(t *testing.T) {
 				file["target"] = 12
 				return src
 			}(),
-			Error: "containers.hello.files.0.target: Invalid type",
+			Message: "containers.hello.files.0.target: Invalid type",
 		},
 		{
 			Name: "containers.*.files.*.mode is not set",
@@ -540,7 +540,7 @@ func TestSchema(t *testing.T) {
 				file["mode"] = nil
 				return src
 			}(),
-			Error: "containers.hello.files.0.mode: Invalid type",
+			Message: "containers.hello.files.0.mode: Invalid type",
 		},
 		{
 			Name: "containers.*.files.*.mode is not a string",
@@ -551,7 +551,7 @@ func TestSchema(t *testing.T) {
 				file["mode"] = 12
 				return src
 			}(),
-			Error: "containers.hello.files.0.mode: Invalid type",
+			Message: "containers.hello.files.0.mode: Invalid type",
 		},
 		{
 			Name: "containers.*.files.*.content is missing",
@@ -562,7 +562,7 @@ func TestSchema(t *testing.T) {
 				delete(file, "content")
 				return src
 			}(),
-			Error: "containers.hello.files.0: content is required",
+			Message: "containers.hello.files.0: content is required",
 		},
 		{
 			Name: "containers.*.files.*.content is not set",
@@ -573,7 +573,7 @@ func TestSchema(t *testing.T) {
 				file["content"] = nil
 				return src
 			}(),
-			Error: "containers.hello.files.0.content: Invalid type",
+			Message: "containers.hello.files.0.content: Invalid type",
 		},
 		{
 			Name: "containers.*.files.*.content is empty",
@@ -584,7 +584,7 @@ func TestSchema(t *testing.T) {
 				file["content"] = []string{}
 				return src
 			}(),
-			Error: "containers.hello.files.0.content: Array must have at least 1 items",
+			Message: "containers.hello.files.0.content: Array must have at least 1 items",
 		},
 
 		// containers.*.volumes
@@ -597,7 +597,7 @@ func TestSchema(t *testing.T) {
 				hello["volumes"] = nil
 				return src
 			}(),
-			Error: "containers.hello.volumes: Invalid type",
+			Message: "containers.hello.volumes: Invalid type",
 		},
 		{
 			Name: "containers.*.volumes is empty",
@@ -607,7 +607,7 @@ func TestSchema(t *testing.T) {
 				hello["volumes"] = []interface{}{}
 				return src
 			}(),
-			Error: "containers.hello.volumes: Array must have at least 1 items",
+			Message: "containers.hello.volumes: Array must have at least 1 items",
 		},
 		{
 			Name: "containers.*.volumes.*.source is missing",
@@ -618,7 +618,7 @@ func TestSchema(t *testing.T) {
 				delete(volumes, "source")
 				return src
 			}(),
-			Error: "containers.hello.volumes.0: source is required",
+			Message: "containers.hello.volumes.0: source is required",
 		},
 		{
 			Name: "containers.*.volumes.*.source is not set",
@@ -629,7 +629,7 @@ func TestSchema(t *testing.T) {
 				volumes["source"] = nil
 				return src
 			}(),
-			Error: "containers.hello.volumes.0.source: Invalid type",
+			Message: "containers.hello.volumes.0.source: Invalid type",
 		},
 		{
 			Name: "containers.*.volumes.*.source is not a string",
@@ -640,7 +640,7 @@ func TestSchema(t *testing.T) {
 				volumes["source"] = 12
 				return src
 			}(),
-			Error: "containers.hello.volumes.0.source: Invalid type",
+			Message: "containers.hello.volumes.0.source: Invalid type",
 		},
 		{
 			Name: "containers.*.volumes.*.path is not set",
@@ -651,7 +651,7 @@ func TestSchema(t *testing.T) {
 				volumes["path"] = nil
 				return src
 			}(),
-			Error: "containers.hello.volumes.0.path: Invalid type",
+			Message: "containers.hello.volumes.0.path: Invalid type",
 		},
 		{
 			Name: "containers.*.volumes.*.path is not a string",
@@ -662,7 +662,7 @@ func TestSchema(t *testing.T) {
 				volumes["path"] = 12
 				return src
 			}(),
-			Error: "containers.hello.volumes.0.path: Invalid type",
+			Message: "containers.hello.volumes.0.path: Invalid type",
 		},
 		{
 			Name: "containers.*.volumes.*.target is missing",
@@ -673,7 +673,7 @@ func TestSchema(t *testing.T) {
 				delete(volumes, "target")
 				return src
 			}(),
-			Error: "containers.hello.volumes.0: target is required",
+			Message: "containers.hello.volumes.0: target is required",
 		},
 		{
 			Name: "containers.*.volumes.*.target is not set",
@@ -684,7 +684,7 @@ func TestSchema(t *testing.T) {
 				volumes["target"] = nil
 				return src
 			}(),
-			Error: "containers.hello.volumes.0.target: Invalid type",
+			Message: "containers.hello.volumes.0.target: Invalid type",
 		},
 		{
 			Name: "containers.*.volumes.*.target is not a string",
@@ -695,7 +695,7 @@ func TestSchema(t *testing.T) {
 				volumes["target"] = 12
 				return src
 			}(),
-			Error: "containers.hello.volumes.0.target: Invalid type",
+			Message: "containers.hello.volumes.0.target: Invalid type",
 		},
 		{
 			Name: "containers.*.volumes.*.read_only is not set",
@@ -706,7 +706,7 @@ func TestSchema(t *testing.T) {
 				volumes["read_only"] = nil
 				return src
 			}(),
-			Error: "containers.hello.volumes.0.read_only: Invalid type",
+			Message: "containers.hello.volumes.0.read_only: Invalid type",
 		},
 		{
 			Name: "containers.*.volumes.*.read_only is not a boolean",
@@ -717,7 +717,7 @@ func TestSchema(t *testing.T) {
 				volumes["read_only"] = 12
 				return src
 			}(),
-			Error: "containers.hello.volumes.0.read_only: Invalid type",
+			Message: "containers.hello.volumes.0.read_only: Invalid type",
 		},
 
 		// containers.*.resources
@@ -730,7 +730,7 @@ func TestSchema(t *testing.T) {
 				hello["resources"] = nil
 				return src
 			}(),
-			Error: "containers.hello.resources: Invalid type",
+			Message: "containers.hello.resources: Invalid type",
 		},
 		{
 			Name: "containers.*.resources is empty",
@@ -740,7 +740,7 @@ func TestSchema(t *testing.T) {
 				hello["resources"] = map[string]interface{}{}
 				return src
 			}(),
-			Error: "containers.hello.resources: Must have at least 1 properties",
+			Message: "containers.hello.resources: Must have at least 1 properties",
 		},
 		{
 			Name: "containers.*.resources.limits is not set",
@@ -750,7 +750,7 @@ func TestSchema(t *testing.T) {
 				hello["resources"].(map[string]interface{})["limits"] = nil
 				return src
 			}(),
-			Error: "containers.hello.resources.limits: Invalid type",
+			Message: "containers.hello.resources.limits: Invalid type",
 		},
 		{
 			Name: "containers.*.resources.limits is empty",
@@ -760,7 +760,7 @@ func TestSchema(t *testing.T) {
 				hello["resources"].(map[string]interface{})["limits"] = map[string]interface{}{}
 				return src
 			}(),
-			Error: "containers.hello.resources.limits: Must have at least 1 properties",
+			Message: "containers.hello.resources.limits: Must have at least 1 properties",
 		},
 		{
 			Name: "containers.*.resources.limits.memory is not set",
@@ -771,7 +771,7 @@ func TestSchema(t *testing.T) {
 				limits["memory"] = nil
 				return src
 			}(),
-			Error: "containers.hello.resources.limits.memory: Invalid type",
+			Message: "containers.hello.resources.limits.memory: Invalid type",
 		},
 		{
 			Name: "containers.*.resources.limits.memory is not a string",
@@ -782,7 +782,7 @@ func TestSchema(t *testing.T) {
 				limits["memory"] = 12
 				return src
 			}(),
-			Error: "containers.hello.resources.limits.memory: Invalid type",
+			Message: "containers.hello.resources.limits.memory: Invalid type",
 		},
 		{
 			Name: "containers.*.resources.limits.memory is not set",
@@ -793,7 +793,7 @@ func TestSchema(t *testing.T) {
 				limits["memory"] = nil
 				return src
 			}(),
-			Error: "containers.hello.resources.limits.memory: Invalid type",
+			Message: "containers.hello.resources.limits.memory: Invalid type",
 		},
 		{
 			Name: "containers.*.resources.limits.cpu is not a string",
@@ -804,7 +804,7 @@ func TestSchema(t *testing.T) {
 				limits["cpu"] = 12
 				return src
 			}(),
-			Error: "containers.hello.resources.limits.cpu: Invalid type",
+			Message: "containers.hello.resources.limits.cpu: Invalid type",
 		},
 		{
 			Name: "containers.*.resources.requests is not set",
@@ -814,7 +814,7 @@ func TestSchema(t *testing.T) {
 				hello["resources"].(map[string]interface{})["requests"] = nil
 				return src
 			}(),
-			Error: "containers.hello.resources.requests: Invalid type",
+			Message: "containers.hello.resources.requests: Invalid type",
 		},
 		{
 			Name: "containers.*.resources.requests is empty",
@@ -824,7 +824,7 @@ func TestSchema(t *testing.T) {
 				hello["resources"].(map[string]interface{})["requests"] = map[string]interface{}{}
 				return src
 			}(),
-			Error: "containers.hello.resources.requests: Must have at least 1 properties",
+			Message: "containers.hello.resources.requests: Must have at least 1 properties",
 		},
 		{
 			Name: "containers.*.resources.requests.memory is not set",
@@ -835,7 +835,7 @@ func TestSchema(t *testing.T) {
 				requests["memory"] = nil
 				return src
 			}(),
-			Error: "containers.hello.resources.requests.memory: Invalid type",
+			Message: "containers.hello.resources.requests.memory: Invalid type",
 		},
 		{
 			Name: "containers.*.resources.requests.memory is not a string",
@@ -846,7 +846,7 @@ func TestSchema(t *testing.T) {
 				requests["memory"] = 12
 				return src
 			}(),
-			Error: "containers.hello.resources.requests.memory: Invalid type",
+			Message: "containers.hello.resources.requests.memory: Invalid type",
 		},
 		{
 			Name: "containers.*.resources.requests.memory is not set",
@@ -857,7 +857,7 @@ func TestSchema(t *testing.T) {
 				requests["memory"] = nil
 				return src
 			}(),
-			Error: "containers.hello.resources.requests.memory: Invalid type",
+			Message: "containers.hello.resources.requests.memory: Invalid type",
 		},
 		{
 			Name: "containers.*.resources.requests.cpu is not a string",
@@ -868,7 +868,7 @@ func TestSchema(t *testing.T) {
 				requests["cpu"] = 12
 				return src
 			}(),
-			Error: "containers.hello.resources.requests.cpu: Invalid type",
+			Message: "containers.hello.resources.requests.cpu: Invalid type",
 		},
 
 		// containers.*.livenessProbe
@@ -881,7 +881,7 @@ func TestSchema(t *testing.T) {
 				hello["livenessProbe"] = nil
 				return src
 			}(),
-			Error: "containers.hello.livenessProbe: Invalid type",
+			Message: "containers.hello.livenessProbe: Invalid type",
 		},
 		{
 			Name: "containers.*.livenessProbe is empty",
@@ -891,7 +891,7 @@ func TestSchema(t *testing.T) {
 				hello["livenessProbe"] = map[string]interface{}{}
 				return src
 			}(),
-			Error: "containers.hello.livenessProbe: Must have at least 1 properties",
+			Message: "containers.hello.livenessProbe: Must have at least 1 properties",
 		},
 		{
 			Name: "containers.*.livenessProbe.httpGet is not set",
@@ -901,7 +901,7 @@ func TestSchema(t *testing.T) {
 				hello["livenessProbe"].(map[string]interface{})["httpGet"] = nil
 				return src
 			}(),
-			Error: "containers.hello.livenessProbe.httpGet: Invalid type",
+			Message: "containers.hello.livenessProbe.httpGet: Invalid type",
 		},
 		{
 			Name: "containers.*.livenessProbe.httpGet.path is missing",
@@ -912,7 +912,7 @@ func TestSchema(t *testing.T) {
 				delete(httpGet, "path")
 				return src
 			}(),
-			Error: "containers.hello.livenessProbe.httpGet: path is required",
+			Message: "containers.hello.livenessProbe.httpGet: path is required",
 		},
 		{
 			Name: "containers.*.livenessProbe.httpGet.path is not set",
@@ -923,7 +923,7 @@ func TestSchema(t *testing.T) {
 				httpGet["path"] = nil
 				return src
 			}(),
-			Error: "containers.hello.livenessProbe.httpGet.path: Invalid type",
+			Message: "containers.hello.livenessProbe.httpGet.path: Invalid type",
 		},
 		{
 			Name: "containers.*.livenessProbe.httpGet.path is not a string",
@@ -934,7 +934,7 @@ func TestSchema(t *testing.T) {
 				httpGet["path"] = 12
 				return src
 			}(),
-			Error: "containers.hello.livenessProbe.httpGet.path: Invalid type",
+			Message: "containers.hello.livenessProbe.httpGet.path: Invalid type",
 		},
 		{
 			Name: "containers.*.livenessProbe.httpGet.port is not set",
@@ -945,7 +945,7 @@ func TestSchema(t *testing.T) {
 				httpGet["port"] = nil
 				return src
 			}(),
-			Error: "containers.hello.livenessProbe.httpGet.port: Invalid type",
+			Message: "containers.hello.livenessProbe.httpGet.port: Invalid type",
 		},
 		{
 			Name: "containers.*.livenessProbe.httpGet.port is not a number",
@@ -956,7 +956,7 @@ func TestSchema(t *testing.T) {
 				httpGet["port"] = "12"
 				return src
 			}(),
-			Error: "containers.hello.livenessProbe.httpGet.port: Invalid type",
+			Message: "containers.hello.livenessProbe.httpGet.port: Invalid type",
 		},
 		{
 			Name: "containers.*.livenessProbe.httpGet.httpHeaders is not set",
@@ -967,7 +967,7 @@ func TestSchema(t *testing.T) {
 				httpGet["httpHeaders"] = nil
 				return src
 			}(),
-			Error: "containers.hello.livenessProbe.httpGet.httpHeaders: Invalid type",
+			Message: "containers.hello.livenessProbe.httpGet.httpHeaders: Invalid type",
 		},
 		{
 			Name: "containers.*.livenessProbe.httpGet.httpHeaders is empty",
@@ -978,24 +978,23 @@ func TestSchema(t *testing.T) {
 				httpGet["httpHeaders"] = []interface{}{}
 				return src
 			}(),
-			Error: "containers.hello.livenessProbe.httpGet.httpHeaders: Array must have at least 1 item",
+			Message: "containers.hello.livenessProbe.httpGet.httpHeaders: Array must have at least 1 item",
 		},
 		{
 			Name: "containers.*.livenessProbe.httpGet.httpHeaders.*.name is not set",
 			Src: func() map[string]interface{} {
 				src := newTestDocument()
 				var hello = src["containers"].(map[string]interface{})["hello"].(map[string]interface{})
-				hello["variables"].(map[string]interface{})["Custom-Header"] = nil
 				var httpGet = hello["livenessProbe"].(map[string]interface{})["httpGet"].(map[string]interface{})
 				httpGet["httpHeaders"] = []interface{}{
 					map[string]interface{}{
 						"name":  nil,
-						"valie": "Awesome",
+						"value": "Awesome",
 					},
 				}
 				return src
 			}(),
-			Error: "containers.hello.livenessProbe.httpGet.httpHeaders.0.name: Invalid type",
+			Message: "containers.hello.livenessProbe.httpGet.httpHeaders.0.name: Invalid type",
 		},
 		{
 			Name: "containers.*.livenessProbe.httpGet.httpHeaders.*.name is not a string",
@@ -1006,19 +1005,18 @@ func TestSchema(t *testing.T) {
 				httpGet["httpHeaders"] = []interface{}{
 					map[string]interface{}{
 						"name":  12,
-						"valie": "Awesome",
+						"value": "Awesome",
 					},
 				}
 				return src
 			}(),
-			Error: "containers.hello.livenessProbe.httpGet.httpHeaders.0.name: Invalid type",
+			Message: "containers.hello.livenessProbe.httpGet.httpHeaders.0.name: Invalid type",
 		},
 		{
 			Name: "containers.*.livenessProbe.httpGet.httpHeaders.*.value is not set",
 			Src: func() map[string]interface{} {
 				src := newTestDocument()
 				var hello = src["containers"].(map[string]interface{})["hello"].(map[string]interface{})
-				hello["variables"].(map[string]interface{})["Custom-Header"] = nil
 				var httpGet = hello["livenessProbe"].(map[string]interface{})["httpGet"].(map[string]interface{})
 				httpGet["httpHeaders"] = []interface{}{
 					map[string]interface{}{
@@ -1028,7 +1026,7 @@ func TestSchema(t *testing.T) {
 				}
 				return src
 			}(),
-			Error: "containers.hello.livenessProbe.httpGet.httpHeaders.0.value: Invalid type",
+			Message: "containers.hello.livenessProbe.httpGet.httpHeaders.0.value: Invalid type",
 		},
 		{
 			Name: "containers.*.livenessProbe.httpGet.httpHeaders.*.value is not a string",
@@ -1044,7 +1042,7 @@ func TestSchema(t *testing.T) {
 				}
 				return src
 			}(),
-			Error: "containers.hello.livenessProbe.httpGet.httpHeaders.0.value: Invalid type",
+			Message: "containers.hello.livenessProbe.httpGet.httpHeaders.0.value: Invalid type",
 		},
 
 		// containers.*.readinessProbe
@@ -1057,7 +1055,7 @@ func TestSchema(t *testing.T) {
 				hello["readinessProbe"] = nil
 				return src
 			}(),
-			Error: "containers.hello.readinessProbe: Invalid type",
+			Message: "containers.hello.readinessProbe: Invalid type",
 		},
 		{
 			Name: "containers.*.readinessProbe is empty",
@@ -1067,7 +1065,7 @@ func TestSchema(t *testing.T) {
 				hello["readinessProbe"] = map[string]interface{}{}
 				return src
 			}(),
-			Error: "containers.hello.readinessProbe: Must have at least 1 properties",
+			Message: "containers.hello.readinessProbe: Must have at least 1 properties",
 		},
 		{
 			Name: "containers.*.readinessProbe.httpGet is not set",
@@ -1077,7 +1075,7 @@ func TestSchema(t *testing.T) {
 				hello["readinessProbe"].(map[string]interface{})["httpGet"] = nil
 				return src
 			}(),
-			Error: "containers.hello.readinessProbe.httpGet: Invalid type",
+			Message: "containers.hello.readinessProbe.httpGet: Invalid type",
 		},
 		{
 			Name: "containers.*.readinessProbe.httpGet.path is missing",
@@ -1088,7 +1086,7 @@ func TestSchema(t *testing.T) {
 				delete(httpGet, "path")
 				return src
 			}(),
-			Error: "containers.hello.readinessProbe.httpGet: path is required",
+			Message: "containers.hello.readinessProbe.httpGet: path is required",
 		},
 		{
 			Name: "containers.*.readinessProbe.httpGet.path is not set",
@@ -1099,7 +1097,7 @@ func TestSchema(t *testing.T) {
 				httpGet["path"] = nil
 				return src
 			}(),
-			Error: "containers.hello.readinessProbe.httpGet.path: Invalid type",
+			Message: "containers.hello.readinessProbe.httpGet.path: Invalid type",
 		},
 		{
 			Name: "containers.*.readinessProbe.httpGet.path is not a string",
@@ -1110,7 +1108,7 @@ func TestSchema(t *testing.T) {
 				httpGet["path"] = 12
 				return src
 			}(),
-			Error: "containers.hello.readinessProbe.httpGet.path: Invalid type",
+			Message: "containers.hello.readinessProbe.httpGet.path: Invalid type",
 		},
 		{
 			Name: "containers.*.readinessProbe.httpGet.port is not set",
@@ -1121,7 +1119,7 @@ func TestSchema(t *testing.T) {
 				httpGet["port"] = nil
 				return src
 			}(),
-			Error: "containers.hello.readinessProbe.httpGet.port: Invalid type",
+			Message: "containers.hello.readinessProbe.httpGet.port: Invalid type",
 		},
 		{
 			Name: "containers.*.readinessProbe.httpGet.port is not a number",
@@ -1132,7 +1130,7 @@ func TestSchema(t *testing.T) {
 				httpGet["port"] = "12"
 				return src
 			}(),
-			Error: "containers.hello.readinessProbe.httpGet.port: Invalid type",
+			Message: "containers.hello.readinessProbe.httpGet.port: Invalid type",
 		},
 		{
 			Name: "containers.*.readinessProbe.httpGet.httpHeaders is not set",
@@ -1143,7 +1141,7 @@ func TestSchema(t *testing.T) {
 				httpGet["httpHeaders"] = nil
 				return src
 			}(),
-			Error: "containers.hello.readinessProbe.httpGet.httpHeaders: Invalid type",
+			Message: "containers.hello.readinessProbe.httpGet.httpHeaders: Invalid type",
 		},
 		{
 			Name: "containers.*.readinessProbe.httpGet.httpHeaders is empty",
@@ -1154,24 +1152,23 @@ func TestSchema(t *testing.T) {
 				httpGet["httpHeaders"] = []interface{}{}
 				return src
 			}(),
-			Error: "containers.hello.readinessProbe.httpGet.httpHeaders: Array must have at least 1 item",
+			Message: "containers.hello.readinessProbe.httpGet.httpHeaders: Array must have at least 1 item",
 		},
 		{
 			Name: "containers.*.readinessProbe.httpGet.httpHeaders.*.name is not set",
 			Src: func() map[string]interface{} {
 				src := newTestDocument()
 				var hello = src["containers"].(map[string]interface{})["hello"].(map[string]interface{})
-				hello["variables"].(map[string]interface{})["Custom-Header"] = nil
 				var httpGet = hello["readinessProbe"].(map[string]interface{})["httpGet"].(map[string]interface{})
 				httpGet["httpHeaders"] = []interface{}{
 					map[string]interface{}{
 						"name":  nil,
-						"valie": "Awesome",
+						"value": "Awesome",
 					},
 				}
 				return src
 			}(),
-			Error: "containers.hello.readinessProbe.httpGet.httpHeaders.0.name: Invalid type",
+			Message: "containers.hello.readinessProbe.httpGet.httpHeaders.0.name: Invalid type",
 		},
 		{
 			Name: "containers.*.readinessProbe.httpGet.httpHeaders.*.name is not a string",
@@ -1182,19 +1179,18 @@ func TestSchema(t *testing.T) {
 				httpGet["httpHeaders"] = []interface{}{
 					map[string]interface{}{
 						"name":  12,
-						"valie": "Awesome",
+						"value": "Awesome",
 					},
 				}
 				return src
 			}(),
-			Error: "containers.hello.readinessProbe.httpGet.httpHeaders.0.name: Invalid type",
+			Message: "containers.hello.readinessProbe.httpGet.httpHeaders.0.name: Invalid type",
 		},
 		{
 			Name: "containers.*.readinessProbe.httpGet.httpHeaders.*.value is not set",
 			Src: func() map[string]interface{} {
 				src := newTestDocument()
 				var hello = src["containers"].(map[string]interface{})["hello"].(map[string]interface{})
-				hello["variables"].(map[string]interface{})["Custom-Header"] = nil
 				var httpGet = hello["readinessProbe"].(map[string]interface{})["httpGet"].(map[string]interface{})
 				httpGet["httpHeaders"] = []interface{}{
 					map[string]interface{}{
@@ -1204,7 +1200,7 @@ func TestSchema(t *testing.T) {
 				}
 				return src
 			}(),
-			Error: "containers.hello.readinessProbe.httpGet.httpHeaders.0.value: Invalid type",
+			Message: "containers.hello.readinessProbe.httpGet.httpHeaders.0.value: Invalid type",
 		},
 		{
 			Name: "containers.*.readinessProbe.httpGet.httpHeaders.*.value is not a string",
@@ -1220,7 +1216,7 @@ func TestSchema(t *testing.T) {
 				}
 				return src
 			}(),
-			Error: "containers.hello.readinessProbe.httpGet.httpHeaders.0.value: Invalid type",
+			Message: "containers.hello.readinessProbe.httpGet.httpHeaders.0.value: Invalid type",
 		},
 
 		// resources
@@ -1232,7 +1228,7 @@ func TestSchema(t *testing.T) {
 				src["resources"] = nil
 				return src
 			}(),
-			Error: "resources: Invalid type",
+			Message: "resources: Invalid type",
 		},
 		{
 			Name: "resources is empty",
@@ -1241,7 +1237,7 @@ func TestSchema(t *testing.T) {
 				src["resources"] = map[string]interface{}{}
 				return src
 			}(),
-			Error: "resources: Must have at least 1 properties",
+			Message: "resources: Must have at least 1 properties",
 		},
 		{
 			Name: "resources.* is not set",
@@ -1250,7 +1246,7 @@ func TestSchema(t *testing.T) {
 				src["resources"].(map[string]interface{})["db"] = nil
 				return src
 			}(),
-			Error: "resources.db: Invalid type",
+			Message: "resources.db: Invalid type",
 		},
 
 		// resources.*.image
@@ -1263,7 +1259,7 @@ func TestSchema(t *testing.T) {
 				delete(db, "type")
 				return src
 			}(),
-			Error: "resources.db: type is required",
+			Message: "resources.db: type is required",
 		},
 		{
 			Name: "resources.*.type is not set",
@@ -1273,7 +1269,7 @@ func TestSchema(t *testing.T) {
 				db["type"] = nil
 				return src
 			}(),
-			Error: "resources.db.type: Invalid type",
+			Message: "resources.db.type: Invalid type",
 		},
 		{
 			Name: "resources.*.type is not a sring",
@@ -1283,7 +1279,7 @@ func TestSchema(t *testing.T) {
 				db["type"] = 12
 				return src
 			}(),
-			Error: "resources.db.type: Invalid type",
+			Message: "resources.db.type: Invalid type",
 		},
 
 		// resources.*.metadata
@@ -1296,7 +1292,7 @@ func TestSchema(t *testing.T) {
 				db["metadata"] = nil
 				return src
 			}(),
-			Error: "resources.db.metadata: Invalid type",
+			Message: "resources.db.metadata: Invalid type",
 		},
 		{
 			Name: "resources.*.metadata is empty",
@@ -1306,7 +1302,7 @@ func TestSchema(t *testing.T) {
 				db["metadata"] = map[string]interface{}{}
 				return src
 			}(),
-			Error: "resources.db.metadata: Must have at least 1 properties",
+			Message: "resources.db.metadata: Must have at least 1 properties",
 		},
 
 		// resources.*.metadata.annotations
@@ -1320,7 +1316,7 @@ func TestSchema(t *testing.T) {
 				metadata["annotations"] = nil
 				return src
 			}(),
-			Error: "resources.db.metadata.annotations: Invalid type",
+			Message: "resources.db.metadata.annotations: Invalid type",
 		},
 		{
 			Name: "resources.*.metadata.annotations is empty",
@@ -1331,7 +1327,7 @@ func TestSchema(t *testing.T) {
 				metadata["annotations"] = map[string]interface{}{}
 				return src
 			}(),
-			Error: "resources.db.metadata.annotations: Must have at least 1 properties",
+			Message: "resources.db.metadata.annotations: Must have at least 1 properties",
 		},
 		{
 			Name: "resources.*.metadata.annotations.* is not set",
@@ -1345,7 +1341,7 @@ func TestSchema(t *testing.T) {
 				}
 				return src
 			}(),
-			Error: "resources.db.metadata.annotations.one: Invalid type.",
+			Message: "resources.db.metadata.annotations.one: Invalid type.",
 		},
 		{
 			Name: "resources.*.metadata.annotations.* is not a string",
@@ -1359,7 +1355,7 @@ func TestSchema(t *testing.T) {
 				}
 				return src
 			}(),
-			Error: "resources.db.metadata.annotations.one: Invalid type.",
+			Message: "resources.db.metadata.annotations.one: Invalid type.",
 		},
 
 		// resources.*.properties
@@ -1372,7 +1368,7 @@ func TestSchema(t *testing.T) {
 				db["properties"] = nil
 				return src
 			}(),
-			Error: "resources.db.properties: Invalid type",
+			Message: "resources.db.properties: Invalid type",
 		},
 		{
 			Name: "resources.*.properties is empty",
@@ -1382,7 +1378,7 @@ func TestSchema(t *testing.T) {
 				db["properties"] = map[string]interface{}{}
 				return src
 			}(),
-			Error: "resources.db.properties: Must have at least 1 properties",
+			Message: "resources.db.properties: Must have at least 1 properties",
 		},
 		{
 			Name: "resources.*.metadata.properties.* is not set",
@@ -1393,7 +1389,7 @@ func TestSchema(t *testing.T) {
 				properties["host"] = nil
 				return src
 			}(),
-			Error: "",
+			Message: "",
 		},
 		{
 			Name: "resources.*.metadata.properties.* is empty",
@@ -1404,7 +1400,7 @@ func TestSchema(t *testing.T) {
 				properties["host"] = map[string]interface{}{}
 				return src
 			}(),
-			Error: "resources.db.properties.host: Must have at least 1 properties",
+			Message: "resources.db.properties.host: Must have at least 1 properties",
 		},
 		{
 			Name: "resources.*.metadata.properties.*.type is not set",
@@ -1415,7 +1411,7 @@ func TestSchema(t *testing.T) {
 				properties["host"].(map[string]interface{})["type"] = nil
 				return src
 			}(),
-			Error: "resources.db.properties.host.type: Invalid type.",
+			Message: "resources.db.properties.host.type: Invalid type.",
 		},
 		{
 			Name: "resources.*.metadata.properties.*.type is not a string",
@@ -1426,7 +1422,7 @@ func TestSchema(t *testing.T) {
 				properties["host"].(map[string]interface{})["type"] = 12
 				return src
 			}(),
-			Error: "resources.db.properties.host.type: Invalid type.",
+			Message: "resources.db.properties.host.type: Invalid type.",
 		},
 		{
 			Name: "resources.*.metadata.properties.*.default is not set",
@@ -1437,7 +1433,7 @@ func TestSchema(t *testing.T) {
 				properties["host"].(map[string]interface{})["default"] = nil
 				return src
 			}(),
-			Error: "resources.db.properties.host.default: Invalid type.",
+			Message: "resources.db.properties.host.default: Invalid type.",
 		},
 		{
 			Name: "resources.*.metadata.properties.*.default is a string",
@@ -1448,7 +1444,7 @@ func TestSchema(t *testing.T) {
 				properties["host"].(map[string]interface{})["default"] = "."
 				return src
 			}(),
-			Error: "",
+			Message: "",
 		},
 		{
 			Name: "resources.*.metadata.properties.*.default is a number",
@@ -1459,7 +1455,7 @@ func TestSchema(t *testing.T) {
 				properties["host"].(map[string]interface{})["default"] = 12
 				return src
 			}(),
-			Error: "",
+			Message: "",
 		},
 		{
 			Name: "resources.*.metadata.properties.*.default is a boolean",
@@ -1470,7 +1466,7 @@ func TestSchema(t *testing.T) {
 				properties["host"].(map[string]interface{})["default"] = false
 				return src
 			}(),
-			Error: "",
+			Message: "",
 		},
 		{
 			Name: "resources.*.metadata.properties.*.default is not a simple type",
@@ -1481,7 +1477,7 @@ func TestSchema(t *testing.T) {
 				properties["host"].(map[string]interface{})["default"] = []string{}
 				return src
 			}(),
-			Error: "resources.db.properties.host.default: Invalid type.",
+			Message: "resources.db.properties.host.default: Invalid type.",
 		},
 		{
 			Name: "resources.*.metadata.properties.*.required is not set",
@@ -1492,7 +1488,7 @@ func TestSchema(t *testing.T) {
 				properties["host"].(map[string]interface{})["required"] = nil
 				return src
 			}(),
-			Error: "resources.db.properties.host.required: Invalid type.",
+			Message: "resources.db.properties.host.required: Invalid type.",
 		},
 		{
 			Name: "resources.*.metadata.properties.*.required is not a boolean",
@@ -1503,7 +1499,7 @@ func TestSchema(t *testing.T) {
 				properties["host"].(map[string]interface{})["required"] = 12
 				return src
 			}(),
-			Error: "resources.db.properties.host.required: Invalid type.",
+			Message: "resources.db.properties.host.required: Invalid type.",
 		},
 		{
 			Name: "resources.*.metadata.properties.*.secret is not set",
@@ -1514,7 +1510,7 @@ func TestSchema(t *testing.T) {
 				properties["host"].(map[string]interface{})["secret"] = nil
 				return src
 			}(),
-			Error: "resources.db.properties.host.secret: Invalid type.",
+			Message: "resources.db.properties.host.secret: Invalid type.",
 		},
 		{
 			Name: "resources.*.metadata.properties.*.secret is not a boolean",
@@ -1525,7 +1521,7 @@ func TestSchema(t *testing.T) {
 				properties["host"].(map[string]interface{})["secret"] = 12
 				return src
 			}(),
-			Error: "resources.db.properties.host.secret: Invalid type.",
+			Message: "resources.db.properties.host.secret: Invalid type.",
 		},
 
 		// resources.*.params
@@ -1538,7 +1534,7 @@ func TestSchema(t *testing.T) {
 				db["params"] = nil
 				return src
 			}(),
-			Error: "resources.db.params: Invalid type",
+			Message: "resources.db.params: Invalid type",
 		},
 		{
 			Name: "resources.*.params is not an object",
@@ -1548,19 +1544,24 @@ func TestSchema(t *testing.T) {
 				db["params"] = 12
 				return src
 			}(),
-			Error: "resources.db.params: Invalid type",
+			Message: "resources.db.params: Invalid type",
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.Name, func(t *testing.T) {
 			var src = gojsonschema.NewGoLoader(tt.Src)
-			var err = validate(src)
+			res, err := Validate(src)
+			assert.NoError(t, err)
 
-			if tt.Error == "" {
-				assert.NoError(t, err)
+			if tt.Message == "" {
+				assert.True(t, res.Valid())
 			} else {
-				assert.ErrorContains(t, err, tt.Error)
+				assert.False(t, res.Valid())
+
+				var errors = res.Errors()
+				assert.Len(t, errors, 1)
+				assert.Contains(t, errors[0].String(), tt.Message)
 			}
 		})
 	}

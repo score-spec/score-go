@@ -8,6 +8,7 @@ The Apache Software Foundation (http://www.apache.org/).
 package schema
 
 import (
+	"bytes"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -97,8 +98,9 @@ resources:
     }
 `)
 
-	var err = ValidateYaml(source)
+	res, err := ValidateYaml(bytes.NewReader(source))
 	assert.NoError(t, err)
+	assert.True(t, res.Valid())
 }
 
 func TestValidateYaml_Error(t *testing.T) {
@@ -185,8 +187,9 @@ resources:
     }
 `)
 
-	var err = ValidateYaml(source)
-	assert.Error(t, ErrInvalid, err)
+	res, err := ValidateYaml(bytes.NewReader(source))
+	assert.NoError(t, err)
+	assert.False(t, res.Valid())
 }
 
 func TestValidateJson(t *testing.T) {
@@ -308,8 +311,9 @@ func TestValidateJson(t *testing.T) {
 }
 `)
 
-	var err = ValidateJson(source)
+	res, err := ValidateJson(bytes.NewReader(source))
 	assert.NoError(t, err)
+	assert.True(t, res.Valid())
 }
 
 func TestValidateJson_Error(t *testing.T) {
@@ -431,6 +435,7 @@ func TestValidateJson_Error(t *testing.T) {
 }
 `)
 
-	var err = ValidateJson(source)
-	assert.Error(t, ErrInvalid, err)
+	res, err := ValidateJson(bytes.NewReader(source))
+	assert.NoError(t, err)
+	assert.False(t, res.Valid())
 }

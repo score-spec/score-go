@@ -8,47 +8,35 @@ The Apache Software Foundation (http://www.apache.org/).
 package schema
 
 import (
-	"bytes"
-	"errors"
 	"fmt"
-	"strings"
+	"io"
 
 	"github.com/xeipuuv/gojsonschema"
 	"gopkg.in/yaml.v3"
 )
 
-var ErrInvalid = errors.New("invalid document")
-
-func ValidateJson(data []byte) error {
-	src := gojsonschema.NewStringLoader(string(data))
-	return validate(src)
+// Validates source JSON file.
+func ValidateJson(r io.Reader) (*gojsonschema.Result, error) {
+	src, rdr := gojsonschema.NewReaderLoader(r)
+	if _, err := io.ReadAll(rdr); err != nil {
+		return nil, fmt.Errorf("reading JSON: %w", err)
+	}
+	return Validate(src)
 }
 
-func ValidateYaml(data []byte) error {
+// Validates source YAML file.
+func ValidateYaml(r io.Reader) (*gojsonschema.Result, error) {
 	var obj map[string]interface{}
-	var yamlReader = bytes.NewReader(data)
-	if err := yaml.NewDecoder(yamlReader).Decode(&obj); err != nil {
-		return fmt.Errorf("decoding yaml: %w", err)
+	if err := yaml.NewDecoder(r).Decode(&obj); err != nil {
+		return nil, fmt.Errorf("decoding YAML: %w", err)
 	}
 
 	src := gojsonschema.NewGoLoader(obj)
-	return validate(src)
+	return Validate(src)
 }
 
-func validate(src gojsonschema.JSONLoader) error {
+// Validates source Score structure.
+func Validate(src gojsonschema.JSONLoader) (*gojsonschema.Result, error) {
 	schema := gojsonschema.NewStringLoader(ScoreSchemaV1b1)
-
-	result, err := gojsonschema.Validate(schema, src)
-	if result == nil {
-		return fmt.Errorf("validating schema: %w", err)
-	}
-	if result != nil && !result.Valid() {
-		var messages = make([]string, 0)
-		var errors = result.Errors()
-		for _, err := range errors {
-			messages = append(messages, err.String())
-		}
-		return fmt.Errorf("%v: %s", ErrInvalid, strings.Join(messages, ": "))
-	}
-	return nil
+	return gojsonschema.Validate(schema, src)
 }
