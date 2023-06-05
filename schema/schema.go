@@ -12,7 +12,7 @@ const ScoreSchemaV1b1 = `
     "$schema": "https://json-schema.org/draft/2020-12/schema",
     "$id": "https://score.dev/schemas/score",
     "title": "Score schema",
-    "description": "Score workload scpecification",
+    "description": "Score workload specification",
     "type": "object",
     "required": [
         "apiVersion",
