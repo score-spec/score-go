@@ -90,25 +90,15 @@ containers:
 resources:
   env:
     type: environment
-    properties:
-      APP_CONFIG:
   dns:
     type: dns
   data:
     type: volume
   db:
+    type: postgres
     metadata:
       annotations:
         "my.org/version": "0.1"
-    type: postgres
-    properties:
-      host:
-        type: string
-        default: localhost
-        required: true
-      port:
-        default: 5432
-      user.name:
     params: {
       extensions: {
         uuid-ossp: {
@@ -188,23 +178,15 @@ resources:
 				Resources: map[string]types.ResourceSpec{
 					"env": {
 						Type: "environment",
-						Properties: map[string]types.ResourcePropertySpec{
-							"APP_CONFIG": {},
-						},
 					},
 					"dns":  {Type: "dns"},
 					"data": {Type: "volume"},
 					"db": {
+						Type: "postgres",
 						Metadata: types.ResourceMeta{
 							Annotations: map[string]string{
 								"my.org/version": "0.1",
 							},
-						},
-						Type: "postgres",
-						Properties: map[string]types.ResourcePropertySpec{
-							"host":      {Type: "string", Default: "localhost", Required: true},
-							"port":      {Default: 5432},
-							"user.name": {},
 						},
 						Params: map[string]interface{}{
 							"extensions": map[string]interface{}{

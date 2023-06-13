@@ -71,25 +71,15 @@ containers:
 resources:
   env:
     type: environment
-    properties:
-      APP_CONFIG:
   dns:
     type: dns
   data:
     type: volume
   db:
+    type: postgres
     metadata:
       annotations:
         "my.org/version": "0.1"
-    type: postgres
-    properties:
-      host:
-        type: string
-        default: localhost
-        required: true
-      port:
-        default: 5432
-      user.name:
     params: {
       extensions: {
         uuid-ossp: {
@@ -1368,7 +1358,7 @@ func TestSchema(t *testing.T) {
 				db["properties"] = nil
 				return src
 			}(),
-			Message: "resources.db.properties: Invalid type",
+			Message: "",
 		},
 		{
 			Name: "resources.*.properties is empty",
@@ -1378,150 +1368,19 @@ func TestSchema(t *testing.T) {
 				db["properties"] = map[string]interface{}{}
 				return src
 			}(),
-			Message: "resources.db.properties: Must have at least 1 properties",
-		},
-		{
-			Name: "resources.*.metadata.properties.* is not set",
-			Src: func() map[string]interface{} {
-				src := newTestDocument()
-				var db = src["resources"].(map[string]interface{})["db"].(map[string]interface{})
-				var properties = db["properties"].(map[string]interface{})
-				properties["host"] = nil
-				return src
-			}(),
 			Message: "",
 		},
 		{
-			Name: "resources.*.metadata.properties.* is empty",
+			Name: "resources.*.properties is ignored",
 			Src: func() map[string]interface{} {
 				src := newTestDocument()
 				var db = src["resources"].(map[string]interface{})["db"].(map[string]interface{})
-				var properties = db["properties"].(map[string]interface{})
-				properties["host"] = map[string]interface{}{}
-				return src
-			}(),
-			Message: "resources.db.properties.host: Must have at least 1 properties",
-		},
-		{
-			Name: "resources.*.metadata.properties.*.type is not set",
-			Src: func() map[string]interface{} {
-				src := newTestDocument()
-				var db = src["resources"].(map[string]interface{})["db"].(map[string]interface{})
-				var properties = db["properties"].(map[string]interface{})
-				properties["host"].(map[string]interface{})["type"] = nil
-				return src
-			}(),
-			Message: "resources.db.properties.host.type: Invalid type.",
-		},
-		{
-			Name: "resources.*.metadata.properties.*.type is not a string",
-			Src: func() map[string]interface{} {
-				src := newTestDocument()
-				var db = src["resources"].(map[string]interface{})["db"].(map[string]interface{})
-				var properties = db["properties"].(map[string]interface{})
-				properties["host"].(map[string]interface{})["type"] = 12
-				return src
-			}(),
-			Message: "resources.db.properties.host.type: Invalid type.",
-		},
-		{
-			Name: "resources.*.metadata.properties.*.default is not set",
-			Src: func() map[string]interface{} {
-				src := newTestDocument()
-				var db = src["resources"].(map[string]interface{})["db"].(map[string]interface{})
-				var properties = db["properties"].(map[string]interface{})
-				properties["host"].(map[string]interface{})["default"] = nil
-				return src
-			}(),
-			Message: "resources.db.properties.host.default: Invalid type.",
-		},
-		{
-			Name: "resources.*.metadata.properties.*.default is a string",
-			Src: func() map[string]interface{} {
-				src := newTestDocument()
-				var db = src["resources"].(map[string]interface{})["db"].(map[string]interface{})
-				var properties = db["properties"].(map[string]interface{})
-				properties["host"].(map[string]interface{})["default"] = "."
+				db["properties"] = map[string]interface{}{
+					"key": "value",
+				}
 				return src
 			}(),
 			Message: "",
-		},
-		{
-			Name: "resources.*.metadata.properties.*.default is a number",
-			Src: func() map[string]interface{} {
-				src := newTestDocument()
-				var db = src["resources"].(map[string]interface{})["db"].(map[string]interface{})
-				var properties = db["properties"].(map[string]interface{})
-				properties["host"].(map[string]interface{})["default"] = 12
-				return src
-			}(),
-			Message: "",
-		},
-		{
-			Name: "resources.*.metadata.properties.*.default is a boolean",
-			Src: func() map[string]interface{} {
-				src := newTestDocument()
-				var db = src["resources"].(map[string]interface{})["db"].(map[string]interface{})
-				var properties = db["properties"].(map[string]interface{})
-				properties["host"].(map[string]interface{})["default"] = false
-				return src
-			}(),
-			Message: "",
-		},
-		{
-			Name: "resources.*.metadata.properties.*.default is not a simple type",
-			Src: func() map[string]interface{} {
-				src := newTestDocument()
-				var db = src["resources"].(map[string]interface{})["db"].(map[string]interface{})
-				var properties = db["properties"].(map[string]interface{})
-				properties["host"].(map[string]interface{})["default"] = []string{}
-				return src
-			}(),
-			Message: "resources.db.properties.host.default: Invalid type.",
-		},
-		{
-			Name: "resources.*.metadata.properties.*.required is not set",
-			Src: func() map[string]interface{} {
-				src := newTestDocument()
-				var db = src["resources"].(map[string]interface{})["db"].(map[string]interface{})
-				var properties = db["properties"].(map[string]interface{})
-				properties["host"].(map[string]interface{})["required"] = nil
-				return src
-			}(),
-			Message: "resources.db.properties.host.required: Invalid type.",
-		},
-		{
-			Name: "resources.*.metadata.properties.*.required is not a boolean",
-			Src: func() map[string]interface{} {
-				src := newTestDocument()
-				var db = src["resources"].(map[string]interface{})["db"].(map[string]interface{})
-				var properties = db["properties"].(map[string]interface{})
-				properties["host"].(map[string]interface{})["required"] = 12
-				return src
-			}(),
-			Message: "resources.db.properties.host.required: Invalid type.",
-		},
-		{
-			Name: "resources.*.metadata.properties.*.secret is not set",
-			Src: func() map[string]interface{} {
-				src := newTestDocument()
-				var db = src["resources"].(map[string]interface{})["db"].(map[string]interface{})
-				var properties = db["properties"].(map[string]interface{})
-				properties["host"].(map[string]interface{})["secret"] = nil
-				return src
-			}(),
-			Message: "resources.db.properties.host.secret: Invalid type.",
-		},
-		{
-			Name: "resources.*.metadata.properties.*.secret is not a boolean",
-			Src: func() map[string]interface{} {
-				src := newTestDocument()
-				var db = src["resources"].(map[string]interface{})["db"].(map[string]interface{})
-				var properties = db["properties"].(map[string]interface{})
-				properties["host"].(map[string]interface{})["secret"] = 12
-				return src
-			}(),
-			Message: "resources.db.properties.host.secret: Invalid type.",
 		},
 
 		// resources.*.params
