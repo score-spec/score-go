@@ -304,36 +304,9 @@ const ScoreSchemaV1b1 = `
 							}
 						},
                         "properties": {
-							"description": "The properties that can be referenced in other places in the Score Specification file.",
-                            "type": "object",
-							"minProperties": 1,
-                            "patternProperties": {
-								"^*": {
-									"description": "The property name.",
-									"type": ["object", "null"],
-									"minProperties": 1,
-									"additionalProperties": false,
-									"properties": {
-										"type": {
-											"description": "The property value type.",
-											"type": "string"
-										},
-										"default": {
-											"description": "A value that applies for the property by default.",
-											"type": ["integer", "string", "boolean"]
-										},
-										"required": {
-											"description": "Indictes if the property value is requred.",
-											"type": "boolean"
-										},
-										"secret": {
-											"description": "Indicates if the property value contains sensitive information.",
-											"type": "boolean"
-										}
-									}
-								}
-                            }
-                        },
+							"description": "DEPRECATED: The properties that can be referenced in other places in the Score Specification file.",
+                            "type": ["object", "null"]
+						},
 						"params": {
 							"description": "The parameters used to validate or provision the resource in the environment.",
 							"type": "object"

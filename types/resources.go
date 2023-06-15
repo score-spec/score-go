@@ -12,21 +12,12 @@ type ResourcesSpecs map[string]ResourceSpec
 
 // ResourceSpec is a resource specification.
 type ResourceSpec struct {
-	Metadata   ResourceMeta                    `json:"metadata,omitempty"`
-	Type       string                          `json:"type"`
-	Properties map[string]ResourcePropertySpec `json:"properties"`
-	Params     map[string]interface{}          `json:"params,omitempty"`
+	Type     string                 `json:"type"`
+	Metadata ResourceMeta           `json:"metadata,omitempty"`
+	Params   map[string]interface{} `json:"params,omitempty"`
 }
 
 // ResourceMeta is an additional resource metadata.
 type ResourceMeta struct {
 	Annotations map[string]string `json:"annotations,omitempty"`
-}
-
-// ResourcePropertySpec is a resource property specification.
-type ResourcePropertySpec struct {
-	Type     string      `json:"type"`
-	Default  interface{} `json:"default"`
-	Required bool        `json:"required"`
-	Secret   bool        `json:"secret"`
 }
