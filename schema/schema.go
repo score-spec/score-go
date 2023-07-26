@@ -190,27 +190,11 @@ const ScoreSchemaV1b1 = `
 						},
 						"livenessProbe": {
 							"description": "The liveness probe for the container.",
-                            "type": "object",
-							"minProperties": 1,
-                            "additionalProperties": false,
-                            "properties": {
-                              "httpGet": {
-                                "description": "",
-							    "$ref": "#/properties/containers/definitions/httpProbe"
-                              }
-                            }
+							"$ref": "#/properties/containers/definitions/containerProbe"
 						},
                         "readinessProbe": {
 							"description": "The readiness probe for the container.",
-							"type": "object",
-							"minProperties": 1,
-                            "additionalProperties": false,
-                            "properties": {
-                              "httpGet": {
-                                "description": "",
-							    "$ref": "#/properties/containers/definitions/httpProbe"
-                              }
-                            }
+							"$ref": "#/properties/containers/definitions/containerProbe"
 						}
 					}
 				}
@@ -232,6 +216,16 @@ const ScoreSchemaV1b1 = `
 						}
 					}
 				},
+				"containerProbe": {
+					"type": "object",
+					"minProperties": 1,
+					"additionalProperties": false,
+					"properties": {
+						"httpGet": {
+							"$ref": "#/properties/containers/definitions/httpProbe"
+						}
+					}
+				},
 				"httpProbe": {
 					"description": "An HTTP probe details.",
 					"type": "object",
@@ -240,6 +234,15 @@ const ScoreSchemaV1b1 = `
 						"path"
 					],
 					"properties": {
+						"host": {
+							"description": "Host name to connect to. Defaults to the container IP.",
+							"type": "string"
+						},
+						"scheme": {
+							"description": "Scheme to use for connecting to the host (HTTP or HTTPS). Defaults to HTTP.",
+							"type": "string",
+							"enum": ["HTTP", "HTTPS"]
+						},
 						"path": {
 							"description": "The path of the HTTP probe endpoint.",
 							"type": "string"

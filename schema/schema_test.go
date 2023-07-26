@@ -894,6 +894,72 @@ func TestSchema(t *testing.T) {
 			Message: "containers.hello.livenessProbe.httpGet: Invalid type",
 		},
 		{
+			Name: "containers.*.livenessProbe.httpGet.host is not a string",
+			Src: func() map[string]interface{} {
+				src := newTestDocument()
+				var hello = src["containers"].(map[string]interface{})["hello"].(map[string]interface{})
+				var httpGet = hello["livenessProbe"].(map[string]interface{})["httpGet"].(map[string]interface{})
+				httpGet["host"] = 12
+				return src
+			}(),
+			Message: "containers.hello.livenessProbe.httpGet.host: Invalid type",
+		},
+		{
+			Name: "containers.*.livenessProbe.httpGet.host is 1.1.1.1",
+			Src: func() map[string]interface{} {
+				src := newTestDocument()
+				var hello = src["containers"].(map[string]interface{})["hello"].(map[string]interface{})
+				var httpGet = hello["livenessProbe"].(map[string]interface{})["httpGet"].(map[string]interface{})
+				httpGet["host"] = "1.1.1.1"
+				return src
+			}(),
+			Message: "",
+		},
+		{
+			Name: "containers.*.livenessProbe.httpGet.scheme is HTTP",
+			Src: func() map[string]interface{} {
+				src := newTestDocument()
+				var hello = src["containers"].(map[string]interface{})["hello"].(map[string]interface{})
+				var httpGet = hello["livenessProbe"].(map[string]interface{})["httpGet"].(map[string]interface{})
+				httpGet["scheme"] = "HTTP"
+				return src
+			}(),
+			Message: "",
+		},
+		{
+			Name: "containers.*.livenessProbe.httpGet.scheme is HTTPS",
+			Src: func() map[string]interface{} {
+				src := newTestDocument()
+				var hello = src["containers"].(map[string]interface{})["hello"].(map[string]interface{})
+				var httpGet = hello["livenessProbe"].(map[string]interface{})["httpGet"].(map[string]interface{})
+				httpGet["scheme"] = "HTTP"
+				return src
+			}(),
+			Message: "",
+		},
+		{
+			Name: "containers.*.livenessProbe.httpGet.scheme is TCP",
+			Src: func() map[string]interface{} {
+				src := newTestDocument()
+				var hello = src["containers"].(map[string]interface{})["hello"].(map[string]interface{})
+				var httpGet = hello["livenessProbe"].(map[string]interface{})["httpGet"].(map[string]interface{})
+				httpGet["scheme"] = "TCP"
+				return src
+			}(),
+			Message: "containers.hello.livenessProbe.httpGet.scheme must be one of the following: \"HTTP\", \"HTTPS\"",
+		},
+		{
+			Name: "containers.*.livenessProbe.httpGet.path is not a string",
+			Src: func() map[string]interface{} {
+				src := newTestDocument()
+				var hello = src["containers"].(map[string]interface{})["hello"].(map[string]interface{})
+				var httpGet = hello["livenessProbe"].(map[string]interface{})["httpGet"].(map[string]interface{})
+				httpGet["scheme"] = 12
+				return src
+			}(),
+			Message: "containers.hello.livenessProbe.httpGet.scheme: Invalid type",
+		},
+		{
 			Name: "containers.*.livenessProbe.httpGet.path is missing",
 			Src: func() map[string]interface{} {
 				src := newTestDocument()
