@@ -949,7 +949,7 @@ func TestSchema(t *testing.T) {
 			Message: "containers.hello.livenessProbe.httpGet.scheme must be one of the following: \"HTTP\", \"HTTPS\"",
 		},
 		{
-			Name: "containers.*.livenessProbe.httpGet.path is not a string",
+			Name: "containers.*.livenessProbe.httpGet.scheme is not a string",
 			Src: func() map[string]interface{} {
 				src := newTestDocument()
 				var hello = src["containers"].(map[string]interface{})["hello"].(map[string]interface{})
