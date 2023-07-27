@@ -81,6 +81,8 @@ containers:
         port: 8080
     readinessProbe:
       httpGet:
+        host: "1.1.1.1"
+        scheme: HTTPS
         path: /ready
         port: 8080
         httpHeaders:
@@ -166,8 +168,10 @@ resources:
 						},
 						ReadinessProbe: types.ContainerProbeSpec{
 							HTTPGet: types.HTTPGetActionSpec{
-								Path: "/ready",
-								Port: 8080,
+								Host:   "1.1.1.1",
+								Scheme: "HTTPS",
+								Path:   "/ready",
+								Port:   8080,
 								HTTPHeaders: []types.HTTPHeaderSpec{
 									{Name: "Custom-Header", Value: "Awesome"},
 								},

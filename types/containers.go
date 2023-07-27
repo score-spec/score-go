@@ -46,13 +46,7 @@ type VolumeMountSpec struct {
 
 // ContainerProbeSpec is a container probe specification.
 type ContainerProbeSpec struct {
-	HTTPGet                       HTTPGetActionSpec `json:"httpGet"`
-	InitialDelaySeconds           int32             `json:"initialDelaySeconds"`
-	TimeoutSeconds                int32             `json:"timeoutSeconds"`
-	PeriodSeconds                 int32             `json:"periodSeconds"`
-	SuccessThreshold              int32             `json:"successThreshold"`
-	FailureThreshold              int32             `json:"failureThreshold"`
-	TerminationGracePeriodSeconds int64             `json:"terminationGracePeriodSeconds"`
+	HTTPGet HTTPGetActionSpec `json:"httpGet"`
 }
 
 // HTTPGetActionSpec is an HTTP GET Action specification.
