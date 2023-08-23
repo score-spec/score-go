@@ -11,8 +11,8 @@ import (
 	"bytes"
 	"testing"
 
+	"github.com/santhosh-tekuri/jsonschema/v5"
 	"github.com/stretchr/testify/assert"
-	"github.com/xeipuuv/gojsonschema"
 	"gopkg.in/yaml.v3"
 )
 
@@ -41,9 +41,7 @@ containers:
     files:
     - target: /etc/hello-world/config.yaml
       mode: "666"
-      content:
-      - "---"
-      - ${resources.env.APP_CONFIG}
+      content: "${resources.env.APP_CONFIG}"
     volumes:
     - source: ${resources.data}
       path: sub/path
@@ -120,7 +118,7 @@ func TestSchema(t *testing.T) {
 				delete(src, "apiVersion")
 				return src
 			}(),
-			Message: "apiVersion is required",
+			Message: "missing properties: 'apiVersion'",
 		},
 		{
 			Name: "apiVersion is not set",
@@ -129,7 +127,7 @@ func TestSchema(t *testing.T) {
 				src["apiVersion"] = nil
 				return src
 			}(),
-			Message: "apiVersion: Invalid type",
+			Message: "/apiVersion",
 		},
 		{
 			Name: "apiVersion is not a string",
@@ -138,7 +136,7 @@ func TestSchema(t *testing.T) {
 				src["apiVersion"] = 12
 				return src
 			}(),
-			Message: "apiVersion: Invalid type",
+			Message: "/apiVersion",
 		},
 
 		// metadata
@@ -150,7 +148,7 @@ func TestSchema(t *testing.T) {
 				delete(src, "metadata")
 				return src
 			}(),
-			Message: "metadata is required",
+			Message: "missing properties: 'metadata'",
 		},
 		{
 			Name: "metadata is not set",
@@ -159,7 +157,7 @@ func TestSchema(t *testing.T) {
 				src["metadata"] = nil
 				return src
 			}(),
-			Message: "metadata: Invalid type",
+			Message: "/metadata",
 		},
 		{
 			Name: "metadata.name is required",
@@ -168,7 +166,7 @@ func TestSchema(t *testing.T) {
 				delete(src["metadata"].(map[string]interface{}), "name")
 				return src
 			}(),
-			Message: "metadata: name is required",
+			Message: "/metadata",
 		},
 		{
 			Name: "metadata.name is not a string",
@@ -177,7 +175,7 @@ func TestSchema(t *testing.T) {
 				src["metadata"].(map[string]interface{})["name"] = 12
 				return src
 			}(),
-			Message: "metadata.name: Invalid type",
+			Message: "/metadata/name",
 		},
 
 		// service
@@ -189,7 +187,7 @@ func TestSchema(t *testing.T) {
 				src["service"] = nil
 				return src
 			}(),
-			Message: "service: Invalid type",
+			Message: "/service",
 		},
 		{
 			Name: "service.ports is not set",
@@ -200,7 +198,7 @@ func TestSchema(t *testing.T) {
 				}
 				return src
 			}(),
-			Message: "service.ports: Invalid type",
+			Message: "/service/ports",
 		},
 		{
 			Name: "service.ports is empty",
@@ -211,7 +209,7 @@ func TestSchema(t *testing.T) {
 				}
 				return src
 			}(),
-			Message: "service.ports: Must have at least 1 properties",
+			Message: "/service/ports",
 		},
 		{
 			Name: "service.ports.* is not set",
@@ -224,7 +222,7 @@ func TestSchema(t *testing.T) {
 				}
 				return src
 			}(),
-			Message: "service.ports.www: Invalid type",
+			Message: "/service/ports/www",
 		},
 		{
 			Name: "service.ports.*.targetPort is missing",
@@ -237,7 +235,7 @@ func TestSchema(t *testing.T) {
 				}
 				return src
 			}(),
-			Message: "service.ports.www: targetPort is required",
+			Message: "/service/ports/www",
 		},
 		{
 			Name: "service.ports.*.targetPort is not a number",
@@ -252,7 +250,7 @@ func TestSchema(t *testing.T) {
 				}
 				return src
 			}(),
-			Message: "service.ports.www.targetPort: Invalid type",
+			Message: "/service/ports/www/targetPort",
 		},
 		{
 			Name: "service.ports.*.port is optional",
@@ -283,7 +281,7 @@ func TestSchema(t *testing.T) {
 				}
 				return src
 			}(),
-			Message: "service.ports.www.port: Invalid type",
+			Message: "/service/ports/www/port",
 		},
 		{
 			Name: "service with multiple ports",
@@ -314,7 +312,7 @@ func TestSchema(t *testing.T) {
 				delete(src, "containers")
 				return src
 			}(),
-			Message: "containers is required",
+			Message: "missing properties: 'containers'",
 		},
 		{
 			Name: "containers is not set",
@@ -323,7 +321,7 @@ func TestSchema(t *testing.T) {
 				src["containers"] = nil
 				return src
 			}(),
-			Message: "containers: Invalid type",
+			Message: "/containers",
 		},
 		{
 			Name: "containers is empty",
@@ -332,7 +330,7 @@ func TestSchema(t *testing.T) {
 				src["containers"] = map[string]interface{}{}
 				return src
 			}(),
-			Message: "containers: Must have at least 1 properties",
+			Message: "/containers",
 		},
 		{
 			Name: "containers.* is not set",
@@ -341,7 +339,7 @@ func TestSchema(t *testing.T) {
 				src["containers"].(map[string]interface{})["hello"] = nil
 				return src
 			}(),
-			Message: "containers.hello: Invalid type",
+			Message: "/containers/hello",
 		},
 
 		// containers.*.image
@@ -354,7 +352,7 @@ func TestSchema(t *testing.T) {
 				delete(hello, "image")
 				return src
 			}(),
-			Message: "containers.hello: image is required",
+			Message: "/containers/hello",
 		},
 		{
 			Name: "containers.*.image is not set",
@@ -364,7 +362,7 @@ func TestSchema(t *testing.T) {
 				hello["image"] = nil
 				return src
 			}(),
-			Message: "containers.hello.image: Invalid type",
+			Message: "/containers/hello/image",
 		},
 		{
 			Name: "containers.*.image is not a sring",
@@ -374,7 +372,7 @@ func TestSchema(t *testing.T) {
 				hello["image"] = 12
 				return src
 			}(),
-			Message: "containers.hello.image: Invalid type",
+			Message: "/containers/hello/image",
 		},
 
 		// containers.*.command
@@ -387,17 +385,17 @@ func TestSchema(t *testing.T) {
 				hello["command"] = nil
 				return src
 			}(),
-			Message: "containers.hello.command: Invalid type",
+			Message: "/containers/hello/command",
 		},
 		{
 			Name: "containers.*.command is empty",
 			Src: func() map[string]interface{} {
 				src := newTestDocument()
 				var hello = src["containers"].(map[string]interface{})["hello"].(map[string]interface{})
-				hello["command"] = []string{}
+				hello["command"] = []interface{}{}
 				return src
 			}(),
-			Message: "containers.hello.command: Array must have at least 1 items",
+			Message: "/containers/hello/command",
 		},
 
 		// containers.*.args
@@ -410,17 +408,17 @@ func TestSchema(t *testing.T) {
 				hello["args"] = nil
 				return src
 			}(),
-			Message: "containers.hello.args: Invalid type",
+			Message: "/containers/hello/args",
 		},
 		{
 			Name: "containers.*.args is empty",
 			Src: func() map[string]interface{} {
 				src := newTestDocument()
 				var hello = src["containers"].(map[string]interface{})["hello"].(map[string]interface{})
-				hello["args"] = []string{}
+				hello["args"] = []interface{}{}
 				return src
 			}(),
-			Message: "containers.hello.args: Array must have at least 1 items",
+			Message: "/containers/hello/args",
 		},
 
 		// containers.*.variables
@@ -433,7 +431,7 @@ func TestSchema(t *testing.T) {
 				hello["variables"] = nil
 				return src
 			}(),
-			Message: "containers.hello.variables: Invalid type",
+			Message: "/containers/hello/variables",
 		},
 		{
 			Name: "containers.*.variables is empty",
@@ -443,7 +441,7 @@ func TestSchema(t *testing.T) {
 				hello["variables"] = map[string]interface{}{}
 				return src
 			}(),
-			Message: "containers.hello.variables: Must have at least 1 properties",
+			Message: "/containers/hello/variables",
 		},
 		{
 			Name: "containers.*.variables.* is not set",
@@ -453,7 +451,7 @@ func TestSchema(t *testing.T) {
 				hello["variables"].(map[string]interface{})["FRIEND"] = nil
 				return src
 			}(),
-			Message: "containers.hello.variables.FRIEND: Invalid type",
+			Message: "/containers/hello/variables/FRIEND",
 		},
 		{
 			Name: "containers.*.variables.* is not a string",
@@ -463,7 +461,7 @@ func TestSchema(t *testing.T) {
 				hello["variables"].(map[string]interface{})["FRIEND"] = 12
 				return src
 			}(),
-			Message: "containers.hello.variables.FRIEND: Invalid type",
+			Message: "/containers/hello/variables/FRIEND",
 		},
 
 		// containers.*.files
@@ -476,7 +474,7 @@ func TestSchema(t *testing.T) {
 				hello["files"] = nil
 				return src
 			}(),
-			Message: "containers.hello.files: Invalid type",
+			Message: "/containers/hello/files",
 		},
 		{
 			Name: "containers.*.files is empty",
@@ -486,7 +484,7 @@ func TestSchema(t *testing.T) {
 				hello["files"] = []interface{}{}
 				return src
 			}(),
-			Message: "containers.hello.files: Array must have at least 1 items",
+			Message: "/containers/hello/files",
 		},
 		{
 			Name: "containers.*.files.*.target is missing",
@@ -497,7 +495,7 @@ func TestSchema(t *testing.T) {
 				delete(file, "target")
 				return src
 			}(),
-			Message: "containers.hello.files.0: target is required",
+			Message: "/containers/hello/files/0",
 		},
 		{
 			Name: "containers.*.files.*.target is not set",
@@ -508,7 +506,7 @@ func TestSchema(t *testing.T) {
 				file["target"] = nil
 				return src
 			}(),
-			Message: "containers.hello.files.0.target: Invalid type",
+			Message: "/containers/hello/files/0/target",
 		},
 		{
 			Name: "containers.*.files.*.target is not a string",
@@ -519,7 +517,7 @@ func TestSchema(t *testing.T) {
 				file["target"] = 12
 				return src
 			}(),
-			Message: "containers.hello.files.0.target: Invalid type",
+			Message: "/containers/hello/files/0/target",
 		},
 		{
 			Name: "containers.*.files.*.mode is not set",
@@ -530,7 +528,7 @@ func TestSchema(t *testing.T) {
 				file["mode"] = nil
 				return src
 			}(),
-			Message: "containers.hello.files.0.mode: Invalid type",
+			Message: "/containers/hello/files/0/mode",
 		},
 		{
 			Name: "containers.*.files.*.mode is not a string",
@@ -541,7 +539,88 @@ func TestSchema(t *testing.T) {
 				file["mode"] = 12
 				return src
 			}(),
-			Message: "containers.hello.files.0.mode: Invalid type",
+			Message: "/containers/hello/files/0/mode",
+		},
+		{
+			Name: "containers.*.files.*.source is missing",
+			Src: func() map[string]interface{} {
+				src := newTestDocument()
+				var hello = src["containers"].(map[string]interface{})["hello"].(map[string]interface{})
+				var file = hello["files"].([]interface{})[0].(map[string]interface{})
+				delete(file, "content")
+				return src
+			}(),
+			Message: "/containers/hello/files/0",
+		},
+		{
+			Name: "containers.*.files.*.source is not set",
+			Src: func() map[string]interface{} {
+				src := newTestDocument()
+				var hello = src["containers"].(map[string]interface{})["hello"].(map[string]interface{})
+				var file = hello["files"].([]interface{})[0].(map[string]interface{})
+				delete(file, "content")
+				file["source"] = nil
+				return src
+			}(),
+			Message: "/containers/hello/files/0",
+		},
+		{
+			Name: "containers.*.files.*.source is empty",
+			Src: func() map[string]interface{} {
+				src := newTestDocument()
+				var hello = src["containers"].(map[string]interface{})["hello"].(map[string]interface{})
+				var file = hello["files"].([]interface{})[0].(map[string]interface{})
+				delete(file, "content")
+				file["source"] = ""
+				return src
+			}(),
+			Message: "/containers/hello/files/0/source",
+		},
+		{
+			Name: "containers.*.files.*.source is not a string",
+			Src: func() map[string]interface{} {
+				src := newTestDocument()
+				var hello = src["containers"].(map[string]interface{})["hello"].(map[string]interface{})
+				var file = hello["files"].([]interface{})[0].(map[string]interface{})
+				delete(file, "content")
+				file["source"] = 5
+				return src
+			}(),
+			Message: "/containers/hello/files/0/source",
+		},
+		{
+			Name: "containers.*.files.*.noExpand isset to true",
+			Src: func() map[string]interface{} {
+				src := newTestDocument()
+				var hello = src["containers"].(map[string]interface{})["hello"].(map[string]interface{})
+				var file = hello["files"].([]interface{})[0].(map[string]interface{})
+				file["noExpand"] = true
+				return src
+			}(),
+			Message: "",
+		},
+		{
+			Name: "containers.*.files.*.noExpand isset to false",
+			Src: func() map[string]interface{} {
+				src := newTestDocument()
+				var hello = src["containers"].(map[string]interface{})["hello"].(map[string]interface{})
+				var file = hello["files"].([]interface{})[0].(map[string]interface{})
+				file["noExpand"] = false
+				return src
+			}(),
+			Message: "",
+		},
+		{
+			Name: "containers.*.files.*.noExpand is not a boolean",
+			Src: func() map[string]interface{} {
+				src := newTestDocument()
+				var hello = src["containers"].(map[string]interface{})["hello"].(map[string]interface{})
+				var file = hello["files"].([]interface{})[0].(map[string]interface{})
+				delete(file, "content")
+				file["noExpand"] = 5
+				return src
+			}(),
+			Message: "/containers/hello/files/0/noExpand",
 		},
 		{
 			Name: "containers.*.files.*.content is missing",
@@ -552,7 +631,7 @@ func TestSchema(t *testing.T) {
 				delete(file, "content")
 				return src
 			}(),
-			Message: "containers.hello.files.0: content is required",
+			Message: "/containers/hello/files/0",
 		},
 		{
 			Name: "containers.*.files.*.content is not set",
@@ -563,18 +642,43 @@ func TestSchema(t *testing.T) {
 				file["content"] = nil
 				return src
 			}(),
-			Message: "containers.hello.files.0.content: Invalid type",
+			Message: "/containers/hello/files/0/content",
 		},
 		{
-			Name: "containers.*.files.*.content is empty",
+			Name: "containers.*.files.*.content is not a string",
 			Src: func() map[string]interface{} {
 				src := newTestDocument()
 				var hello = src["containers"].(map[string]interface{})["hello"].(map[string]interface{})
 				var file = hello["files"].([]interface{})[0].(map[string]interface{})
-				file["content"] = []string{}
+				file["content"] = 5
 				return src
 			}(),
-			Message: "containers.hello.files.0.content: Array must have at least 1 items",
+			Message: "/containers/hello/files/0/content",
+		},
+		{
+			Name: "containers.*.files.*.content is an empty array",
+			Src: func() map[string]interface{} {
+				src := newTestDocument()
+				var hello = src["containers"].(map[string]interface{})["hello"].(map[string]interface{})
+				var file = hello["files"].([]interface{})[0].(map[string]interface{})
+				file["content"] = []interface{}{}
+				return src
+			}(),
+			Message: "/containers/hello/files/0/content",
+		},
+		{
+			Name: "containers.*.files.*.content is an array of strings",
+			Src: func() map[string]interface{} {
+				src := newTestDocument()
+				var hello = src["containers"].(map[string]interface{})["hello"].(map[string]interface{})
+				var file = hello["files"].([]interface{})[0].(map[string]interface{})
+				file["content"] = []interface{}{
+					"Line 1",
+					"Line 2",
+				}
+				return src
+			}(),
+			Message: "",
 		},
 
 		// containers.*.volumes
@@ -587,7 +691,7 @@ func TestSchema(t *testing.T) {
 				hello["volumes"] = nil
 				return src
 			}(),
-			Message: "containers.hello.volumes: Invalid type",
+			Message: "/containers/hello/volumes",
 		},
 		{
 			Name: "containers.*.volumes is empty",
@@ -597,7 +701,7 @@ func TestSchema(t *testing.T) {
 				hello["volumes"] = []interface{}{}
 				return src
 			}(),
-			Message: "containers.hello.volumes: Array must have at least 1 items",
+			Message: "/containers/hello/volumes",
 		},
 		{
 			Name: "containers.*.volumes.*.source is missing",
@@ -608,7 +712,7 @@ func TestSchema(t *testing.T) {
 				delete(volumes, "source")
 				return src
 			}(),
-			Message: "containers.hello.volumes.0: source is required",
+			Message: "/containers/hello/volumes/0",
 		},
 		{
 			Name: "containers.*.volumes.*.source is not set",
@@ -619,7 +723,7 @@ func TestSchema(t *testing.T) {
 				volumes["source"] = nil
 				return src
 			}(),
-			Message: "containers.hello.volumes.0.source: Invalid type",
+			Message: "/containers/hello/volumes/0/source",
 		},
 		{
 			Name: "containers.*.volumes.*.source is not a string",
@@ -630,7 +734,7 @@ func TestSchema(t *testing.T) {
 				volumes["source"] = 12
 				return src
 			}(),
-			Message: "containers.hello.volumes.0.source: Invalid type",
+			Message: "/containers/hello/volumes/0/source",
 		},
 		{
 			Name: "containers.*.volumes.*.path is not set",
@@ -641,7 +745,7 @@ func TestSchema(t *testing.T) {
 				volumes["path"] = nil
 				return src
 			}(),
-			Message: "containers.hello.volumes.0.path: Invalid type",
+			Message: "/containers/hello/volumes/0/path",
 		},
 		{
 			Name: "containers.*.volumes.*.path is not a string",
@@ -652,7 +756,7 @@ func TestSchema(t *testing.T) {
 				volumes["path"] = 12
 				return src
 			}(),
-			Message: "containers.hello.volumes.0.path: Invalid type",
+			Message: "/containers/hello/volumes/0/path",
 		},
 		{
 			Name: "containers.*.volumes.*.target is missing",
@@ -663,7 +767,7 @@ func TestSchema(t *testing.T) {
 				delete(volumes, "target")
 				return src
 			}(),
-			Message: "containers.hello.volumes.0: target is required",
+			Message: "/containers/hello/volumes/0",
 		},
 		{
 			Name: "containers.*.volumes.*.target is not set",
@@ -674,7 +778,7 @@ func TestSchema(t *testing.T) {
 				volumes["target"] = nil
 				return src
 			}(),
-			Message: "containers.hello.volumes.0.target: Invalid type",
+			Message: "/containers/hello/volumes/0/target",
 		},
 		{
 			Name: "containers.*.volumes.*.target is not a string",
@@ -685,7 +789,7 @@ func TestSchema(t *testing.T) {
 				volumes["target"] = 12
 				return src
 			}(),
-			Message: "containers.hello.volumes.0.target: Invalid type",
+			Message: "/containers/hello/volumes/0/target",
 		},
 		{
 			Name: "containers.*.volumes.*.read_only is not set",
@@ -696,7 +800,7 @@ func TestSchema(t *testing.T) {
 				volumes["read_only"] = nil
 				return src
 			}(),
-			Message: "containers.hello.volumes.0.read_only: Invalid type",
+			Message: "/containers/hello/volumes/0/read_only",
 		},
 		{
 			Name: "containers.*.volumes.*.read_only is not a boolean",
@@ -707,7 +811,7 @@ func TestSchema(t *testing.T) {
 				volumes["read_only"] = 12
 				return src
 			}(),
-			Message: "containers.hello.volumes.0.read_only: Invalid type",
+			Message: "/containers/hello/volumes/0/read_only",
 		},
 
 		// containers.*.resources
@@ -720,7 +824,7 @@ func TestSchema(t *testing.T) {
 				hello["resources"] = nil
 				return src
 			}(),
-			Message: "containers.hello.resources: Invalid type",
+			Message: "/containers/hello/resources",
 		},
 		{
 			Name: "containers.*.resources is empty",
@@ -730,7 +834,7 @@ func TestSchema(t *testing.T) {
 				hello["resources"] = map[string]interface{}{}
 				return src
 			}(),
-			Message: "containers.hello.resources: Must have at least 1 properties",
+			Message: "/containers/hello/resources",
 		},
 		{
 			Name: "containers.*.resources.limits is not set",
@@ -740,7 +844,7 @@ func TestSchema(t *testing.T) {
 				hello["resources"].(map[string]interface{})["limits"] = nil
 				return src
 			}(),
-			Message: "containers.hello.resources.limits: Invalid type",
+			Message: "/containers/hello/resources/limits",
 		},
 		{
 			Name: "containers.*.resources.limits is empty",
@@ -750,7 +854,7 @@ func TestSchema(t *testing.T) {
 				hello["resources"].(map[string]interface{})["limits"] = map[string]interface{}{}
 				return src
 			}(),
-			Message: "containers.hello.resources.limits: Must have at least 1 properties",
+			Message: "/containers/hello/resources/limits",
 		},
 		{
 			Name: "containers.*.resources.limits.memory is not set",
@@ -761,7 +865,7 @@ func TestSchema(t *testing.T) {
 				limits["memory"] = nil
 				return src
 			}(),
-			Message: "containers.hello.resources.limits.memory: Invalid type",
+			Message: "/containers/hello/resources/limits/memory",
 		},
 		{
 			Name: "containers.*.resources.limits.memory is not a string",
@@ -772,7 +876,7 @@ func TestSchema(t *testing.T) {
 				limits["memory"] = 12
 				return src
 			}(),
-			Message: "containers.hello.resources.limits.memory: Invalid type",
+			Message: "/containers/hello/resources/limits/memory",
 		},
 		{
 			Name: "containers.*.resources.limits.memory is not set",
@@ -783,7 +887,7 @@ func TestSchema(t *testing.T) {
 				limits["memory"] = nil
 				return src
 			}(),
-			Message: "containers.hello.resources.limits.memory: Invalid type",
+			Message: "/containers/hello/resources/limits/memory",
 		},
 		{
 			Name: "containers.*.resources.limits.cpu is not a string",
@@ -794,7 +898,7 @@ func TestSchema(t *testing.T) {
 				limits["cpu"] = 12
 				return src
 			}(),
-			Message: "containers.hello.resources.limits.cpu: Invalid type",
+			Message: "/containers/hello/resources/limits/cpu",
 		},
 		{
 			Name: "containers.*.resources.requests is not set",
@@ -804,7 +908,7 @@ func TestSchema(t *testing.T) {
 				hello["resources"].(map[string]interface{})["requests"] = nil
 				return src
 			}(),
-			Message: "containers.hello.resources.requests: Invalid type",
+			Message: "/containers/hello/resources/requests",
 		},
 		{
 			Name: "containers.*.resources.requests is empty",
@@ -814,7 +918,7 @@ func TestSchema(t *testing.T) {
 				hello["resources"].(map[string]interface{})["requests"] = map[string]interface{}{}
 				return src
 			}(),
-			Message: "containers.hello.resources.requests: Must have at least 1 properties",
+			Message: "/containers/hello/resources/requests",
 		},
 		{
 			Name: "containers.*.resources.requests.memory is not set",
@@ -825,7 +929,7 @@ func TestSchema(t *testing.T) {
 				requests["memory"] = nil
 				return src
 			}(),
-			Message: "containers.hello.resources.requests.memory: Invalid type",
+			Message: "/containers/hello/resources/requests/memory",
 		},
 		{
 			Name: "containers.*.resources.requests.memory is not a string",
@@ -836,7 +940,7 @@ func TestSchema(t *testing.T) {
 				requests["memory"] = 12
 				return src
 			}(),
-			Message: "containers.hello.resources.requests.memory: Invalid type",
+			Message: "/containers/hello/resources/requests/memory",
 		},
 		{
 			Name: "containers.*.resources.requests.memory is not set",
@@ -847,7 +951,7 @@ func TestSchema(t *testing.T) {
 				requests["memory"] = nil
 				return src
 			}(),
-			Message: "containers.hello.resources.requests.memory: Invalid type",
+			Message: "/containers/hello/resources/requests/memory",
 		},
 		{
 			Name: "containers.*.resources.requests.cpu is not a string",
@@ -858,7 +962,7 @@ func TestSchema(t *testing.T) {
 				requests["cpu"] = 12
 				return src
 			}(),
-			Message: "containers.hello.resources.requests.cpu: Invalid type",
+			Message: "/containers/hello/resources/requests/cpu",
 		},
 
 		// containers.*.livenessProbe
@@ -871,7 +975,7 @@ func TestSchema(t *testing.T) {
 				hello["livenessProbe"] = nil
 				return src
 			}(),
-			Message: "containers.hello.livenessProbe: Invalid type",
+			Message: "/containers/hello/livenessProbe",
 		},
 		{
 			Name: "containers.*.livenessProbe is empty",
@@ -881,7 +985,7 @@ func TestSchema(t *testing.T) {
 				hello["livenessProbe"] = map[string]interface{}{}
 				return src
 			}(),
-			Message: "containers.hello.livenessProbe: Must have at least 1 properties",
+			Message: "/containers/hello/livenessProbe",
 		},
 		{
 			Name: "containers.*.livenessProbe.httpGet is not set",
@@ -891,7 +995,7 @@ func TestSchema(t *testing.T) {
 				hello["livenessProbe"].(map[string]interface{})["httpGet"] = nil
 				return src
 			}(),
-			Message: "containers.hello.livenessProbe.httpGet: Invalid type",
+			Message: "/containers/hello/livenessProbe/httpGet",
 		},
 		{
 			Name: "containers.*.livenessProbe.httpGet.host is not a string",
@@ -902,7 +1006,7 @@ func TestSchema(t *testing.T) {
 				httpGet["host"] = 12
 				return src
 			}(),
-			Message: "containers.hello.livenessProbe.httpGet.host: Invalid type",
+			Message: "/containers/hello/livenessProbe/httpGet/host",
 		},
 		{
 			Name: "containers.*.livenessProbe.httpGet.host is 1.1.1.1",
@@ -946,7 +1050,7 @@ func TestSchema(t *testing.T) {
 				httpGet["scheme"] = "TCP"
 				return src
 			}(),
-			Message: "containers.hello.livenessProbe.httpGet.scheme must be one of the following: \"HTTP\", \"HTTPS\"",
+			Message: "/containers/hello/livenessProbe/httpGet/scheme",
 		},
 		{
 			Name: "containers.*.livenessProbe.httpGet.scheme is not a string",
@@ -957,7 +1061,7 @@ func TestSchema(t *testing.T) {
 				httpGet["scheme"] = 12
 				return src
 			}(),
-			Message: "containers.hello.livenessProbe.httpGet.scheme: Invalid type",
+			Message: "/containers/hello/livenessProbe/httpGet/scheme",
 		},
 		{
 			Name: "containers.*.livenessProbe.httpGet.path is missing",
@@ -968,7 +1072,7 @@ func TestSchema(t *testing.T) {
 				delete(httpGet, "path")
 				return src
 			}(),
-			Message: "containers.hello.livenessProbe.httpGet: path is required",
+			Message: "/containers/hello/livenessProbe/httpGet",
 		},
 		{
 			Name: "containers.*.livenessProbe.httpGet.path is not set",
@@ -979,7 +1083,7 @@ func TestSchema(t *testing.T) {
 				httpGet["path"] = nil
 				return src
 			}(),
-			Message: "containers.hello.livenessProbe.httpGet.path: Invalid type",
+			Message: "/containers/hello/livenessProbe/httpGet/path",
 		},
 		{
 			Name: "containers.*.livenessProbe.httpGet.path is not a string",
@@ -990,7 +1094,7 @@ func TestSchema(t *testing.T) {
 				httpGet["path"] = 12
 				return src
 			}(),
-			Message: "containers.hello.livenessProbe.httpGet.path: Invalid type",
+			Message: "/containers/hello/livenessProbe/httpGet/path",
 		},
 		{
 			Name: "containers.*.livenessProbe.httpGet.port is not set",
@@ -1001,7 +1105,7 @@ func TestSchema(t *testing.T) {
 				httpGet["port"] = nil
 				return src
 			}(),
-			Message: "containers.hello.livenessProbe.httpGet.port: Invalid type",
+			Message: "/containers/hello/livenessProbe/httpGet/port",
 		},
 		{
 			Name: "containers.*.livenessProbe.httpGet.port is not a number",
@@ -1012,7 +1116,7 @@ func TestSchema(t *testing.T) {
 				httpGet["port"] = "12"
 				return src
 			}(),
-			Message: "containers.hello.livenessProbe.httpGet.port: Invalid type",
+			Message: "/containers/hello/livenessProbe/httpGet/port",
 		},
 		{
 			Name: "containers.*.livenessProbe.httpGet.httpHeaders is not set",
@@ -1023,7 +1127,7 @@ func TestSchema(t *testing.T) {
 				httpGet["httpHeaders"] = nil
 				return src
 			}(),
-			Message: "containers.hello.livenessProbe.httpGet.httpHeaders: Invalid type",
+			Message: "/containers/hello/livenessProbe/httpGet/httpHeaders",
 		},
 		{
 			Name: "containers.*.livenessProbe.httpGet.httpHeaders is empty",
@@ -1034,7 +1138,7 @@ func TestSchema(t *testing.T) {
 				httpGet["httpHeaders"] = []interface{}{}
 				return src
 			}(),
-			Message: "containers.hello.livenessProbe.httpGet.httpHeaders: Array must have at least 1 item",
+			Message: "/containers/hello/livenessProbe/httpGet/httpHeaders",
 		},
 		{
 			Name: "containers.*.livenessProbe.httpGet.httpHeaders.*.name is not set",
@@ -1050,7 +1154,7 @@ func TestSchema(t *testing.T) {
 				}
 				return src
 			}(),
-			Message: "containers.hello.livenessProbe.httpGet.httpHeaders.0.name: Invalid type",
+			Message: "/containers/hello/livenessProbe/httpGet/httpHeaders/0/name",
 		},
 		{
 			Name: "containers.*.livenessProbe.httpGet.httpHeaders.*.name is not a string",
@@ -1066,7 +1170,7 @@ func TestSchema(t *testing.T) {
 				}
 				return src
 			}(),
-			Message: "containers.hello.livenessProbe.httpGet.httpHeaders.0.name: Invalid type",
+			Message: "/containers/hello/livenessProbe/httpGet/httpHeaders/0/name",
 		},
 		{
 			Name: "containers.*.livenessProbe.httpGet.httpHeaders.*.value is not set",
@@ -1082,7 +1186,7 @@ func TestSchema(t *testing.T) {
 				}
 				return src
 			}(),
-			Message: "containers.hello.livenessProbe.httpGet.httpHeaders.0.value: Invalid type",
+			Message: "/containers/hello/livenessProbe/httpGet/httpHeaders/0/value",
 		},
 		{
 			Name: "containers.*.livenessProbe.httpGet.httpHeaders.*.value is not a string",
@@ -1098,7 +1202,7 @@ func TestSchema(t *testing.T) {
 				}
 				return src
 			}(),
-			Message: "containers.hello.livenessProbe.httpGet.httpHeaders.0.value: Invalid type",
+			Message: "/containers/hello/livenessProbe/httpGet/httpHeaders/0/value",
 		},
 
 		// containers.*.readinessProbe
@@ -1111,7 +1215,7 @@ func TestSchema(t *testing.T) {
 				hello["readinessProbe"] = nil
 				return src
 			}(),
-			Message: "containers.hello.readinessProbe: Invalid type",
+			Message: "/containers/hello/readinessProbe",
 		},
 		{
 			Name: "containers.*.readinessProbe is empty",
@@ -1121,7 +1225,7 @@ func TestSchema(t *testing.T) {
 				hello["readinessProbe"] = map[string]interface{}{}
 				return src
 			}(),
-			Message: "containers.hello.readinessProbe: Must have at least 1 properties",
+			Message: "/containers/hello/readinessProbe",
 		},
 		{
 			Name: "containers.*.readinessProbe.httpGet is not set",
@@ -1131,7 +1235,7 @@ func TestSchema(t *testing.T) {
 				hello["readinessProbe"].(map[string]interface{})["httpGet"] = nil
 				return src
 			}(),
-			Message: "containers.hello.readinessProbe.httpGet: Invalid type",
+			Message: "/containers/hello/readinessProbe",
 		},
 		{
 			Name: "containers.*.readinessProbe.httpGet.path is missing",
@@ -1142,7 +1246,7 @@ func TestSchema(t *testing.T) {
 				delete(httpGet, "path")
 				return src
 			}(),
-			Message: "containers.hello.readinessProbe.httpGet: path is required",
+			Message: "/containers/hello/readinessProbe/httpGet",
 		},
 		{
 			Name: "containers.*.readinessProbe.httpGet.path is not set",
@@ -1153,7 +1257,7 @@ func TestSchema(t *testing.T) {
 				httpGet["path"] = nil
 				return src
 			}(),
-			Message: "containers.hello.readinessProbe.httpGet.path: Invalid type",
+			Message: "/containers/hello/readinessProbe/httpGet/path",
 		},
 		{
 			Name: "containers.*.readinessProbe.httpGet.path is not a string",
@@ -1164,7 +1268,7 @@ func TestSchema(t *testing.T) {
 				httpGet["path"] = 12
 				return src
 			}(),
-			Message: "containers.hello.readinessProbe.httpGet.path: Invalid type",
+			Message: "/containers/hello/readinessProbe/httpGet/path",
 		},
 		{
 			Name: "containers.*.readinessProbe.httpGet.port is not set",
@@ -1175,7 +1279,7 @@ func TestSchema(t *testing.T) {
 				httpGet["port"] = nil
 				return src
 			}(),
-			Message: "containers.hello.readinessProbe.httpGet.port: Invalid type",
+			Message: "/containers/hello/readinessProbe/httpGet/port",
 		},
 		{
 			Name: "containers.*.readinessProbe.httpGet.port is not a number",
@@ -1186,7 +1290,7 @@ func TestSchema(t *testing.T) {
 				httpGet["port"] = "12"
 				return src
 			}(),
-			Message: "containers.hello.readinessProbe.httpGet.port: Invalid type",
+			Message: "/containers/hello/readinessProbe/httpGet/port",
 		},
 		{
 			Name: "containers.*.readinessProbe.httpGet.httpHeaders is not set",
@@ -1197,7 +1301,7 @@ func TestSchema(t *testing.T) {
 				httpGet["httpHeaders"] = nil
 				return src
 			}(),
-			Message: "containers.hello.readinessProbe.httpGet.httpHeaders: Invalid type",
+			Message: "/containers/hello/readinessProbe/httpGet/httpHeaders",
 		},
 		{
 			Name: "containers.*.readinessProbe.httpGet.httpHeaders is empty",
@@ -1208,7 +1312,7 @@ func TestSchema(t *testing.T) {
 				httpGet["httpHeaders"] = []interface{}{}
 				return src
 			}(),
-			Message: "containers.hello.readinessProbe.httpGet.httpHeaders: Array must have at least 1 item",
+			Message: "/containers/hello/readinessProbe/httpGet/httpHeaders",
 		},
 		{
 			Name: "containers.*.readinessProbe.httpGet.httpHeaders.*.name is not set",
@@ -1224,7 +1328,7 @@ func TestSchema(t *testing.T) {
 				}
 				return src
 			}(),
-			Message: "containers.hello.readinessProbe.httpGet.httpHeaders.0.name: Invalid type",
+			Message: "/containers/hello/readinessProbe/httpGet/httpHeaders/0/name",
 		},
 		{
 			Name: "containers.*.readinessProbe.httpGet.httpHeaders.*.name is not a string",
@@ -1240,7 +1344,7 @@ func TestSchema(t *testing.T) {
 				}
 				return src
 			}(),
-			Message: "containers.hello.readinessProbe.httpGet.httpHeaders.0.name: Invalid type",
+			Message: "/containers/hello/readinessProbe/httpGet/httpHeaders/0/name",
 		},
 		{
 			Name: "containers.*.readinessProbe.httpGet.httpHeaders.*.value is not set",
@@ -1256,7 +1360,7 @@ func TestSchema(t *testing.T) {
 				}
 				return src
 			}(),
-			Message: "containers.hello.readinessProbe.httpGet.httpHeaders.0.value: Invalid type",
+			Message: "/containers/hello/readinessProbe/httpGet/httpHeaders/0/value",
 		},
 		{
 			Name: "containers.*.readinessProbe.httpGet.httpHeaders.*.value is not a string",
@@ -1272,7 +1376,7 @@ func TestSchema(t *testing.T) {
 				}
 				return src
 			}(),
-			Message: "containers.hello.readinessProbe.httpGet.httpHeaders.0.value: Invalid type",
+			Message: "/containers/hello/readinessProbe/httpGet/httpHeaders/0/value",
 		},
 
 		// resources
@@ -1284,7 +1388,7 @@ func TestSchema(t *testing.T) {
 				src["resources"] = nil
 				return src
 			}(),
-			Message: "resources: Invalid type",
+			Message: "/resources",
 		},
 		{
 			Name: "resources is empty",
@@ -1293,7 +1397,7 @@ func TestSchema(t *testing.T) {
 				src["resources"] = map[string]interface{}{}
 				return src
 			}(),
-			Message: "resources: Must have at least 1 properties",
+			Message: "/resources",
 		},
 		{
 			Name: "resources.* is not set",
@@ -1302,10 +1406,10 @@ func TestSchema(t *testing.T) {
 				src["resources"].(map[string]interface{})["db"] = nil
 				return src
 			}(),
-			Message: "resources.db: Invalid type",
+			Message: "/resources",
 		},
 
-		// resources.*.image
+		// resources.*.type
 		//
 		{
 			Name: "resources.*.type is missing",
@@ -1315,7 +1419,7 @@ func TestSchema(t *testing.T) {
 				delete(db, "type")
 				return src
 			}(),
-			Message: "resources.db: type is required",
+			Message: "/resources/db",
 		},
 		{
 			Name: "resources.*.type is not set",
@@ -1325,7 +1429,7 @@ func TestSchema(t *testing.T) {
 				db["type"] = nil
 				return src
 			}(),
-			Message: "resources.db.type: Invalid type",
+			Message: "/resources/db/type",
 		},
 		{
 			Name: "resources.*.type is not a sring",
@@ -1335,7 +1439,7 @@ func TestSchema(t *testing.T) {
 				db["type"] = 12
 				return src
 			}(),
-			Message: "resources.db.type: Invalid type",
+			Message: "/resources/db/type",
 		},
 
 		// resources.*.metadata
@@ -1348,7 +1452,7 @@ func TestSchema(t *testing.T) {
 				db["metadata"] = nil
 				return src
 			}(),
-			Message: "resources.db.metadata: Invalid type",
+			Message: "/resources/db/metadata",
 		},
 		{
 			Name: "resources.*.metadata is empty",
@@ -1358,7 +1462,7 @@ func TestSchema(t *testing.T) {
 				db["metadata"] = map[string]interface{}{}
 				return src
 			}(),
-			Message: "resources.db.metadata: Must have at least 1 properties",
+			Message: "/resources/db/metadata",
 		},
 
 		// resources.*.metadata.annotations
@@ -1372,7 +1476,7 @@ func TestSchema(t *testing.T) {
 				metadata["annotations"] = nil
 				return src
 			}(),
-			Message: "resources.db.metadata.annotations: Invalid type",
+			Message: "/resources/db/metadata/annotations",
 		},
 		{
 			Name: "resources.*.metadata.annotations is empty",
@@ -1383,7 +1487,7 @@ func TestSchema(t *testing.T) {
 				metadata["annotations"] = map[string]interface{}{}
 				return src
 			}(),
-			Message: "resources.db.metadata.annotations: Must have at least 1 properties",
+			Message: "/resources/db/metadata/annotations",
 		},
 		{
 			Name: "resources.*.metadata.annotations.* is not set",
@@ -1397,7 +1501,7 @@ func TestSchema(t *testing.T) {
 				}
 				return src
 			}(),
-			Message: "resources.db.metadata.annotations.one: Invalid type.",
+			Message: "/resources/db/metadata/annotations/one",
 		},
 		{
 			Name: "resources.*.metadata.annotations.* is not a string",
@@ -1411,7 +1515,7 @@ func TestSchema(t *testing.T) {
 				}
 				return src
 			}(),
-			Message: "resources.db.metadata.annotations.one: Invalid type.",
+			Message: "/resources/db/metadata/annotations/one",
 		},
 
 		// resources.*.properties
@@ -1459,7 +1563,7 @@ func TestSchema(t *testing.T) {
 				db["params"] = nil
 				return src
 			}(),
-			Message: "resources.db.params: Invalid type",
+			Message: "/resources/db/params",
 		},
 		{
 			Name: "resources.*.params is not an object",
@@ -1469,24 +1573,19 @@ func TestSchema(t *testing.T) {
 				db["params"] = 12
 				return src
 			}(),
-			Message: "resources.db.params: Invalid type",
+			Message: "/resources/db/params",
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.Name, func(t *testing.T) {
-			var src = gojsonschema.NewGoLoader(tt.Src)
-			res, err := Validate(src)
-			assert.NoError(t, err)
+			err := Validate(tt.Src)
 
 			if tt.Message == "" {
-				assert.True(t, res.Valid())
+				assert.NoError(t, err)
 			} else {
-				assert.False(t, res.Valid())
-
-				var errors = res.Errors()
-				assert.Len(t, errors, 1)
-				assert.Contains(t, errors[0].String(), tt.Message)
+				assert.IsType(t, &jsonschema.ValidationError{}, err)
+				assert.ErrorContains(t, err, tt.Message)
 			}
 		})
 	}

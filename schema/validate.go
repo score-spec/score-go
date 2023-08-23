@@ -8,35 +8,51 @@ The Apache Software Foundation (http://www.apache.org/).
 package schema
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
 
-	"github.com/xeipuuv/gojsonschema"
+	"github.com/santhosh-tekuri/jsonschema/v5"
 	"gopkg.in/yaml.v3"
 )
 
 // Validates source JSON file.
-func ValidateJson(r io.Reader) (*gojsonschema.Result, error) {
-	src, rdr := gojsonschema.NewReaderLoader(r)
-	if _, err := io.ReadAll(rdr); err != nil {
-		return nil, fmt.Errorf("reading JSON: %w", err)
+//
+// For all vaidation errors returned error would be a *jsonschema.ValidationError.
+func ValidateJson(r io.Reader) error {
+	var obj interface{}
+
+	var dec = json.NewDecoder(r)
+	dec.UseNumber()
+	if err := dec.Decode(&obj); err != nil {
+		return fmt.Errorf("decoding source JSON structure: %w", err)
 	}
-	return Validate(src)
+
+	return Validate(obj)
 }
 
 // Validates source YAML file.
-func ValidateYaml(r io.Reader) (*gojsonschema.Result, error) {
-	var obj map[string]interface{}
-	if err := yaml.NewDecoder(r).Decode(&obj); err != nil {
-		return nil, fmt.Errorf("decoding YAML: %w", err)
+//
+// For all vaidation errors returned error would be a *jsonschema.ValidationError.
+func ValidateYaml(r io.Reader) error {
+	var obj interface{}
+
+	var dec = yaml.NewDecoder(r)
+	if err := dec.Decode(&obj); err != nil {
+		return fmt.Errorf("decoding source YAML structure: %w", err)
 	}
 
-	src := gojsonschema.NewGoLoader(obj)
-	return Validate(src)
+	return Validate(obj)
 }
 
-// Validates source Score structure.
-func Validate(src gojsonschema.JSONLoader) (*gojsonschema.Result, error) {
-	schema := gojsonschema.NewStringLoader(ScoreSchemaV1b1)
-	return gojsonschema.Validate(schema, src)
+// Validates source structure.
+//
+// For all vaidation errors returned error would be a *jsonschema.ValidationError.
+func Validate(src interface{}) error {
+	schema, err := jsonschema.CompileString("", ScoreSchemaV1b1)
+	if err != nil {
+		return fmt.Errorf("compiling Score schema: %w", err)
+	}
+
+	return schema.Validate(src)
 }

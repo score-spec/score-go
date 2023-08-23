@@ -111,8 +111,7 @@
               "items": {
                 "type": "object",
                 "required": [
-                  "target",
-                  "content"
+                  "target"
                 ],
                 "properties": {
                   "target": {
@@ -123,15 +122,34 @@
                     "description": "The file access mode.",
                     "type": "string"
                   },
+                  "source": {
+                    "description": "The relative or absolute path to the content file.",
+                    "type": "string",
+                    "minLength": 1
+                  },
                   "content": {
                     "description": "The inline content for the file.",
-                    "type": "array",
-                    "minItems": 1,
-                    "items": {
-                      "type": "string"
-                    }
+                    "anyOf": [{
+                        "type": "string"
+                      }, {
+                        "deprecated": true,
+                        "type": "array",
+                        "minItems": 1,
+                        "items": {
+                          "type": "string"
+                        }
+                      }]
+                  },
+                  "noExpand": {
+                    "description": "If set to true, the placeholders expansion will not occur in the contents or the file.",
+                    "type": "boolean"
                   }
-                }
+                },
+                "oneOf": [{ 
+                    "required": ["content"]
+                  }, { 
+                    "required": ["source"]
+                  }]
               }
             },
             "volumes": {
