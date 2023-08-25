@@ -30,7 +30,7 @@ service:
 containers:
   hello:
     image: busybox
-    command: 
+    command:
     - "/bin/echo"
     args:
     - "Hello $(FRIEND)"
@@ -39,9 +39,7 @@ containers:
     files:
     - target: /etc/hello-world/config.yaml
       mode: "666"
-      content:
-      - "---"
-      - ${resources.env.APP_CONFIG}
+      content: "${resources.env.APP_CONFIG}"
     volumes:
     - source: ${resources.data}
       path: sub/path
@@ -88,9 +86,8 @@ resources:
     }
 `)
 
-	res, err := ValidateYaml(bytes.NewReader(source))
+	err := ValidateYaml(bytes.NewReader(source))
 	assert.NoError(t, err)
-	assert.True(t, res.Valid())
 }
 
 func TestValidateYaml_Error(t *testing.T) {
@@ -109,7 +106,7 @@ service:
 containers:
   hello:
     image: busybox
-    command: 
+    command:
     - "/bin/echo"
     args:
     - "Hello $(FRIEND)"
@@ -118,9 +115,7 @@ containers:
     files:
     - target: /etc/hello-world/config.yaml
       mode: "666"
-      content:
-      - "---"
-      - ${resources.env.APP_CONFIG}
+      content: "${resources.env.APP_CONFIG}"
     volumes:
     - source: ${resources.data}
       path: sub/path
@@ -167,9 +162,8 @@ resources:
     }
 `)
 
-	res, err := ValidateYaml(bytes.NewReader(source))
-	assert.NoError(t, err)
-	assert.False(t, res.Valid())
+	err := ValidateYaml(bytes.NewReader(source))
+	assert.Error(t, err)
 }
 
 func TestValidateJson(t *testing.T) {
@@ -203,10 +197,7 @@ func TestValidateJson(t *testing.T) {
         {
           "target": "/etc/hello-world/config.yaml",
           "mode": "666",
-          "content": [
-            "---",
-            "${resources.env.APP_CONFIG}"
-          ]
+          "content": "${resources.env.APP_CONFIG}"
         }
       ],
       "volumes": [
@@ -277,9 +268,8 @@ func TestValidateJson(t *testing.T) {
 }
 `)
 
-	res, err := ValidateJson(bytes.NewReader(source))
+	err := ValidateJson(bytes.NewReader(source))
 	assert.NoError(t, err)
-	assert.True(t, res.Valid())
 }
 
 func TestValidateJson_Error(t *testing.T) {
@@ -313,10 +303,7 @@ func TestValidateJson_Error(t *testing.T) {
         {
           "target": "/etc/hello-world/config.yaml",
           "mode": "666",
-          "content": [
-            "---",
-            "${resources.env.APP_CONFIG}"
-          ]
+          "content": "${resources.env.APP_CONFIG}"
         }
       ],
       "volumes": [
@@ -387,7 +374,6 @@ func TestValidateJson_Error(t *testing.T) {
 }
 `)
 
-	res, err := ValidateJson(bytes.NewReader(source))
-	assert.NoError(t, err)
-	assert.False(t, res.Valid())
+	err := ValidateJson(bytes.NewReader(source))
+	assert.Error(t, err)
 }
