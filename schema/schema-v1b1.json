@@ -141,7 +141,7 @@
                       }]
                   },
                   "noExpand": {
-                    "description": "If set to true, the placeholders expansion will not occur in the contents or the file.",
+                    "description": "If set to true, the placeholders expansion will not occur in the contents of the file.",
                     "type": "boolean"
                   }
                 },
