@@ -60,9 +60,10 @@ containers:
     files:
     - target: /etc/hello-world/config.yaml
       mode: "666"
-      content:
-      - "---"
-      - ${resources.env.APP_CONFIG}
+      content: |
+        ---
+        ${resources.env.APP_CONFIG}
+      noExpand: true
     volumes:
     - source: ${resources.data}
       path: sub/path
@@ -134,12 +135,11 @@ resources:
 						},
 						Files: []types.FileMountSpec{
 							{
-								Target: "/etc/hello-world/config.yaml",
-								Mode:   "666",
-								Content: []interface{}{
-									"---",
-									"${resources.env.APP_CONFIG}",
-								},
+								Target:   "/etc/hello-world/config.yaml",
+								Mode:     "666",
+								Source:   "",
+								Content:  "---\n${resources.env.APP_CONFIG}\n",
+								NoExpand: true,
 							},
 						},
 						Volumes: []types.VolumeMountSpec{

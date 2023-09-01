@@ -43,7 +43,7 @@ type FileMountSpec struct {
 	// This property can't be used if 'content' property is used.
 	Source string `json:"source"`
 	// If set to true, the placeholders expansion will not occur in the contents of the file.
-	NoExpand string `json:"noExpand"`
+	NoExpand bool `json:"noExpand"`
 }
 
 // VolumeMountSpec is a container volume mount point specification.
