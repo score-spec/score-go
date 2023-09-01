@@ -136,7 +136,7 @@ resources:
 							{
 								Target: "/etc/hello-world/config.yaml",
 								Mode:   "666",
-								Content: []string{
+								Content: []interface{}{
 									"---",
 									"${resources.env.APP_CONFIG}",
 								},
