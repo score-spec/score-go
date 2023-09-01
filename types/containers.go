@@ -31,9 +31,19 @@ type ContainerResourcesRequirementsSpec struct {
 
 // FileMountSpec is a container's file mount specification.
 type FileMountSpec struct {
-	Target  string   `json:"target"`
-	Mode    string   `json:"mode"`
-	Content []string `json:"content"`
+	// The mounted file path and name.
+	Target string `json:"target"`
+	// The mounted file access mode.
+	Mode string `json:"mode"`
+	// File content, if scpecified, could be a single string or an array of strings (parsed as []interface{}, DEPRECATED).
+	// This property can't be used if 'source' property is used.
+	Content interface{} `json:"content"`
+	// If specified, file content should be read from the local file, referenced by the source property.
+	// The file path is always relative to the source Score file.
+	// This property can't be used if 'content' property is used.
+	Source string `json:"source"`
+	// If set to true, the placeholders expansion will not occur in the contents of the file.
+	NoExpand string `json:"noExpand"`
 }
 
 // VolumeMountSpec is a container volume mount point specification.
