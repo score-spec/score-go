@@ -9,5 +9,5 @@ package schema
 
 import _ "embed"
 
-//go:embed schema-v1b1.json
+//go:embed files/score-v1b1.json
 var ScoreSchemaV1b1 string
