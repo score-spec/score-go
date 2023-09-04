@@ -312,7 +312,7 @@
               "additionalProperties": true,
               "properties": {
                 "annotations": {
-                  "description": "Annotattions that apply to the property.",
+                  "description": "Annotations that apply to the property.",
                   "type": "object",
                   "minProperties": 1,
                   "additionalProperties": {
