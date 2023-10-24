@@ -71,10 +71,12 @@ resources:
     type: environment
   dns:
     type: dns
+    class: sensitive
   data:
     type: volume
   db:
     type: postgres
+    class: large
     metadata:
       annotations:
         "my.org/version": "0.1"
@@ -1440,6 +1442,18 @@ func TestSchema(t *testing.T) {
 				return src
 			}(),
 			Message: "/resources/db/type",
+		},
+
+		// resource.*.class
+		{
+			Name: "resources.*.class is not valid",
+			Src: func() map[string]interface{} {
+				src := newTestDocument()
+				var db = src["resources"].(map[string]interface{})["db"].(map[string]interface{})
+				db["class"] = "cl@ss?"
+				return src
+			}(),
+			Message: "/resources/db/class",
 		},
 
 		// resources.*.metadata

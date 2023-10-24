@@ -95,10 +95,12 @@ resources:
     type: environment
   dns:
     type: dns
+    class: sensitive
   data:
     type: volume
   db:
     type: postgres
+    class: large
     metadata:
       annotations:
         "my.org/version": "0.1"
@@ -183,10 +185,11 @@ resources:
 					"env": {
 						Type: "environment",
 					},
-					"dns":  {Type: "dns"},
+					"dns":  {Type: "dns", Class: "sensitive"},
 					"data": {Type: "volume"},
 					"db": {
-						Type: "postgres",
+						Type:  "postgres",
+						Class: "large",
 						Metadata: types.ResourceMeta{
 							Annotations: map[string]string{
 								"my.org/version": "0.1",
