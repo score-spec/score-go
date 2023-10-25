@@ -57,10 +57,12 @@ package types
 //	      APP_CONFIG:
 //	  dns:
 //	    type: dns
+//	    class: sensitive
 //	    properties:
 //	      domain:
 //	  data:
 //	    type: volume
+//	    class: large
 //	  db:
 //	    type: postgres
 //	    properties:

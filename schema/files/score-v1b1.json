@@ -305,6 +305,11 @@
               "description": "The resource in the target environment.",
               "type": "string"
             },
+            "class": {
+              "description": "A specialisation of the resource type.",
+              "type": "string",
+              "pattern": "^[a-z0-9](?:-?[a-z0-9]+)+$"
+            },
             "metadata": {
               "description": "The metadata for the resource.",
               "type": "object",

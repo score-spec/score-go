@@ -13,6 +13,7 @@ type ResourcesSpecs map[string]ResourceSpec
 // ResourceSpec is a resource specification.
 type ResourceSpec struct {
 	Type     string                 `json:"type"`
+	Class    string                 `json:"class,omitempty"`
 	Metadata ResourceMeta           `json:"metadata,omitempty"`
 	Params   map[string]interface{} `json:"params,omitempty"`
 }

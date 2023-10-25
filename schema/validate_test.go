@@ -69,8 +69,10 @@ resources:
     type: environment
   dns:
     type: dns
+    class: external
   data:
     type: volume
+    class: large
   db:
     type: postgres
     metadata:
@@ -243,10 +245,12 @@ func TestValidateJson(t *testing.T) {
       "type": "environment"
     },
     "dns": {
-      "type": "dns"
+      "type": "dns",
+      "class": "external"
     },
     "data": {
-      "type": "volume"
+      "type": "volume",
+      "class": "large"
     },
     "db": {
       "type": "postgres",
