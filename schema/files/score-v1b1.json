@@ -37,25 +37,22 @@
         "ports": {
           "description": "List of network ports published by the service.",
           "type": "object",
-          "additionalProperties": true,
           "minProperties": 1,
-          "patternProperties": {
-            "^*": {
-              "description": "The network port description.",
-              "type": "object",
-              "required": [
-                "targetPort"
-              ],
-              "additionalProperties": false,
-              "properties": {
-                "port": {
-                  "description": "The public service port.",
-                  "type": "number"
-                },
-                "targetPort": {
-                  "description": "The internal service port.",
-                  "type": "number"
-                }
+          "additionalProperties": {
+            "description": "The network port description.",
+            "type": "object",
+            "required": [
+              "targetPort"
+            ],
+            "additionalProperties": false,
+            "properties": {
+              "port": {
+                "description": "The public service port.",
+                "type": "number"
+              },
+              "targetPort": {
+                "description": "The internal service port.",
+                "type": "number"
               }
             }
           }
@@ -65,224 +62,154 @@
     "containers": {
       "description": "The declared Score Specification version.",
       "type": "object",
-      "additionalProperties": true,
       "minProperties": 1,
-      "patternProperties": {
-        "^*": {
-          "description": "The container name.",
-          "type": "object",
-          "required": [
-            "image"
-          ],
-          "additionalProperties": false,
-          "properties": {
-            "image": {
-              "description": "The image name and tag.",
+      "additionalProperties": {
+        "description": "The container name.",
+        "type": "object",
+        "required": [
+          "image"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "image": {
+            "description": "The image name and tag.",
+            "type": "string"
+          },
+          "command": {
+            "description": "If specified, overrides container entry point.",
+            "type": "array",
+            "minItems": 1,
+            "items": {
               "type": "string"
-            },
-            "command": {
-              "description": "If specified, overrides container entry point.",
-              "type": "array",
-              "minItems": 1,
-              "items": {
-                "type": "string"
-              }
-            },
-            "args": {
-              "description": "If specified, overrides container entry point arguments.",
-              "type": "array",
-              "minItems": 1,
-              "items": {
-                "type": "string"
-              }
-            },
-            "variables": {
-              "description": "The environment variables for the container.",
+            }
+          },
+          "args": {
+            "description": "If specified, overrides container entry point arguments.",
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "string"
+            }
+          },
+          "variables": {
+            "description": "The environment variables for the container.",
+            "type": "object",
+            "minProperties": 1,
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "files": {
+            "description": "The extra files to mount.",
+            "type": "array",
+            "minItems": 1,
+            "items": {
               "type": "object",
-              "minProperties": 1,
-              "additionalProperties": {
-                "type": "string"
-              }
-            },
-            "files": {
-              "description": "The extra files to mount.",
-              "type": "array",
-              "minItems": 1,
-              "items": {
-                "type": "object",
-                "required": [
-                  "target"
-                ],
-                "properties": {
-                  "target": {
-                    "description": "The file path and name.",
-                    "type": "string"
-                  },
-                  "mode": {
-                    "description": "The file access mode.",
-                    "type": "string"
-                  },
-                  "source": {
-                    "description": "The relative or absolute path to the content file.",
-                    "type": "string",
-                    "minLength": 1
-                  },
-                  "content": {
-                    "description": "The inline content for the file.",
-                    "anyOf": [{
-                        "type": "string"
-                      }, {
-                        "deprecated": true,
-                        "type": "array",
-                        "minItems": 1,
-                        "items": {
-                          "type": "string"
-                        }
-                      }]
-                  },
-                  "noExpand": {
-                    "description": "If set to true, the placeholders expansion will not occur in the contents of the file.",
-                    "type": "boolean"
-                  }
-                },
-                "oneOf": [{ 
-                    "required": ["content"]
-                  }, { 
-                    "required": ["source"]
-                  }]
-              }
-            },
-            "volumes": {
-              "description": "The volumes to mount.",
-              "type": "array",
-              "minItems": 1,
-              "items": {
-                "type": "object",
-                "required": [
-                  "source",
-                  "target"
-                ],
-                "properties": {
-                  "source": {
-                    "description": "The external volume reference.",
-                    "type": "string"
-                  },
-                  "path": {
-                    "description": "An optional sub path in the volume.",
-                    "type": "string"
-                  },
-                  "target": {
-                    "description": "The target mount on the container.",
-                    "type": "string"
-                  },
-                  "read_only": {
-                    "description": "Indicates if the volume should be mounted in a read-only mode.",
-                    "type": "boolean"
-                  }
-                }
-              }
-            },
-            "resources": {
-              "description": "The compute resources for the container.",
-              "type": "object",
-              "minProperties": 1,
-              "additionalProperties": false,
+              "required": [
+                "target"
+              ],
               "properties": {
-                "limits": {
-                  "description": "The maximum allowed resources for the container.",
-                  "$ref": "#/properties/containers/definitions/resourcesLimits"
+                "target": {
+                  "description": "The file path and name.",
+                  "type": "string"
                 },
-                "requests": {
-                  "description": "The minimal resources required for the container.",
-                  "$ref": "#/properties/containers/definitions/resourcesLimits"
+                "mode": {
+                  "description": "The file access mode.",
+                  "type": "string"
+                },
+                "source": {
+                  "description": "The relative or absolute path to the content file.",
+                  "type": "string",
+                  "minLength": 1
+                },
+                "content": {
+                  "description": "The inline content for the file.",
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "deprecated": true,
+                      "type": "array",
+                      "minItems": 1,
+                      "items": {
+                        "type": "string"
+                      }
+                    }
+                  ]
+                },
+                "noExpand": {
+                  "description": "If set to true, the placeholders expansion will not occur in the contents of the file.",
+                  "type": "boolean"
                 }
-              }
-            },
-            "livenessProbe": {
-              "description": "The liveness probe for the container.",
-              "$ref": "#/properties/containers/definitions/containerProbe"
-            },
-            "readinessProbe": {
-              "description": "The readiness probe for the container.",
-              "$ref": "#/properties/containers/definitions/containerProbe"
-            }
-          }
-        }
-      },
-      "definitions": {
-        "resourcesLimits": {
-          "description": "The compute resources limits.",
-          "type": "object",
-          "minProperties": 1,
-          "additionalProperties": false,
-          "properties": {
-            "memory": {
-              "description": "The memory limit.",
-              "type": "string"
-            },
-            "cpu": {
-              "description": "The CPU limit.",
-              "type": "string"
-            }
-          }
-        },
-        "containerProbe": {
-          "type": "object",
-          "minProperties": 1,
-          "additionalProperties": false,
-          "properties": {
-            "httpGet": {
-              "$ref": "#/properties/containers/definitions/httpProbe"
-            }
-          }
-        },
-        "httpProbe": {
-          "description": "An HTTP probe details.",
-          "type": "object",
-          "additionalProperties": false,
-          "required": [
-            "path"
-          ],
-          "properties": {
-            "host": {
-              "description": "Host name to connect to. Defaults to the container IP.",
-              "type": "string"
-            },
-            "scheme": {
-              "description": "Scheme to use for connecting to the host (HTTP or HTTPS). Defaults to HTTP.",
-              "type": "string",
-              "enum": [
-                "HTTP",
-                "HTTPS"
+              },
+              "oneOf": [
+                {
+                  "required": [
+                    "content"
+                  ]
+                },
+                {
+                  "required": [
+                    "source"
+                  ]
+                }
               ]
-            },
-            "path": {
-              "description": "The path of the HTTP probe endpoint.",
-              "type": "string"
-            },
-            "port": {
-              "description": "The path of the HTTP probe endpoint.",
-              "type": "number"
-            },
-            "httpHeaders": {
-              "description": "Additional HTTP headers to send with the request",
-              "type": "array",
-              "minItems": 1,
-              "items": {
-                "type": "object",
-                "additionalProperties": false,
-                "properties": {
-                  "name": {
-                    "description": "The HTTP header name.",
-                    "type": "string"
-                  },
-                  "value": {
-                    "description": "The HTTP header value.",
-                    "type": "string"
-                  }
+            }
+          },
+          "volumes": {
+            "description": "The volumes to mount.",
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "object",
+              "required": [
+                "source",
+                "target"
+              ],
+              "properties": {
+                "source": {
+                  "description": "The external volume reference.",
+                  "type": "string"
+                },
+                "path": {
+                  "description": "An optional sub path in the volume.",
+                  "type": "string"
+                },
+                "target": {
+                  "description": "The target mount on the container.",
+                  "type": "string"
+                },
+                "read_only": {
+                  "description": "Indicates if the volume should be mounted in a read-only mode.",
+                  "type": "boolean"
                 }
               }
             }
+          },
+          "resources": {
+            "description": "The compute resources for the container.",
+            "type": "object",
+            "minProperties": 1,
+            "additionalProperties": false,
+            "properties": {
+              "limits": {
+                "description": "The maximum allowed resources for the container.",
+                "$ref": "#/$defs/resourcesLimits"
+              },
+              "requests": {
+                "description": "The minimal resources required for the container.",
+                "$ref": "#/$defs/resourcesLimits"
+              }
+            }
+          },
+          "livenessProbe": {
+            "description": "The liveness probe for the container.",
+            "$ref": "#/$defs/containerProbe"
+          },
+          "readinessProbe": {
+            "description": "The readiness probe for the container.",
+            "$ref": "#/$defs/containerProbe"
           }
         }
       }
@@ -291,51 +218,125 @@
       "description": "The dependencies needed by the Workload.",
       "type": "object",
       "minProperties": 1,
-      "additionalProperties": true,
-      "patternProperties": {
-        "^*": {
-          "description": "The resource name.",
-          "type": "object",
-          "additionalProperties": false,
-          "required": [
-            "type"
-          ],
-          "properties": {
-            "type": {
-              "description": "The resource in the target environment.",
-              "type": "string"
-            },
-            "class": {
-              "description": "A specialisation of the resource type.",
-              "type": "string",
-              "pattern": "^[a-z0-9](?:-?[a-z0-9]+)+$"
-            },
-            "metadata": {
-              "description": "The metadata for the resource.",
-              "type": "object",
-              "minProperties": 1,
-              "additionalProperties": true,
-              "properties": {
-                "annotations": {
-                  "description": "Annotations that apply to the property.",
-                  "type": "object",
-                  "minProperties": 1,
-                  "additionalProperties": {
-                    "type": "string"
-                  }
+      "additionalProperties": {
+        "description": "The resource name.",
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "type"
+        ],
+        "properties": {
+          "type": {
+            "description": "The resource in the target environment.",
+            "type": "string"
+          },
+          "class": {
+            "description": "A specialisation of the resource type.",
+            "type": "string",
+            "pattern": "^[a-z0-9](?:-?[a-z0-9]+)+$"
+          },
+          "metadata": {
+            "description": "The metadata for the resource.",
+            "type": "object",
+            "minProperties": 1,
+            "additionalProperties": true,
+            "properties": {
+              "annotations": {
+                "description": "Annotations that apply to the property.",
+                "type": "object",
+                "minProperties": 1,
+                "additionalProperties": {
+                  "type": "string"
                 }
               }
-            },
+            }
+          },
+          "properties": {
+            "description": "DEPRECATED: The properties that can be referenced in other places in the Score Specification file.",
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "params": {
+            "description": "The parameters used to validate or provision the resource in the environment.",
+            "type": "object"
+          }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "resourcesLimits": {
+      "description": "The compute resources limits.",
+      "type": "object",
+      "minProperties": 1,
+      "additionalProperties": false,
+      "properties": {
+        "memory": {
+          "description": "The memory limit.",
+          "type": "string"
+        },
+        "cpu": {
+          "description": "The CPU limit.",
+          "type": "string"
+        }
+      }
+    },
+    "containerProbe": {
+      "type": "object",
+      "minProperties": 1,
+      "additionalProperties": false,
+      "properties": {
+        "httpGet": {
+          "$ref": "#/$defs/httpProbe"
+        }
+      }
+    },
+    "httpProbe": {
+      "description": "An HTTP probe details.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "path"
+      ],
+      "properties": {
+        "host": {
+          "description": "Host name to connect to. Defaults to the container IP.",
+          "type": "string"
+        },
+        "scheme": {
+          "description": "Scheme to use for connecting to the host (HTTP or HTTPS). Defaults to HTTP.",
+          "type": "string",
+          "enum": [
+            "HTTP",
+            "HTTPS"
+          ]
+        },
+        "path": {
+          "description": "The path of the HTTP probe endpoint.",
+          "type": "string"
+        },
+        "port": {
+          "description": "The path of the HTTP probe endpoint.",
+          "type": "number"
+        },
+        "httpHeaders": {
+          "description": "Additional HTTP headers to send with the request",
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
             "properties": {
-              "description": "DEPRECATED: The properties that can be referenced in other places in the Score Specification file.",
-              "type": [
-                "object",
-                "null"
-              ]
-            },
-            "params": {
-              "description": "The parameters used to validate or provision the resource in the environment.",
-              "type": "object"
+              "name": {
+                "description": "The HTTP header name.",
+                "type": "string"
+              },
+              "value": {
+                "description": "The HTTP header value.",
+                "type": "string"
+              }
             }
           }
         }
