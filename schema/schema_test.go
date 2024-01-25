@@ -92,7 +92,7 @@ resources:
 
 	var obj map[string]interface{}
 	var yamlReader = bytes.NewReader(data)
-	yaml.NewDecoder(yamlReader).Decode(&obj)
+	_ = yaml.NewDecoder(yamlReader).Decode(&obj)
 	return obj
 }
 
@@ -227,7 +227,7 @@ func TestSchema(t *testing.T) {
 			Message: "/service/ports/www",
 		},
 		{
-			Name: "service.ports.*.targetPort is missing",
+			Name: "service.ports.*.port is missing",
 			Src: func() map[string]interface{} {
 				src := newTestDocument()
 				src["service"] = map[string]interface{}{
@@ -238,36 +238,6 @@ func TestSchema(t *testing.T) {
 				return src
 			}(),
 			Message: "/service/ports/www",
-		},
-		{
-			Name: "service.ports.*.targetPort is not a number",
-			Src: func() map[string]interface{} {
-				src := newTestDocument()
-				src["service"] = map[string]interface{}{
-					"ports": map[string]interface{}{
-						"www": map[string]interface{}{
-							"targetPort": false,
-						},
-					},
-				}
-				return src
-			}(),
-			Message: "/service/ports/www/targetPort",
-		},
-		{
-			Name: "service.ports.*.port is optional",
-			Src: func() map[string]interface{} {
-				src := newTestDocument()
-				src["service"] = map[string]interface{}{
-					"ports": map[string]interface{}{
-						"www": map[string]interface{}{
-							"targetPort": 8080,
-						},
-					},
-				}
-				return src
-			}(),
-			Message: "",
 		},
 		{
 			Name: "service.ports.*.port is not a number",
@@ -286,6 +256,37 @@ func TestSchema(t *testing.T) {
 			Message: "/service/ports/www/port",
 		},
 		{
+			Name: "service.ports.*.targetPort is not a number",
+			Src: func() map[string]interface{} {
+				src := newTestDocument()
+				src["service"] = map[string]interface{}{
+					"ports": map[string]interface{}{
+						"www": map[string]interface{}{
+							"port":       80,
+							"targetPort": false,
+						},
+					},
+				}
+				return src
+			}(),
+			Message: "/service/ports/www/targetPort",
+		},
+		{
+			Name: "service.ports.*.targetPort is optional",
+			Src: func() map[string]interface{} {
+				src := newTestDocument()
+				src["service"] = map[string]interface{}{
+					"ports": map[string]interface{}{
+						"www": map[string]interface{}{
+							"port": 8080,
+						},
+					},
+				}
+				return src
+			}(),
+			Message: "",
+		},
+		{
 			Name: "service with multiple ports",
 			Src: func() map[string]interface{} {
 				src := newTestDocument()
@@ -296,7 +297,7 @@ func TestSchema(t *testing.T) {
 							"targetPort": 8080,
 						},
 						"admin": map[string]interface{}{
-							"targetPort": 8090,
+							"port": 90,
 						},
 					},
 				}
@@ -1530,41 +1531,6 @@ func TestSchema(t *testing.T) {
 				return src
 			}(),
 			Message: "/resources/db/metadata/annotations/one",
-		},
-
-		// resources.*.properties
-		//
-		{
-			Name: "resources.*.properties is not set",
-			Src: func() map[string]interface{} {
-				src := newTestDocument()
-				var db = src["resources"].(map[string]interface{})["db"].(map[string]interface{})
-				db["properties"] = nil
-				return src
-			}(),
-			Message: "",
-		},
-		{
-			Name: "resources.*.properties is empty",
-			Src: func() map[string]interface{} {
-				src := newTestDocument()
-				var db = src["resources"].(map[string]interface{})["db"].(map[string]interface{})
-				db["properties"] = map[string]interface{}{}
-				return src
-			}(),
-			Message: "",
-		},
-		{
-			Name: "resources.*.properties is ignored",
-			Src: func() map[string]interface{} {
-				src := newTestDocument()
-				var db = src["resources"].(map[string]interface{})["db"].(map[string]interface{})
-				db["properties"] = map[string]interface{}{
-					"key": "value",
-				}
-				return src
-			}(),
-			Message: "",
 		},
 
 		// resources.*.params
