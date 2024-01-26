@@ -1,6 +1,6 @@
-module github.com/score-spec/score-go
+module github.com/score-spec/score-go/v1
 
-go 1.19
+go 1.21
 
 require (
 	github.com/mitchellh/mapstructure v1.5.0
