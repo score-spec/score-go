@@ -5,10 +5,10 @@ Reference library for the parsing and loading SCORE files in Go.
 This can be added to your project via:
 
 ```sh
-$ go get -u github.com/score-spec/score-go/v1
+$ go get -u github.com/score-spec/score-go
 ```
 
-**NOTE**: if you project is still using the hand-written types, you will need to stay on `github.com/score-spec/score-go`
+**NOTE**: if you project is still using the hand-written types, you will need to stay on `github.com/score-spec/score-go@v0.0.1`
 and any important fixes to the schema may be back-ported to that branch.
 
 ## Parsing SCORE files

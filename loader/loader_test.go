@@ -15,7 +15,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/score-spec/score-go/v1/types"
+	"github.com/score-spec/score-go/types"
 )
 
 func stringRef(input string) *string {
