@@ -1,4 +1,4 @@
-module github.com/score-spec/score-go/v1
+module github.com/score-spec/score-go
 
 go 1.21
 

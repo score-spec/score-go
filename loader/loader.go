@@ -14,7 +14,7 @@ import (
 	"github.com/mitchellh/mapstructure"
 	"gopkg.in/yaml.v3"
 
-	"github.com/score-spec/score-go/v1/types"
+	"github.com/score-spec/score-go/types"
 )
 
 // ParseYAML parses YAML into the target mapping structure.
