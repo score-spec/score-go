@@ -10,8 +10,8 @@ default:
 .PHONY: update-schema
 update-schema:
 	rm -fv schema/files/score-v1b1.json.modified
-	git subtree pull --prefix schema/files git@github.com:score-spec/schema.git main --squash -m "chore: updated score specification"
-	git log -1 --pretty=%B | grep "chore: updated score specification" && git commit --amend -s --no-edit
+	C=$(shell git rev-parse HEAD); git subtree pull --prefix schema/files git@github.com:score-spec/schema.git main --squash -m "chore: updated score specification"; \
+		if git rev-parse HEAD | grep -v $$C; then git commit --amend -s --no-edit; fi
 
 ## Generate types
 .PHONY: generate
