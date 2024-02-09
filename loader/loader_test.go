@@ -133,7 +133,7 @@ resources:
 			Output: types.Workload{
 				ApiVersion: "score.dev/v1b1",
 				Metadata: types.WorkloadMetadata{
-					Name: "hello-world",
+					"name": "hello-world",
 				},
 				Service: &types.WorkloadService{
 					Ports: types.WorkloadServicePorts{
@@ -205,8 +205,8 @@ resources:
 					"db": {
 						Type:  "postgres",
 						Class: stringRef("large"),
-						Metadata: &types.ResourceMetadata{
-							Annotations: map[string]string{
+						Metadata: map[string]interface{}{
+							"annotations": map[string]interface{}{
 								"my.org/version": "0.1",
 							},
 						},

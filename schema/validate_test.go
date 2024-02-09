@@ -381,3 +381,20 @@ func TestValidateJson_Error(t *testing.T) {
 	err := ValidateJson(bytes.NewReader(source))
 	assert.Error(t, err)
 }
+
+func TestValidateYaml_missing_workload_name(t *testing.T) {
+	var source = []byte(`
+---
+apiVersion: score.dev/v1b1
+metadata:
+  no-name: hello-world
+  something-else: value
+
+containers:
+  hello:
+    image: busybox
+`)
+
+	err := ValidateYaml(bytes.NewReader(source))
+	assert.EqualError(t, err, "jsonschema: '/metadata' does not validate with https://score.dev/schemas/score#/properties/metadata/required: missing properties: 'name'")
+}
