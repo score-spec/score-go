@@ -2,14 +2,15 @@
 MAKEFLAGS += --no-builtin-rules
 .SUFFIXES:
 
-.PHONY: .ALWAYS
-.ALWAYS:
+.PHONY: default
+default:
+	# Please provide a valid make target
 
 ## Update score schema
 .PHONY: update-schema
 update-schema:
 	rm -fv schema/files/score-v1b1.json.modified
-	git subtree pull --prefix schema/files git@github.com:score-spec/schema.git main --squash
+	git subtree pull --prefix schema/files git@github.com:score-spec/schema.git main --squash -m "chore: updated score specification"
 
 ## Generate types
 .PHONY: generate

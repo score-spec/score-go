@@ -58,7 +58,7 @@ When the Score JSON schema is updated in https://github.com/score-spec/schema, t
 First update the subtree:
 
 ```
-git subtree pull --prefix schema/files git@github.com:score-spec/schema.git main --squash
+make update-schema
 ```
 
 Then regenerate the defined types:
