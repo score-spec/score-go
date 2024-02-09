@@ -11,6 +11,7 @@ default:
 update-schema:
 	rm -fv schema/files/score-v1b1.json.modified
 	git subtree pull --prefix schema/files git@github.com:score-spec/schema.git main --squash -m "chore: updated score specification"
+	git log -1 --pretty=%B | grep "chore: updated score specification" && git commit --amend -s --no-edit
 
 ## Generate types
 .PHONY: generate
