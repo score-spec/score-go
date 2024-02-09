@@ -64,7 +64,7 @@ git subtree pull --prefix schema/files git@github.com:score-spec/schema.git main
 Then regenerate the defined types:
 
 ```
-go generate -v ./...
+make generate
 ```
 
 And ensure the tests still pass:
