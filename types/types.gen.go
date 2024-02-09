@@ -116,79 +116,110 @@ type HttpProbeScheme string
 const HttpProbeSchemeHTTP HttpProbeScheme = "HTTP"
 const HttpProbeSchemeHTTPS HttpProbeScheme = "HTTPS"
 
-// The resource name.
-type Resource struct {
-	// A specialisation of the resource type.
-	Class *string `json:"class,omitempty" yaml:"class,omitempty" mapstructure:"class,omitempty"`
-
-	// The metadata for the resource.
-	Metadata *ResourceMetadata `json:"metadata,omitempty" yaml:"metadata,omitempty" mapstructure:"metadata,omitempty"`
-
-	// The parameters used to validate or provision the resource in the environment.
-	Params ResourceParams `json:"params,omitempty" yaml:"params,omitempty" mapstructure:"params,omitempty"`
-
-	// The resource in the target environment.
-	Type string `json:"type" yaml:"type" mapstructure:"type"`
+// UnmarshalJSON implements json.Unmarshaler.
+func (j *Resource) UnmarshalJSON(b []byte) error {
+	var raw map[string]interface{}
+	if err := json.Unmarshal(b, &raw); err != nil {
+		return err
+	}
+	if v, ok := raw["type"]; !ok || v == nil {
+		return fmt.Errorf("field type in Resource: required")
+	}
+	type Plain Resource
+	var plain Plain
+	if err := json.Unmarshal(b, &plain); err != nil {
+		return err
+	}
+	*j = Resource(plain)
+	return nil
 }
 
-// The metadata for the resource.
-type ResourceMetadata struct {
-	// Annotations that apply to the property.
-	Annotations ResourceMetadataAnnotations `json:"annotations,omitempty" yaml:"annotations,omitempty" mapstructure:"annotations,omitempty"`
+// UnmarshalJSON implements json.Unmarshaler.
+func (j *HttpProbe) UnmarshalJSON(b []byte) error {
+	var raw map[string]interface{}
+	if err := json.Unmarshal(b, &raw); err != nil {
+		return err
+	}
+	if v, ok := raw["path"]; !ok || v == nil {
+		return fmt.Errorf("field path in HttpProbe: required")
+	}
+	type Plain HttpProbe
+	var plain Plain
+	if err := json.Unmarshal(b, &plain); err != nil {
+		return err
+	}
+	if plain.HttpHeaders != nil && len(plain.HttpHeaders) < 1 {
+		return fmt.Errorf("field %s length: must be >= %d", "httpHeaders", 1)
+	}
+	*j = HttpProbe(plain)
+	return nil
 }
 
-// Annotations that apply to the property.
-type ResourceMetadataAnnotations map[string]string
-
-// The parameters used to validate or provision the resource in the environment.
-type ResourceParams map[string]interface{}
-
-// The compute resources limits.
-type ResourcesLimits struct {
-	// The CPU limit.
-	Cpu *string `json:"cpu,omitempty" yaml:"cpu,omitempty" mapstructure:"cpu,omitempty"`
-
-	// The memory limit.
-	Memory *string `json:"memory,omitempty" yaml:"memory,omitempty" mapstructure:"memory,omitempty"`
+// UnmarshalJSON implements json.Unmarshaler.
+func (j *HttpProbeScheme) UnmarshalJSON(b []byte) error {
+	var v string
+	if err := json.Unmarshal(b, &v); err != nil {
+		return err
+	}
+	var ok bool
+	for _, expected := range enumValues_HttpProbeScheme {
+		if reflect.DeepEqual(v, expected) {
+			ok = true
+			break
+		}
+	}
+	if !ok {
+		return fmt.Errorf("invalid value (expected one of %#v): %#v", enumValues_HttpProbeScheme, v)
+	}
+	*j = HttpProbeScheme(v)
+	return nil
 }
 
-// The network port description.
-type ServicePort struct {
-	// The public service port.
-	Port int `json:"port" yaml:"port" mapstructure:"port"`
-
-	// The transport level protocol. Defaults to TCP.
-	Protocol *string `json:"protocol,omitempty" yaml:"protocol,omitempty" mapstructure:"protocol,omitempty"`
-
-	// The internal service port. This will default to 'port' if not provided.
-	TargetPort *int `json:"targetPort,omitempty" yaml:"targetPort,omitempty" mapstructure:"targetPort,omitempty"`
+var enumValues_HttpProbeScheme = []interface{}{
+	"HTTP",
+	"HTTPS",
 }
 
-// Score workload specification
-type Workload struct {
-	// The declared Score Specification version.
-	ApiVersion string `json:"apiVersion" yaml:"apiVersion" mapstructure:"apiVersion"`
-
-	// The declared Score Specification version.
-	Containers WorkloadContainers `json:"containers" yaml:"containers" mapstructure:"containers"`
-
-	// The metadata description of the Workload.
-	Metadata WorkloadMetadata `json:"metadata" yaml:"metadata" mapstructure:"metadata"`
-
-	// The dependencies needed by the Workload.
-	Resources WorkloadResources `json:"resources,omitempty" yaml:"resources,omitempty" mapstructure:"resources,omitempty"`
-
-	// The service that the workload provides.
-	Service *WorkloadService `json:"service,omitempty" yaml:"service,omitempty" mapstructure:"service,omitempty"`
+// UnmarshalJSON implements json.Unmarshaler.
+func (j *ContainerVolumesElem) UnmarshalJSON(b []byte) error {
+	var raw map[string]interface{}
+	if err := json.Unmarshal(b, &raw); err != nil {
+		return err
+	}
+	if v, ok := raw["source"]; !ok || v == nil {
+		return fmt.Errorf("field source in ContainerVolumesElem: required")
+	}
+	if v, ok := raw["target"]; !ok || v == nil {
+		return fmt.Errorf("field target in ContainerVolumesElem: required")
+	}
+	type Plain ContainerVolumesElem
+	var plain Plain
+	if err := json.Unmarshal(b, &plain); err != nil {
+		return err
+	}
+	*j = ContainerVolumesElem(plain)
+	return nil
 }
 
-// The declared Score Specification version.
-type WorkloadContainers map[string]Container
-
-// The metadata description of the Workload.
-type WorkloadMetadata struct {
-	// A string that can describe the Workload.
-	Name string `json:"name" yaml:"name" mapstructure:"name"`
+// UnmarshalJSON implements json.Unmarshaler.
+func (j *ContainerFilesElem) UnmarshalJSON(b []byte) error {
+	var raw map[string]interface{}
+	if err := json.Unmarshal(b, &raw); err != nil {
+		return err
+	}
+	if v, ok := raw["target"]; !ok || v == nil {
+		return fmt.Errorf("field target in ContainerFilesElem: required")
+	}
+	type Plain ContainerFilesElem
+	var plain Plain
+	if err := json.Unmarshal(b, &plain); err != nil {
+		return err
+	}
+	if plain.Source != nil && len(*plain.Source) < 1 {
+		return fmt.Errorf("field %s length: must be >= %d", "source", 1)
+	}
+	*j = ContainerFilesElem(plain)
+	return nil
 }
 
 // UnmarshalJSON implements json.Unmarshaler.
@@ -221,89 +252,46 @@ func (j *Container) UnmarshalJSON(b []byte) error {
 	return nil
 }
 
-// UnmarshalJSON implements json.Unmarshaler.
-func (j *HttpProbe) UnmarshalJSON(b []byte) error {
-	var raw map[string]interface{}
-	if err := json.Unmarshal(b, &raw); err != nil {
-		return err
-	}
-	if v, ok := raw["path"]; !ok || v == nil {
-		return fmt.Errorf("field path in HttpProbe: required")
-	}
-	type Plain HttpProbe
-	var plain Plain
-	if err := json.Unmarshal(b, &plain); err != nil {
-		return err
-	}
-	if plain.HttpHeaders != nil && len(plain.HttpHeaders) < 1 {
-		return fmt.Errorf("field %s length: must be >= %d", "httpHeaders", 1)
-	}
-	*j = HttpProbe(plain)
-	return nil
+// The metadata for the resource.
+type ResourceMetadata map[string]interface{}
+
+// The parameters used to validate or provision the resource in the environment.
+type ResourceParams map[string]interface{}
+
+// The resource name.
+type Resource struct {
+	// A specialisation of the resource type.
+	Class *string `json:"class,omitempty" yaml:"class,omitempty" mapstructure:"class,omitempty"`
+
+	// The metadata for the resource.
+	Metadata ResourceMetadata `json:"metadata,omitempty" yaml:"metadata,omitempty" mapstructure:"metadata,omitempty"`
+
+	// The parameters used to validate or provision the resource in the environment.
+	Params ResourceParams `json:"params,omitempty" yaml:"params,omitempty" mapstructure:"params,omitempty"`
+
+	// The resource in the target environment.
+	Type string `json:"type" yaml:"type" mapstructure:"type"`
 }
 
-// UnmarshalJSON implements json.Unmarshaler.
-func (j *Resource) UnmarshalJSON(b []byte) error {
-	var raw map[string]interface{}
-	if err := json.Unmarshal(b, &raw); err != nil {
-		return err
-	}
-	if v, ok := raw["type"]; !ok || v == nil {
-		return fmt.Errorf("field type in Resource: required")
-	}
-	type Plain Resource
-	var plain Plain
-	if err := json.Unmarshal(b, &plain); err != nil {
-		return err
-	}
-	*j = Resource(plain)
-	return nil
+// The compute resources limits.
+type ResourcesLimits struct {
+	// The CPU limit.
+	Cpu *string `json:"cpu,omitempty" yaml:"cpu,omitempty" mapstructure:"cpu,omitempty"`
+
+	// The memory limit.
+	Memory *string `json:"memory,omitempty" yaml:"memory,omitempty" mapstructure:"memory,omitempty"`
 }
 
-var enumValues_HttpProbeScheme = []interface{}{
-	"HTTP",
-	"HTTPS",
-}
+// The network port description.
+type ServicePort struct {
+	// The public service port.
+	Port int `json:"port" yaml:"port" mapstructure:"port"`
 
-// UnmarshalJSON implements json.Unmarshaler.
-func (j *HttpProbeScheme) UnmarshalJSON(b []byte) error {
-	var v string
-	if err := json.Unmarshal(b, &v); err != nil {
-		return err
-	}
-	var ok bool
-	for _, expected := range enumValues_HttpProbeScheme {
-		if reflect.DeepEqual(v, expected) {
-			ok = true
-			break
-		}
-	}
-	if !ok {
-		return fmt.Errorf("invalid value (expected one of %#v): %#v", enumValues_HttpProbeScheme, v)
-	}
-	*j = HttpProbeScheme(v)
-	return nil
-}
+	// The transport level protocol. Defaults to TCP.
+	Protocol *string `json:"protocol,omitempty" yaml:"protocol,omitempty" mapstructure:"protocol,omitempty"`
 
-// UnmarshalJSON implements json.Unmarshaler.
-func (j *ContainerVolumesElem) UnmarshalJSON(b []byte) error {
-	var raw map[string]interface{}
-	if err := json.Unmarshal(b, &raw); err != nil {
-		return err
-	}
-	if v, ok := raw["source"]; !ok || v == nil {
-		return fmt.Errorf("field source in ContainerVolumesElem: required")
-	}
-	if v, ok := raw["target"]; !ok || v == nil {
-		return fmt.Errorf("field target in ContainerVolumesElem: required")
-	}
-	type Plain ContainerVolumesElem
-	var plain Plain
-	if err := json.Unmarshal(b, &plain); err != nil {
-		return err
-	}
-	*j = ContainerVolumesElem(plain)
-	return nil
+	// The internal service port. This will default to 'port' if not provided.
+	TargetPort *int `json:"targetPort,omitempty" yaml:"targetPort,omitempty" mapstructure:"targetPort,omitempty"`
 }
 
 // UnmarshalJSON implements json.Unmarshaler.
@@ -324,29 +312,17 @@ func (j *ServicePort) UnmarshalJSON(b []byte) error {
 	return nil
 }
 
-// List of network ports published by the service.
-type WorkloadServicePorts map[string]ServicePort
+// The declared Score Specification version.
+type WorkloadContainers map[string]Container
+
+// The metadata description of the Workload.
+type WorkloadMetadata map[string]interface{}
 
 // The dependencies needed by the Workload.
 type WorkloadResources map[string]Resource
 
-// UnmarshalJSON implements json.Unmarshaler.
-func (j *WorkloadMetadata) UnmarshalJSON(b []byte) error {
-	var raw map[string]interface{}
-	if err := json.Unmarshal(b, &raw); err != nil {
-		return err
-	}
-	if v, ok := raw["name"]; !ok || v == nil {
-		return fmt.Errorf("field name in WorkloadMetadata: required")
-	}
-	type Plain WorkloadMetadata
-	var plain Plain
-	if err := json.Unmarshal(b, &plain); err != nil {
-		return err
-	}
-	*j = WorkloadMetadata(plain)
-	return nil
-}
+// List of network ports published by the service.
+type WorkloadServicePorts map[string]ServicePort
 
 // The service that the workload provides.
 type WorkloadService struct {
@@ -354,25 +330,22 @@ type WorkloadService struct {
 	Ports WorkloadServicePorts `json:"ports,omitempty" yaml:"ports,omitempty" mapstructure:"ports,omitempty"`
 }
 
-// UnmarshalJSON implements json.Unmarshaler.
-func (j *ContainerFilesElem) UnmarshalJSON(b []byte) error {
-	var raw map[string]interface{}
-	if err := json.Unmarshal(b, &raw); err != nil {
-		return err
-	}
-	if v, ok := raw["target"]; !ok || v == nil {
-		return fmt.Errorf("field target in ContainerFilesElem: required")
-	}
-	type Plain ContainerFilesElem
-	var plain Plain
-	if err := json.Unmarshal(b, &plain); err != nil {
-		return err
-	}
-	if plain.Source != nil && len(*plain.Source) < 1 {
-		return fmt.Errorf("field %s length: must be >= %d", "source", 1)
-	}
-	*j = ContainerFilesElem(plain)
-	return nil
+// Score workload specification
+type Workload struct {
+	// The declared Score Specification version.
+	ApiVersion string `json:"apiVersion" yaml:"apiVersion" mapstructure:"apiVersion"`
+
+	// The declared Score Specification version.
+	Containers WorkloadContainers `json:"containers" yaml:"containers" mapstructure:"containers"`
+
+	// The metadata description of the Workload.
+	Metadata WorkloadMetadata `json:"metadata" yaml:"metadata" mapstructure:"metadata"`
+
+	// The dependencies needed by the Workload.
+	Resources WorkloadResources `json:"resources,omitempty" yaml:"resources,omitempty" mapstructure:"resources,omitempty"`
+
+	// The service that the workload provides.
+	Service *WorkloadService `json:"service,omitempty" yaml:"service,omitempty" mapstructure:"service,omitempty"`
 }
 
 // UnmarshalJSON implements json.Unmarshaler.
