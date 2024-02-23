@@ -85,7 +85,7 @@ containers:
     - source: ${resources.data}
       path: sub/path
       target: /mnt/data
-      read_only: true
+      readOnly: true
     resources:
       limits:
         memory: "128Mi"
@@ -155,7 +155,7 @@ resources:
 							{
 								Target:   "/etc/hello-world/config.yaml",
 								Mode:     stringRef("666"),
-								Content:  "---\n${resources.env.APP_CONFIG}\n",
+								Content:  stringRef("---\n${resources.env.APP_CONFIG}\n"),
 								NoExpand: boolRef(true),
 							},
 						},
@@ -178,17 +178,17 @@ resources:
 							},
 						},
 						LivenessProbe: &types.ContainerProbe{
-							HttpGet: &types.HttpProbe{
+							HttpGet: types.HttpProbe{
 								Path: "/alive",
-								Port: intRef(8080),
+								Port: 8080,
 							},
 						},
 						ReadinessProbe: &types.ContainerProbe{
-							HttpGet: &types.HttpProbe{
+							HttpGet: types.HttpProbe{
 								Host:   stringRef("1.1.1.1"),
 								Scheme: schemeRef(types.HttpProbeSchemeHTTPS),
 								Path:   "/ready",
-								Port:   intRef(8080),
+								Port:   8080,
 								HttpHeaders: []types.HttpProbeHttpHeadersElem{
 									{Name: stringRef("Custom-Header"), Value: stringRef("Awesome")},
 								},

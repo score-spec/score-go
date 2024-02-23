@@ -6,222 +6,6 @@ import "encoding/json"
 import "fmt"
 import "reflect"
 
-// The container name.
-type Container struct {
-	// If specified, overrides container entry point arguments.
-	Args []string `json:"args,omitempty" yaml:"args,omitempty" mapstructure:"args,omitempty"`
-
-	// If specified, overrides container entry point.
-	Command []string `json:"command,omitempty" yaml:"command,omitempty" mapstructure:"command,omitempty"`
-
-	// The extra files to mount.
-	Files []ContainerFilesElem `json:"files,omitempty" yaml:"files,omitempty" mapstructure:"files,omitempty"`
-
-	// The image name and tag.
-	Image string `json:"image" yaml:"image" mapstructure:"image"`
-
-	// The liveness probe for the container.
-	LivenessProbe *ContainerProbe `json:"livenessProbe,omitempty" yaml:"livenessProbe,omitempty" mapstructure:"livenessProbe,omitempty"`
-
-	// The readiness probe for the container.
-	ReadinessProbe *ContainerProbe `json:"readinessProbe,omitempty" yaml:"readinessProbe,omitempty" mapstructure:"readinessProbe,omitempty"`
-
-	// The compute resources for the container.
-	Resources *ContainerResources `json:"resources,omitempty" yaml:"resources,omitempty" mapstructure:"resources,omitempty"`
-
-	// The environment variables for the container.
-	Variables ContainerVariables `json:"variables,omitempty" yaml:"variables,omitempty" mapstructure:"variables,omitempty"`
-
-	// The volumes to mount.
-	Volumes []ContainerVolumesElem `json:"volumes,omitempty" yaml:"volumes,omitempty" mapstructure:"volumes,omitempty"`
-}
-
-type ContainerFilesElem struct {
-	// The inline content for the file.
-	Content interface{} `json:"content,omitempty" yaml:"content,omitempty" mapstructure:"content,omitempty"`
-
-	// The file access mode.
-	Mode *string `json:"mode,omitempty" yaml:"mode,omitempty" mapstructure:"mode,omitempty"`
-
-	// If set to true, the placeholders expansion will not occur in the contents of
-	// the file.
-	NoExpand *bool `json:"noExpand,omitempty" yaml:"noExpand,omitempty" mapstructure:"noExpand,omitempty"`
-
-	// The relative or absolute path to the content file.
-	Source *string `json:"source,omitempty" yaml:"source,omitempty" mapstructure:"source,omitempty"`
-
-	// The file path and name.
-	Target string `json:"target" yaml:"target" mapstructure:"target"`
-}
-
-type ContainerProbe struct {
-	// HttpGet corresponds to the JSON schema field "httpGet".
-	HttpGet *HttpProbe `json:"httpGet,omitempty" yaml:"httpGet,omitempty" mapstructure:"httpGet,omitempty"`
-}
-
-// The compute resources for the container.
-type ContainerResources struct {
-	// The maximum allowed resources for the container.
-	Limits *ResourcesLimits `json:"limits,omitempty" yaml:"limits,omitempty" mapstructure:"limits,omitempty"`
-
-	// The minimal resources required for the container.
-	Requests *ResourcesLimits `json:"requests,omitempty" yaml:"requests,omitempty" mapstructure:"requests,omitempty"`
-}
-
-// The environment variables for the container.
-type ContainerVariables map[string]string
-
-type ContainerVolumesElem struct {
-	// An optional sub path in the volume.
-	Path *string `json:"path,omitempty" yaml:"path,omitempty" mapstructure:"path,omitempty"`
-
-	// Indicates if the volume should be mounted in a read-only mode.
-	ReadOnly *bool `json:"read_only,omitempty" yaml:"read_only,omitempty" mapstructure:"read_only,omitempty"`
-
-	// The external volume reference.
-	Source string `json:"source" yaml:"source" mapstructure:"source"`
-
-	// The target mount on the container.
-	Target string `json:"target" yaml:"target" mapstructure:"target"`
-}
-
-// An HTTP probe details.
-type HttpProbe struct {
-	// Host name to connect to. Defaults to the container IP.
-	Host *string `json:"host,omitempty" yaml:"host,omitempty" mapstructure:"host,omitempty"`
-
-	// Additional HTTP headers to send with the request
-	HttpHeaders []HttpProbeHttpHeadersElem `json:"httpHeaders,omitempty" yaml:"httpHeaders,omitempty" mapstructure:"httpHeaders,omitempty"`
-
-	// The path of the HTTP probe endpoint.
-	Path string `json:"path" yaml:"path" mapstructure:"path"`
-
-	// The path of the HTTP probe endpoint.
-	Port *int `json:"port,omitempty" yaml:"port,omitempty" mapstructure:"port,omitempty"`
-
-	// Scheme to use for connecting to the host (HTTP or HTTPS). Defaults to HTTP.
-	Scheme *HttpProbeScheme `json:"scheme,omitempty" yaml:"scheme,omitempty" mapstructure:"scheme,omitempty"`
-}
-
-type HttpProbeHttpHeadersElem struct {
-	// The HTTP header name.
-	Name *string `json:"name,omitempty" yaml:"name,omitempty" mapstructure:"name,omitempty"`
-
-	// The HTTP header value.
-	Value *string `json:"value,omitempty" yaml:"value,omitempty" mapstructure:"value,omitempty"`
-}
-
-type HttpProbeScheme string
-
-const HttpProbeSchemeHTTP HttpProbeScheme = "HTTP"
-const HttpProbeSchemeHTTPS HttpProbeScheme = "HTTPS"
-
-// UnmarshalJSON implements json.Unmarshaler.
-func (j *Resource) UnmarshalJSON(b []byte) error {
-	var raw map[string]interface{}
-	if err := json.Unmarshal(b, &raw); err != nil {
-		return err
-	}
-	if v, ok := raw["type"]; !ok || v == nil {
-		return fmt.Errorf("field type in Resource: required")
-	}
-	type Plain Resource
-	var plain Plain
-	if err := json.Unmarshal(b, &plain); err != nil {
-		return err
-	}
-	*j = Resource(plain)
-	return nil
-}
-
-// UnmarshalJSON implements json.Unmarshaler.
-func (j *HttpProbe) UnmarshalJSON(b []byte) error {
-	var raw map[string]interface{}
-	if err := json.Unmarshal(b, &raw); err != nil {
-		return err
-	}
-	if v, ok := raw["path"]; !ok || v == nil {
-		return fmt.Errorf("field path in HttpProbe: required")
-	}
-	type Plain HttpProbe
-	var plain Plain
-	if err := json.Unmarshal(b, &plain); err != nil {
-		return err
-	}
-	if plain.HttpHeaders != nil && len(plain.HttpHeaders) < 1 {
-		return fmt.Errorf("field %s length: must be >= %d", "httpHeaders", 1)
-	}
-	*j = HttpProbe(plain)
-	return nil
-}
-
-// UnmarshalJSON implements json.Unmarshaler.
-func (j *HttpProbeScheme) UnmarshalJSON(b []byte) error {
-	var v string
-	if err := json.Unmarshal(b, &v); err != nil {
-		return err
-	}
-	var ok bool
-	for _, expected := range enumValues_HttpProbeScheme {
-		if reflect.DeepEqual(v, expected) {
-			ok = true
-			break
-		}
-	}
-	if !ok {
-		return fmt.Errorf("invalid value (expected one of %#v): %#v", enumValues_HttpProbeScheme, v)
-	}
-	*j = HttpProbeScheme(v)
-	return nil
-}
-
-var enumValues_HttpProbeScheme = []interface{}{
-	"HTTP",
-	"HTTPS",
-}
-
-// UnmarshalJSON implements json.Unmarshaler.
-func (j *ContainerVolumesElem) UnmarshalJSON(b []byte) error {
-	var raw map[string]interface{}
-	if err := json.Unmarshal(b, &raw); err != nil {
-		return err
-	}
-	if v, ok := raw["source"]; !ok || v == nil {
-		return fmt.Errorf("field source in ContainerVolumesElem: required")
-	}
-	if v, ok := raw["target"]; !ok || v == nil {
-		return fmt.Errorf("field target in ContainerVolumesElem: required")
-	}
-	type Plain ContainerVolumesElem
-	var plain Plain
-	if err := json.Unmarshal(b, &plain); err != nil {
-		return err
-	}
-	*j = ContainerVolumesElem(plain)
-	return nil
-}
-
-// UnmarshalJSON implements json.Unmarshaler.
-func (j *ContainerFilesElem) UnmarshalJSON(b []byte) error {
-	var raw map[string]interface{}
-	if err := json.Unmarshal(b, &raw); err != nil {
-		return err
-	}
-	if v, ok := raw["target"]; !ok || v == nil {
-		return fmt.Errorf("field target in ContainerFilesElem: required")
-	}
-	type Plain ContainerFilesElem
-	var plain Plain
-	if err := json.Unmarshal(b, &plain); err != nil {
-		return err
-	}
-	if plain.Source != nil && len(*plain.Source) < 1 {
-		return fmt.Errorf("field %s length: must be >= %d", "source", 1)
-	}
-	*j = ContainerFilesElem(plain)
-	return nil
-}
-
 // UnmarshalJSON implements json.Unmarshaler.
 func (j *Container) UnmarshalJSON(b []byte) error {
 	var raw map[string]interface{}
@@ -236,50 +20,11 @@ func (j *Container) UnmarshalJSON(b []byte) error {
 	if err := json.Unmarshal(b, &plain); err != nil {
 		return err
 	}
-	if plain.Args != nil && len(plain.Args) < 1 {
-		return fmt.Errorf("field %s length: must be >= %d", "args", 1)
-	}
-	if plain.Command != nil && len(plain.Command) < 1 {
-		return fmt.Errorf("field %s length: must be >= %d", "command", 1)
-	}
-	if plain.Files != nil && len(plain.Files) < 1 {
-		return fmt.Errorf("field %s length: must be >= %d", "files", 1)
-	}
-	if plain.Volumes != nil && len(plain.Volumes) < 1 {
-		return fmt.Errorf("field %s length: must be >= %d", "volumes", 1)
+	if len(plain.Image) < 1 {
+		return fmt.Errorf("field %s length: must be >= %d", "image", 1)
 	}
 	*j = Container(plain)
 	return nil
-}
-
-// The metadata for the resource.
-type ResourceMetadata map[string]interface{}
-
-// The parameters used to validate or provision the resource in the environment.
-type ResourceParams map[string]interface{}
-
-// The resource name.
-type Resource struct {
-	// A specialisation of the resource type.
-	Class *string `json:"class,omitempty" yaml:"class,omitempty" mapstructure:"class,omitempty"`
-
-	// The metadata for the resource.
-	Metadata ResourceMetadata `json:"metadata,omitempty" yaml:"metadata,omitempty" mapstructure:"metadata,omitempty"`
-
-	// The parameters used to validate or provision the resource in the environment.
-	Params ResourceParams `json:"params,omitempty" yaml:"params,omitempty" mapstructure:"params,omitempty"`
-
-	// The resource in the target environment.
-	Type string `json:"type" yaml:"type" mapstructure:"type"`
-}
-
-// The compute resources limits.
-type ResourcesLimits struct {
-	// The CPU limit.
-	Cpu *string `json:"cpu,omitempty" yaml:"cpu,omitempty" mapstructure:"cpu,omitempty"`
-
-	// The memory limit.
-	Memory *string `json:"memory,omitempty" yaml:"memory,omitempty" mapstructure:"memory,omitempty"`
 }
 
 // The network port description.
@@ -288,64 +33,36 @@ type ServicePort struct {
 	Port int `json:"port" yaml:"port" mapstructure:"port"`
 
 	// The transport level protocol. Defaults to TCP.
-	Protocol *string `json:"protocol,omitempty" yaml:"protocol,omitempty" mapstructure:"protocol,omitempty"`
+	Protocol *ServicePortProtocol `json:"protocol,omitempty" yaml:"protocol,omitempty" mapstructure:"protocol,omitempty"`
 
 	// The internal service port. This will default to 'port' if not provided.
 	TargetPort *int `json:"targetPort,omitempty" yaml:"targetPort,omitempty" mapstructure:"targetPort,omitempty"`
 }
 
-// UnmarshalJSON implements json.Unmarshaler.
-func (j *ServicePort) UnmarshalJSON(b []byte) error {
-	var raw map[string]interface{}
-	if err := json.Unmarshal(b, &raw); err != nil {
-		return err
-	}
-	if v, ok := raw["port"]; !ok || v == nil {
-		return fmt.Errorf("field port in ServicePort: required")
-	}
-	type Plain ServicePort
-	var plain Plain
-	if err := json.Unmarshal(b, &plain); err != nil {
-		return err
-	}
-	*j = ServicePort(plain)
-	return nil
+type HttpProbeHttpHeadersElem struct {
+	// The HTTP header name.
+	Name *string `json:"name,omitempty" yaml:"name,omitempty" mapstructure:"name,omitempty"`
+
+	// The HTTP header value.
+	Value *string `json:"value,omitempty" yaml:"value,omitempty" mapstructure:"value,omitempty"`
 }
 
-// The declared Score Specification version.
-type WorkloadContainers map[string]Container
+type ContainerFilesElem struct {
+	// The inline content for the file.
+	Content *string `json:"content,omitempty" yaml:"content,omitempty" mapstructure:"content,omitempty"`
 
-// The metadata description of the Workload.
-type WorkloadMetadata map[string]interface{}
+	// The optional file access mode in octal encoding. For example 0600.
+	Mode *string `json:"mode,omitempty" yaml:"mode,omitempty" mapstructure:"mode,omitempty"`
 
-// The dependencies needed by the Workload.
-type WorkloadResources map[string]Resource
+	// If set to true, the placeholders expansion will not occur in the contents of
+	// the file.
+	NoExpand *bool `json:"noExpand,omitempty" yaml:"noExpand,omitempty" mapstructure:"noExpand,omitempty"`
 
-// List of network ports published by the service.
-type WorkloadServicePorts map[string]ServicePort
+	// The relative or absolute path to the content file.
+	Source *string `json:"source,omitempty" yaml:"source,omitempty" mapstructure:"source,omitempty"`
 
-// The service that the workload provides.
-type WorkloadService struct {
-	// List of network ports published by the service.
-	Ports WorkloadServicePorts `json:"ports,omitempty" yaml:"ports,omitempty" mapstructure:"ports,omitempty"`
-}
-
-// Score workload specification
-type Workload struct {
-	// The declared Score Specification version.
-	ApiVersion string `json:"apiVersion" yaml:"apiVersion" mapstructure:"apiVersion"`
-
-	// The declared Score Specification version.
-	Containers WorkloadContainers `json:"containers" yaml:"containers" mapstructure:"containers"`
-
-	// The metadata description of the Workload.
-	Metadata WorkloadMetadata `json:"metadata" yaml:"metadata" mapstructure:"metadata"`
-
-	// The dependencies needed by the Workload.
-	Resources WorkloadResources `json:"resources,omitempty" yaml:"resources,omitempty" mapstructure:"resources,omitempty"`
-
-	// The service that the workload provides.
-	Service *WorkloadService `json:"service,omitempty" yaml:"service,omitempty" mapstructure:"service,omitempty"`
+	// The file path to expose in the container.
+	Target string `json:"target" yaml:"target" mapstructure:"target"`
 }
 
 // UnmarshalJSON implements json.Unmarshaler.
@@ -370,4 +87,356 @@ func (j *Workload) UnmarshalJSON(b []byte) error {
 	}
 	*j = Workload(plain)
 	return nil
+}
+
+// UnmarshalJSON implements json.Unmarshaler.
+func (j *HttpProbeScheme) UnmarshalJSON(b []byte) error {
+	var v string
+	if err := json.Unmarshal(b, &v); err != nil {
+		return err
+	}
+	var ok bool
+	for _, expected := range enumValues_HttpProbeScheme {
+		if reflect.DeepEqual(v, expected) {
+			ok = true
+			break
+		}
+	}
+	if !ok {
+		return fmt.Errorf("invalid value (expected one of %#v): %#v", enumValues_HttpProbeScheme, v)
+	}
+	*j = HttpProbeScheme(v)
+	return nil
+}
+
+const HttpProbeSchemeHTTP HttpProbeScheme = "HTTP"
+const HttpProbeSchemeHTTPS HttpProbeScheme = "HTTPS"
+
+// An HTTP probe details.
+type HttpProbe struct {
+	// Host name to connect to. Defaults to the workload IP. The is equivalent to a
+	// Host HTTP header.
+	Host *string `json:"host,omitempty" yaml:"host,omitempty" mapstructure:"host,omitempty"`
+
+	// Additional HTTP headers to send with the request
+	HttpHeaders []HttpProbeHttpHeadersElem `json:"httpHeaders,omitempty" yaml:"httpHeaders,omitempty" mapstructure:"httpHeaders,omitempty"`
+
+	// The path to access on the HTTP server.
+	Path string `json:"path" yaml:"path" mapstructure:"path"`
+
+	// The port to access on the workload.
+	Port int `json:"port" yaml:"port" mapstructure:"port"`
+
+	// Scheme to use for connecting to the host (HTTP or HTTPS). Defaults to HTTP.
+	Scheme *HttpProbeScheme `json:"scheme,omitempty" yaml:"scheme,omitempty" mapstructure:"scheme,omitempty"`
+}
+
+// UnmarshalJSON implements json.Unmarshaler.
+func (j *HttpProbe) UnmarshalJSON(b []byte) error {
+	var raw map[string]interface{}
+	if err := json.Unmarshal(b, &raw); err != nil {
+		return err
+	}
+	if v, ok := raw["path"]; !ok || v == nil {
+		return fmt.Errorf("field path in HttpProbe: required")
+	}
+	if v, ok := raw["port"]; !ok || v == nil {
+		return fmt.Errorf("field port in HttpProbe: required")
+	}
+	type Plain HttpProbe
+	var plain Plain
+	if err := json.Unmarshal(b, &plain); err != nil {
+		return err
+	}
+	*j = HttpProbe(plain)
+	return nil
+}
+
+type ContainerProbe struct {
+	// HttpGet corresponds to the JSON schema field "httpGet".
+	HttpGet HttpProbe `json:"httpGet" yaml:"httpGet" mapstructure:"httpGet"`
+}
+
+// UnmarshalJSON implements json.Unmarshaler.
+func (j *ContainerProbe) UnmarshalJSON(b []byte) error {
+	var raw map[string]interface{}
+	if err := json.Unmarshal(b, &raw); err != nil {
+		return err
+	}
+	if v, ok := raw["httpGet"]; !ok || v == nil {
+		return fmt.Errorf("field httpGet in ContainerProbe: required")
+	}
+	type Plain ContainerProbe
+	var plain Plain
+	if err := json.Unmarshal(b, &plain); err != nil {
+		return err
+	}
+	*j = ContainerProbe(plain)
+	return nil
+}
+
+// The compute and memory resource limits.
+type ResourcesLimits struct {
+	// The CPU limit as whole or fractional CPUs. 'm' indicates milli-CPUs. For
+	// example 2 or 125m.
+	Cpu *string `json:"cpu,omitempty" yaml:"cpu,omitempty" mapstructure:"cpu,omitempty"`
+
+	// The memory limit in bytes with optional unit specifier. For example 125M or
+	// 1Gi.
+	Memory *string `json:"memory,omitempty" yaml:"memory,omitempty" mapstructure:"memory,omitempty"`
+}
+
+// The compute resources for the container.
+type ContainerResources struct {
+	// The maximum allowed resources for the container.
+	Limits *ResourcesLimits `json:"limits,omitempty" yaml:"limits,omitempty" mapstructure:"limits,omitempty"`
+
+	// The minimal resources required for the container.
+	Requests *ResourcesLimits `json:"requests,omitempty" yaml:"requests,omitempty" mapstructure:"requests,omitempty"`
+}
+
+// The environment variables for the container.
+type ContainerVariables map[string]string
+
+type ContainerVolumesElem struct {
+	// An optional sub path in the volume.
+	Path *string `json:"path,omitempty" yaml:"path,omitempty" mapstructure:"path,omitempty"`
+
+	// Indicates if the volume should be mounted in a read-only mode.
+	ReadOnly *bool `json:"readOnly,omitempty" yaml:"readOnly,omitempty" mapstructure:"readOnly,omitempty"`
+
+	// The external volume reference.
+	Source string `json:"source" yaml:"source" mapstructure:"source"`
+
+	// The target mount on the container.
+	Target string `json:"target" yaml:"target" mapstructure:"target"`
+}
+
+// UnmarshalJSON implements json.Unmarshaler.
+func (j *ContainerVolumesElem) UnmarshalJSON(b []byte) error {
+	var raw map[string]interface{}
+	if err := json.Unmarshal(b, &raw); err != nil {
+		return err
+	}
+	if v, ok := raw["source"]; !ok || v == nil {
+		return fmt.Errorf("field source in ContainerVolumesElem: required")
+	}
+	if v, ok := raw["target"]; !ok || v == nil {
+		return fmt.Errorf("field target in ContainerVolumesElem: required")
+	}
+	type Plain ContainerVolumesElem
+	var plain Plain
+	if err := json.Unmarshal(b, &plain); err != nil {
+		return err
+	}
+	*j = ContainerVolumesElem(plain)
+	return nil
+}
+
+// The specification of a Container within the Workload.
+type Container struct {
+	// If specified, overrides the arguments passed to the container entrypoint.
+	Args []string `json:"args,omitempty" yaml:"args,omitempty" mapstructure:"args,omitempty"`
+
+	// If specified, overrides the entrypoint defined in the container image.
+	Command []string `json:"command,omitempty" yaml:"command,omitempty" mapstructure:"command,omitempty"`
+
+	// The extra files to mount into the container.
+	Files []ContainerFilesElem `json:"files,omitempty" yaml:"files,omitempty" mapstructure:"files,omitempty"`
+
+	// The container image name and tag.
+	Image string `json:"image" yaml:"image" mapstructure:"image"`
+
+	// The liveness probe for the container.
+	LivenessProbe *ContainerProbe `json:"livenessProbe,omitempty" yaml:"livenessProbe,omitempty" mapstructure:"livenessProbe,omitempty"`
+
+	// The readiness probe for the container.
+	ReadinessProbe *ContainerProbe `json:"readinessProbe,omitempty" yaml:"readinessProbe,omitempty" mapstructure:"readinessProbe,omitempty"`
+
+	// The compute resources for the container.
+	Resources *ContainerResources `json:"resources,omitempty" yaml:"resources,omitempty" mapstructure:"resources,omitempty"`
+
+	// The environment variables for the container.
+	Variables ContainerVariables `json:"variables,omitempty" yaml:"variables,omitempty" mapstructure:"variables,omitempty"`
+
+	// The volumes to mount.
+	Volumes []ContainerVolumesElem `json:"volumes,omitempty" yaml:"volumes,omitempty" mapstructure:"volumes,omitempty"`
+}
+
+type HttpProbeScheme string
+
+// The metadata for the Resource.
+type ResourceMetadata map[string]interface{}
+
+// The set of Resources associated with this Workload.
+type Resource struct {
+	// A specialisation of the Resource type.
+	Class *string `json:"class,omitempty" yaml:"class,omitempty" mapstructure:"class,omitempty"`
+
+	// The metadata for the Resource.
+	Metadata ResourceMetadata `json:"metadata,omitempty" yaml:"metadata,omitempty" mapstructure:"metadata,omitempty"`
+
+	// Optional parameters used to provision the Resource in the environment.
+	Params ResourceParams `json:"params,omitempty" yaml:"params,omitempty" mapstructure:"params,omitempty"`
+
+	// The Resource type. This should be a type supported by the Score implementations
+	// being used.
+	Type string `json:"type" yaml:"type" mapstructure:"type"`
+}
+
+// Optional parameters used to provision the Resource in the environment.
+type ResourceParams map[string]interface{}
+
+// UnmarshalJSON implements json.Unmarshaler.
+func (j *Resource) UnmarshalJSON(b []byte) error {
+	var raw map[string]interface{}
+	if err := json.Unmarshal(b, &raw); err != nil {
+		return err
+	}
+	if v, ok := raw["type"]; !ok || v == nil {
+		return fmt.Errorf("field type in Resource: required")
+	}
+	type Plain Resource
+	var plain Plain
+	if err := json.Unmarshal(b, &plain); err != nil {
+		return err
+	}
+	if plain.Class != nil && len(*plain.Class) < 2 {
+		return fmt.Errorf("field %s length: must be >= %d", "class", 2)
+	}
+	if plain.Class != nil && len(*plain.Class) > 63 {
+		return fmt.Errorf("field %s length: must be <= %d", "class", 63)
+	}
+	if len(plain.Type) < 2 {
+		return fmt.Errorf("field %s length: must be >= %d", "type", 2)
+	}
+	if len(plain.Type) > 63 {
+		return fmt.Errorf("field %s length: must be <= %d", "type", 63)
+	}
+	*j = Resource(plain)
+	return nil
+}
+
+// UnmarshalJSON implements json.Unmarshaler.
+func (j *ServicePort) UnmarshalJSON(b []byte) error {
+	var raw map[string]interface{}
+	if err := json.Unmarshal(b, &raw); err != nil {
+		return err
+	}
+	if v, ok := raw["port"]; !ok || v == nil {
+		return fmt.Errorf("field port in ServicePort: required")
+	}
+	type Plain ServicePort
+	var plain Plain
+	if err := json.Unmarshal(b, &plain); err != nil {
+		return err
+	}
+	*j = ServicePort(plain)
+	return nil
+}
+
+// UnmarshalJSON implements json.Unmarshaler.
+func (j *ContainerFilesElem) UnmarshalJSON(b []byte) error {
+	var raw map[string]interface{}
+	if err := json.Unmarshal(b, &raw); err != nil {
+		return err
+	}
+	if v, ok := raw["target"]; !ok || v == nil {
+		return fmt.Errorf("field target in ContainerFilesElem: required")
+	}
+	type Plain ContainerFilesElem
+	var plain Plain
+	if err := json.Unmarshal(b, &plain); err != nil {
+		return err
+	}
+	if plain.Source != nil && len(*plain.Source) < 1 {
+		return fmt.Errorf("field %s length: must be >= %d", "source", 1)
+	}
+	if len(plain.Target) < 1 {
+		return fmt.Errorf("field %s length: must be >= %d", "target", 1)
+	}
+	*j = ContainerFilesElem(plain)
+	return nil
+}
+
+// UnmarshalJSON implements json.Unmarshaler.
+func (j *ServicePortProtocol) UnmarshalJSON(b []byte) error {
+	var v string
+	if err := json.Unmarshal(b, &v); err != nil {
+		return err
+	}
+	var ok bool
+	for _, expected := range enumValues_ServicePortProtocol {
+		if reflect.DeepEqual(v, expected) {
+			ok = true
+			break
+		}
+	}
+	if !ok {
+		return fmt.Errorf("invalid value (expected one of %#v): %#v", enumValues_ServicePortProtocol, v)
+	}
+	*j = ServicePortProtocol(v)
+	return nil
+}
+
+type ServicePortProtocol string
+
+const ServicePortProtocolTCP ServicePortProtocol = "TCP"
+const ServicePortProtocolUDP ServicePortProtocol = "UDP"
+
+// Score workload specification
+type Workload struct {
+	// The declared Score Specification version.
+	ApiVersion string `json:"apiVersion" yaml:"apiVersion" mapstructure:"apiVersion"`
+
+	// The declared Score Specification version. The container name must be a valid
+	// RFC1123 Label Name of up to 63 characters, including a-z, 0-9, '-' but may not
+	// start or end with '-'.
+	Containers WorkloadContainers `json:"containers" yaml:"containers" mapstructure:"containers"`
+
+	// The metadata description of the Workload.
+	Metadata WorkloadMetadata `json:"metadata" yaml:"metadata" mapstructure:"metadata"`
+
+	// The Resource dependencies needed by the Workload. The resource name must be a
+	// valid RFC1123 Label Name of up to 63 characters, including a-z, 0-9, '-' but
+	// may not start or end with '-'.
+	Resources WorkloadResources `json:"resources,omitempty" yaml:"resources,omitempty" mapstructure:"resources,omitempty"`
+
+	// The service that the workload provides.
+	Service *WorkloadService `json:"service,omitempty" yaml:"service,omitempty" mapstructure:"service,omitempty"`
+}
+
+// The declared Score Specification version. The container name must be a valid
+// RFC1123 Label Name of up to 63 characters, including a-z, 0-9, '-' but may not
+// start or end with '-'.
+type WorkloadContainers map[string]Container
+
+// The metadata description of the Workload.
+type WorkloadMetadata map[string]interface{}
+
+// The Resource dependencies needed by the Workload. The resource name must be a
+// valid RFC1123 Label Name of up to 63 characters, including a-z, 0-9, '-' but may
+// not start or end with '-'.
+type WorkloadResources map[string]Resource
+
+// The service that the workload provides.
+type WorkloadService struct {
+	// The set of named network ports published by the service. The service name must
+	// be a valid RFC1123 Label Name of up to 63 characters, including a-z, 0-9, '-'
+	// but may not start or end with '-'.
+	Ports WorkloadServicePorts `json:"ports,omitempty" yaml:"ports,omitempty" mapstructure:"ports,omitempty"`
+}
+
+// The set of named network ports published by the service. The service name must
+// be a valid RFC1123 Label Name of up to 63 characters, including a-z, 0-9, '-'
+// but may not start or end with '-'.
+type WorkloadServicePorts map[string]ServicePort
+
+var enumValues_HttpProbeScheme = []interface{}{
+	"HTTP",
+	"HTTPS",
+}
+var enumValues_ServicePortProtocol = []interface{}{
+	"TCP",
+	"UDP",
 }

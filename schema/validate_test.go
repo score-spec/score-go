@@ -44,7 +44,7 @@ containers:
     - source: ${resources.data}
       path: sub/path
       target: /mnt/data
-      read_only: true
+      readOnly: true
     resources:
       limits:
         memory: "128Mi"
@@ -122,7 +122,7 @@ containers:
     - source: ${resources.data}
       path: sub/path
       target: /mnt/data
-      read_only: true
+      readOnly: true
     resources:
       limits:
         memory: "128Mi"
@@ -207,7 +207,7 @@ func TestValidateJson(t *testing.T) {
           "source": "${resources.data}",
           "path": "sub/path",
           "target": "/mnt/data",
-          "read_only": true
+          "readOnly": true
         }
       ],
       "resources": {
@@ -315,7 +315,7 @@ func TestValidateJson_Error(t *testing.T) {
           "source": "${resources.data}",
           "path": "sub/path",
           "target": "/mnt/data",
-          "read_only": true
+          "readOnly": true
         }
       ],
       "resources": {
