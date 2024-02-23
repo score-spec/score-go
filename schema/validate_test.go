@@ -12,6 +12,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"gopkg.in/yaml.v3"
 )
 
 func TestValidateYaml(t *testing.T) {
@@ -397,4 +398,44 @@ containers:
 
 	err := ValidateYaml(bytes.NewReader(source))
 	assert.EqualError(t, err, "jsonschema: '/metadata' does not validate with https://score.dev/schemas/score#/properties/metadata/required: missing properties: 'name'")
+}
+
+func TestApplyCommonUpgradeTransforms(t *testing.T) {
+	var source = []byte(`
+---
+apiVersion: score.dev/v1b1
+metadata:
+  name: hello-world
+containers:
+  hello:
+    image: busybox
+    files:
+    - target: /etc/hello-world/config.yaml
+      mode: "666"
+      content:
+      - line1
+      - line2
+    volumes:
+    - source: ${resources.data}
+      target: /mnt/data
+      read_only: true
+`)
+
+	var obj map[string]interface{}
+	var dec = yaml.NewDecoder(bytes.NewReader(source))
+	assert.NoError(t, dec.Decode(&obj))
+
+	// first validation attempt should fail
+	assert.Error(t, Validate(obj))
+
+	// apply transforms
+	changes, err := ApplyCommonUpgradeTransforms(obj)
+	assert.NoError(t, err)
+	assert.Len(t, changes, 2)
+
+	// second validation attempt should succeed
+	assert.NoError(t, Validate(obj))
+
+	assert.Equal(t, "line1\nline2", obj["containers"].(map[string]interface{})["hello"].(map[string]interface{})["files"].([]interface{})[0].(map[string]interface{})["content"])
+	assert.Equal(t, true, obj["containers"].(map[string]interface{})["hello"].(map[string]interface{})["volumes"].([]interface{})[0].(map[string]interface{})["readOnly"])
 }
