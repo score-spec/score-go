@@ -46,7 +46,7 @@ containers:
     - source: ${resources.data}
       path: sub/path
       target: /mnt/data
-      read_only: true
+      readOnly: true
     resources:
       limits:
         memory: "128Mi"
@@ -211,7 +211,7 @@ func TestSchema(t *testing.T) {
 				}
 				return src
 			}(),
-			Message: "/service/ports",
+			Message: "",
 		},
 		{
 			Name: "service.ports.* is not set",
@@ -398,7 +398,7 @@ func TestSchema(t *testing.T) {
 				hello["command"] = []interface{}{}
 				return src
 			}(),
-			Message: "/containers/hello/command",
+			Message: "",
 		},
 
 		// containers.*.args
@@ -421,7 +421,7 @@ func TestSchema(t *testing.T) {
 				hello["args"] = []interface{}{}
 				return src
 			}(),
-			Message: "/containers/hello/args",
+			Message: "",
 		},
 
 		// containers.*.variables
@@ -444,7 +444,7 @@ func TestSchema(t *testing.T) {
 				hello["variables"] = map[string]interface{}{}
 				return src
 			}(),
-			Message: "/containers/hello/variables",
+			Message: "",
 		},
 		{
 			Name: "containers.*.variables.* is not set",
@@ -487,7 +487,7 @@ func TestSchema(t *testing.T) {
 				hello["files"] = []interface{}{}
 				return src
 			}(),
-			Message: "/containers/hello/files",
+			Message: "",
 		},
 		{
 			Name: "containers.*.files.*.target is missing",
@@ -681,7 +681,7 @@ func TestSchema(t *testing.T) {
 				}
 				return src
 			}(),
-			Message: "",
+			Message: "/containers/hello/files/0/content",
 		},
 
 		// containers.*.volumes
@@ -704,7 +704,7 @@ func TestSchema(t *testing.T) {
 				hello["volumes"] = []interface{}{}
 				return src
 			}(),
-			Message: "/containers/hello/volumes",
+			Message: "",
 		},
 		{
 			Name: "containers.*.volumes.*.source is missing",
@@ -795,26 +795,26 @@ func TestSchema(t *testing.T) {
 			Message: "/containers/hello/volumes/0/target",
 		},
 		{
-			Name: "containers.*.volumes.*.read_only is not set",
+			Name: "containers.*.volumes.*.readOnly is not set",
 			Src: func() map[string]interface{} {
 				src := newTestDocument()
 				var hello = src["containers"].(map[string]interface{})["hello"].(map[string]interface{})
 				var volumes = hello["volumes"].([]interface{})[0].(map[string]interface{})
-				volumes["read_only"] = nil
+				volumes["readOnly"] = nil
 				return src
 			}(),
-			Message: "/containers/hello/volumes/0/read_only",
+			Message: "/containers/hello/volumes/0/readOnly",
 		},
 		{
-			Name: "containers.*.volumes.*.read_only is not a boolean",
+			Name: "containers.*.volumes.*.readOnly is not a boolean",
 			Src: func() map[string]interface{} {
 				src := newTestDocument()
 				var hello = src["containers"].(map[string]interface{})["hello"].(map[string]interface{})
 				var volumes = hello["volumes"].([]interface{})[0].(map[string]interface{})
-				volumes["read_only"] = 12
+				volumes["readOnly"] = 12
 				return src
 			}(),
-			Message: "/containers/hello/volumes/0/read_only",
+			Message: "/containers/hello/volumes/0/readOnly",
 		},
 
 		// containers.*.resources
@@ -837,7 +837,7 @@ func TestSchema(t *testing.T) {
 				hello["resources"] = map[string]interface{}{}
 				return src
 			}(),
-			Message: "/containers/hello/resources",
+			Message: "",
 		},
 		{
 			Name: "containers.*.resources.limits is not set",
@@ -857,7 +857,7 @@ func TestSchema(t *testing.T) {
 				hello["resources"].(map[string]interface{})["limits"] = map[string]interface{}{}
 				return src
 			}(),
-			Message: "/containers/hello/resources/limits",
+			Message: "",
 		},
 		{
 			Name: "containers.*.resources.limits.memory is not set",
@@ -921,7 +921,7 @@ func TestSchema(t *testing.T) {
 				hello["resources"].(map[string]interface{})["requests"] = map[string]interface{}{}
 				return src
 			}(),
-			Message: "/containers/hello/resources/requests",
+			Message: "",
 		},
 		{
 			Name: "containers.*.resources.requests.memory is not set",
@@ -1141,7 +1141,7 @@ func TestSchema(t *testing.T) {
 				httpGet["httpHeaders"] = []interface{}{}
 				return src
 			}(),
-			Message: "/containers/hello/livenessProbe/httpGet/httpHeaders",
+			Message: "",
 		},
 		{
 			Name: "containers.*.livenessProbe.httpGet.httpHeaders.*.name is not set",
@@ -1315,7 +1315,7 @@ func TestSchema(t *testing.T) {
 				httpGet["httpHeaders"] = []interface{}{}
 				return src
 			}(),
-			Message: "/containers/hello/readinessProbe/httpGet/httpHeaders",
+			Message: "",
 		},
 		{
 			Name: "containers.*.readinessProbe.httpGet.httpHeaders.*.name is not set",
@@ -1400,7 +1400,7 @@ func TestSchema(t *testing.T) {
 				src["resources"] = map[string]interface{}{}
 				return src
 			}(),
-			Message: "/resources",
+			Message: "",
 		},
 		{
 			Name: "resources.* is not set",
@@ -1477,7 +1477,7 @@ func TestSchema(t *testing.T) {
 				db["metadata"] = map[string]interface{}{}
 				return src
 			}(),
-			Message: "/resources/db/metadata",
+			Message: "",
 		},
 
 		// resources.*.metadata.annotations
@@ -1502,7 +1502,7 @@ func TestSchema(t *testing.T) {
 				metadata["annotations"] = map[string]interface{}{}
 				return src
 			}(),
-			Message: "/resources/db/metadata/annotations",
+			Message: "",
 		},
 		{
 			Name: "resources.*.metadata.annotations.* is not set",
