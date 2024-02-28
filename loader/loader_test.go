@@ -190,7 +190,7 @@ resources:
 								Path:   "/ready",
 								Port:   8080,
 								HttpHeaders: []types.HttpProbeHttpHeadersElem{
-									{Name: stringRef("Custom-Header"), Value: stringRef("Awesome")},
+									{Name: "Custom-Header", Value: "Awesome"},
 								},
 							},
 						},

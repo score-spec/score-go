@@ -340,7 +340,8 @@
       "properties": {
         "host": {
           "description": "Host name to connect to. Defaults to the workload IP. The is equivalent to a Host HTTP header.",
-          "type": "string"
+          "type": "string",
+          "minLength": 1
         },
         "scheme": {
           "description": "Scheme to use for connecting to the host (HTTP or HTTPS). Defaults to HTTP.",
@@ -366,6 +367,10 @@
           "items": {
             "type": "object",
             "additionalProperties": false,
+            "required": [
+              "name",
+              "value"
+            ],
             "properties": {
               "name": {
                 "description": "The HTTP header name.",
@@ -374,7 +379,8 @@
               },
               "value": {
                 "description": "The HTTP header value.",
-                "type": "string"
+                "type": "string",
+                "minLength": 1
               }
             }
           }
