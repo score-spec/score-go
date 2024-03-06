@@ -119,8 +119,14 @@ const HttpProbeSchemeHTTPS HttpProbeScheme = "HTTPS"
 
 // The set of Resources associated with this Workload.
 type Resource struct {
-	// A specialisation of the Resource type.
+	// An optional specialisation of the Resource type.
 	Class *string `json:"class,omitempty" yaml:"class,omitempty" mapstructure:"class,omitempty"`
+
+	// An optional external Resource identifier. When two resources share the same
+	// type, class, and id, they are considered the same resource when used across
+	// related Workloads. The id must be a valid RFC1123 Label Name of up to 63
+	// characters, including a-z, 0-9, '-' but may not start or end with '-'.
+	Id *string `json:"id,omitempty" yaml:"id,omitempty" mapstructure:"id,omitempty"`
 
 	// The metadata for the Resource.
 	Metadata ResourceMetadata `json:"metadata,omitempty" yaml:"metadata,omitempty" mapstructure:"metadata,omitempty"`
@@ -335,6 +341,12 @@ func (j *Resource) UnmarshalJSON(b []byte) error {
 	}
 	if plain.Class != nil && len(*plain.Class) > 63 {
 		return fmt.Errorf("field %s length: must be <= %d", "class", 63)
+	}
+	if plain.Id != nil && len(*plain.Id) < 2 {
+		return fmt.Errorf("field %s length: must be >= %d", "id", 2)
+	}
+	if plain.Id != nil && len(*plain.Id) > 63 {
+		return fmt.Errorf("field %s length: must be <= %d", "id", 63)
 	}
 	if len(plain.Type) < 2 {
 		return fmt.Errorf("field %s length: must be >= %d", "type", 2)
