@@ -125,11 +125,18 @@
           "pattern": "^[A-Za-z0-9][A-Za-z0-9-]{0,61}[A-Za-z0-9]$"
         },
         "class": {
-          "description": "A specialisation of the Resource type.",
+          "description": "An optional specialisation of the Resource type.",
           "type": "string",
           "minLength": 2,
           "maxLength": 63,
           "pattern": "^[A-Za-z0-9][A-Za-z0-9-]{0,61}[A-Za-z0-9]$"
+        },
+        "id": {
+          "description": "An optional external Resource identifier. When two resources share the same type, class, and id, they are considered the same resource when used across related Workloads. The id must be a valid RFC1123 Label Name of up to 63 characters, including a-z, 0-9, '-' but may not start or end with '-'.",
+          "type": "string",
+          "minLength": 2,
+          "maxLength": 63,
+          "pattern": "^[a-z0-9][a-z0-9-]{0,61}[a-z0-9]$"
         },
         "metadata": {
           "description": "The metadata for the Resource.",
