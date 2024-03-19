@@ -1,7 +1,7 @@
 # JSON schemas for Score files
 
-| version  | file            |
-|----------|-----------------|
+| version | file |
+| --- | --- |
 | v1-beta1 | score-v1b1.json |
 
 ## Embed schemas into project
