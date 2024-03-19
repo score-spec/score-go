@@ -30,6 +30,18 @@
           "minLength": 2,
           "maxLength": 63,
           "pattern": "^[a-z0-9][a-z0-9-]{0,61}[a-z0-9]$"
+        },
+        "annotations": {
+          "description": "Annotations that apply to the Workload. The annotation can contain A-Z, a-z, 0-9, and '-' and may contain an optional /-separated RFC1123 Host Name prefix.",
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "propertyNames": {
+            "minLength": 2,
+            "maxLength": 316,
+            "pattern": "^(([a-z0-9][a-z0-9-]{0,61}[a-z0-9])(\\.[a-z0-9][a-z0-9-]{0,61}[a-z0-9])*/)?[A-Za-z0-9][A-Za-z0-9._-]{0,61}[A-Za-z0-9]$"
+          }
         }
       }
     },

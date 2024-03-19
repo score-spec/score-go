@@ -2,6 +2,8 @@ apiVersion: score.dev/v1b1
 metadata:
   name: example-workload-name123
   extra-key: extra-value
+  annotations:
+    prefix.com/Another-Key_Annotation.2: something else
 service:
   ports:
     port-one:
