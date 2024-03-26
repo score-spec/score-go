@@ -33,6 +33,18 @@ Never made an open-source contribution before? Wondering how contributions work 
 13. Introduce changes to the pull request if the reviewing maintainer recommends them.
 14. Celebrate your success after your pull request is merged!
 
+### Ensuring all source files contain a license header
+
+A [LICENSE](LICENSE), and [NOTICE](NOTICE) file exists in the root directory, and each source code file should contain
+an appropriate Apache 2 header.
+
+To check and update all files, run:
+
+```
+$ go install github.com/google/addlicense@latest
+$ addlicense -l apache -v -ignore '**/*.yaml' -c Humanitec ./loader ./schema ./types ./pkg
+```
+
 ## Feature requests
 
 ## Code reviews
