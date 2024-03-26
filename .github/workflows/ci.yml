@@ -17,3 +17,8 @@ jobs:
       - run: |
           go vet ./...
           go test ./... --cover
+
+      - name: Install license check tool
+        run: go install github.com/google/addlicense@latest
+      - name: Check licenses
+        run: addlicense -l apache -check -v -ignore '**/*.yaml' -c Humanitec ./loader ./schema ./types ./pkg
