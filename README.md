@@ -1,6 +1,6 @@
 # score-go
 
-Reference library for the parsing and loading SCORE files in Go.
+Reference library containing common types and functions for building Score implementations in Go.
 
 This can be added to your project via:
 
@@ -11,6 +11,13 @@ go get -u github.com/score-spec/score-go@latest
 **NOTE**: if you project is still using the hand-written types, you will need to stay on `github.com/score-spec/score-go@v0.0.1`
 and any important fixes to the schema may be back-ported to that branch.
 
+## Packages
+
+- `github.com/score-spec/score-go/schema` - Go constant with the json schema, and methods for validating a json or yaml structure against the schema.
+- `github.com/score-spec/score-go/types` - Go types for Score workloads, services, and resources generated from the json schema.
+- `github.com/score-spec/score-go/loader` - Go functions for loading the validated json or yaml structure into a workload struct. 
+- `github.com/score-spec/score-go/framework`  - Common types and functions for Score implementations.
+
 ## Parsing SCORE files
 
 This library includes a few utility methods to parse source SCORE files.
@@ -19,9 +26,11 @@ This library includes a few utility methods to parse source SCORE files.
 import (
     "os"
 
-    "github.com/score-spec/score-go/loader"
-    "github.com/score-spec/score-go/schema"
-    score "github.com/score-spec/score-go/types"
+    "gopkg.in/yaml.v3"
+	
+    scoreloader "github.com/score-spec/score-go/loader"
+    scoreschema "github.com/score-spec/score-go/schema"
+    scoretypes "github.com/score-spec/score-go/types"
 )
 
 func main() {
@@ -32,20 +41,20 @@ func main() {
     defer src.Close()
 
     var srcMap map[string]interface{}
-    if err := loader.ParseYAML(&srcMap, src); err != nil {
+    if err := yaml.NewDecoder(src).Decode(&srcMap); err != nil {
         panic(err)
     }
     
-    if err := schema.Validate(srcMap); err != nil {
+    if err := scoreschema.Validate(srcMap); err != nil {
         panic(err)
     }
 
-    var spec score.Workload
-    if err := loader.MapSpec(&spec, srcMap); err != nil {
+    var spec scoretypes.Workload
+    if err := scoreloader.MapSpec(&spec, srcMap); err != nil {
         panic(err)
     }
     
-    if err := loader.Normalize(&spec, "."); err != nil {
+    if err := scoreloader.Normalize(&spec, "."); err != nil {
         panic(err)
     }
 
@@ -53,6 +62,10 @@ func main() {
     // ...
 }
 ```
+
+## Building a Score implementation
+
+[score-compose](https://github.com/score-spec/score-compose) is the reference Score implementation written in Go and using this library. If you'd like to write a custom Score implementation, use the functions in this library and the `score-compose` implementation as a Guide.
 
 ## Upgrading the schema version
 

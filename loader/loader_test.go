@@ -21,6 +21,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"gopkg.in/yaml.v3"
 
 	"github.com/score-spec/score-go/types"
 )
@@ -236,7 +237,7 @@ resources:
 			var srcMap map[string]interface{}
 			var spec types.Workload
 
-			var err = ParseYAML(&srcMap, tt.Source)
+			var err = yaml.NewDecoder(tt.Source).Decode(&srcMap)
 			if err == nil {
 				err = MapSpec(&spec, srcMap)
 			}
