@@ -25,6 +25,7 @@ import (
 )
 
 // ParseYAML parses YAML into the target mapping structure.
+// Deprecated. Please use the yaml/v3 library directly rather than calling this method.
 func ParseYAML(dest *map[string]interface{}, r io.Reader) error {
 	return yaml.NewDecoder(r).Decode(dest)
 }
@@ -38,6 +39,5 @@ func MapSpec(dest *types.Workload, src map[string]interface{}) error {
 	if err != nil {
 		return fmt.Errorf("initializing decoder: %w", err)
 	}
-
 	return mapper.Decode(src)
 }

@@ -15,6 +15,7 @@
 package schema
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -22,13 +23,14 @@ import (
 
 	"github.com/santhosh-tekuri/jsonschema/v5"
 	"gopkg.in/yaml.v3"
+
+	"github.com/score-spec/score-go/types"
 )
 
-// Validates source JSON file.
-//
-// For all vaidation errors returned error would be a *jsonschema.ValidationError.
+// ValidateJson validates a json structure read from the given reader source.
+// For all validation errors, the returned error would be a *jsonschema.ValidationError.
 func ValidateJson(r io.Reader) error {
-	var obj interface{}
+	var obj map[string]interface{}
 
 	var dec = json.NewDecoder(r)
 	dec.UseNumber()
@@ -39,11 +41,10 @@ func ValidateJson(r io.Reader) error {
 	return Validate(obj)
 }
 
-// Validates source YAML file.
-//
-// For all vaidation errors returned error would be a *jsonschema.ValidationError.
+// ValidateYaml validates a yaml structure read from the given reader source.
+// For all validation errors returned error would be a *jsonschema.ValidationError.
 func ValidateYaml(r io.Reader) error {
-	var obj interface{}
+	var obj map[string]interface{}
 
 	var dec = yaml.NewDecoder(r)
 	if err := dec.Decode(&obj); err != nil {
@@ -53,10 +54,18 @@ func ValidateYaml(r io.Reader) error {
 	return Validate(obj)
 }
 
-// Validates source structure.
-//
-// For all vaidation errors returned error would be a *jsonschema.ValidationError.
-func Validate(src interface{}) error {
+// ValidateSpec validates a workload spec structure by serializing it to yaml and calling ValidateYaml.
+func ValidateSpec(spec *types.Workload) error {
+	intermediate, err := yaml.Marshal(spec)
+	if err != nil {
+		return fmt.Errorf("failed to marshal to yaml: %w", err)
+	}
+	return ValidateYaml(bytes.NewReader(intermediate))
+}
+
+// Validate validates the source structure which should be a decoded map.
+// For all validation errors returned error would be a *jsonschema.ValidationError.
+func Validate(src map[string]interface{}) error {
 	schema, err := jsonschema.CompileString("", ScoreSchemaV1b1)
 	if err != nil {
 		return fmt.Errorf("compiling Score schema: %w", err)
