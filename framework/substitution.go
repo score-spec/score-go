@@ -136,9 +136,6 @@ func BuildSubstitutionFunction(metadata map[string]interface{}, resources map[st
 			rv, ok := resources[parts[1]]
 			if !ok {
 				return "", fmt.Errorf("invalid ref '%s': no known resource '%s'", ref, parts[1])
-			} else if len(parts) == 2 {
-				// TODO: deprecate this - this is an annoying and nonsensical legacy thing
-				return parts[1], nil
 			} else if rv2, err := rv(parts[2:]...); err != nil {
 				return "", fmt.Errorf("invalid ref '%s': %w", ref, err)
 			} else {

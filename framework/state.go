@@ -54,7 +54,7 @@ type ScoreResourceState struct {
 	Type string `yaml:"type"`
 	// Class is the resource class or 'default' if not provided.
 	Class string `yaml:"class"`
-	// Id is the generated id for the resource, either <workload>.<resName> or <shared>.<id>. This is tracked so that
+	// Id is the generated id for the resource, either <workload>.<resName> or <id>. This is tracked so that
 	// we can deduplicate and work out where a resource came from.
 	Id string `yaml:"id"`
 

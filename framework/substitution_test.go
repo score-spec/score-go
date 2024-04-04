@@ -35,18 +35,27 @@ func init() {
 		},
 	}, map[string]OutputLookupFunc{
 		"env": func(keys ...string) (interface{}, error) {
-			if len(keys) != 1 {
+			if len(keys) == 0 {
+				return "env", nil
+			} else if len(keys) != 1 {
 				return nil, fmt.Errorf("fail")
 			}
 			return "${" + keys[0] + "}", nil
 		},
 		"db": func(keys ...string) (interface{}, error) {
-			if len(keys) < 1 {
+			if len(keys) == 0 {
+				return "db", nil
+			} else if len(keys) < 1 {
 				return nil, fmt.Errorf("fail")
 			}
 			return "${DB_" + strings.ToUpper(strings.Join(keys, "_")) + "?required}", nil
 		},
-		"static": mapLookupOutput(map[string]interface{}{"x": "a"}),
+		"static": func(keys ...string) (interface{}, error) {
+			if len(keys) == 0 {
+				return "static", nil
+			}
+			return mapLookupOutput(map[string]interface{}{"x": "a"})(keys...)
+		},
 	})
 }
 

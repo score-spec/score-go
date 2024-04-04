@@ -34,14 +34,17 @@ func NewResourceUid(workloadName string, resName string, resType string, resClas
 	return ResourceUid(fmt.Sprintf("%s.%s#%s.%s", resType, *resClass, workloadName, resName))
 }
 
+// Type returns the type of the resource
 func (r ResourceUid) Type() string {
 	return string(r)[0:strings.Index(string(r), ".")]
 }
 
+// Class returns the class of the resource, defaulted to "default"
 func (r ResourceUid) Class() string {
 	return string(r)[strings.Index(string(r), ".")+1 : strings.Index(string(r), "#")]
 }
 
+// Id returns the id of the resource, either <workload>.<name> or <id> if id is specified
 func (r ResourceUid) Id() string {
 	return string(r)[strings.Index(string(r), "#")+1:]
 }
