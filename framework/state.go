@@ -133,14 +133,14 @@ func (s *State[StateExtras, WorkloadExtras]) WithPrimedResources() (*State[State
 			} else {
 				// multiple definitions of the same shared resource, let's check for conflicting params and metadata
 				if res.Params != nil {
-					if existing.Params != nil && !reflect.DeepEqual(existing.Params, res.Params) {
+					if existing.Params != nil && !reflect.DeepEqual(existing.Params, map[string]interface{}(res.Params)) {
 						return nil, fmt.Errorf("resource '%s': multiple definitions with different params", resUid)
 					}
 					existing.Params = res.Params
 					existing.SourceWorkload = workloadName
 				}
 				if res.Metadata != nil {
-					if existing.Metadata != nil && !reflect.DeepEqual(existing.Metadata, res.Metadata) {
+					if existing.Metadata != nil && !reflect.DeepEqual(existing.Metadata, map[string]interface{}(res.Metadata)) {
 						return nil, fmt.Errorf("resource '%s': multiple definitions with different metadata", resUid)
 					}
 					existing.Metadata = res.Metadata
