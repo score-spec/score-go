@@ -156,7 +156,27 @@ resources:
 		}, next.Resources)
 	})
 
-	t.Run("one workload - diff metadata", func(t *testing.T) {
+	t.Run("one workload - same resource - same metadata", func(t *testing.T) {
+		next := mustAddWorkload(t, start, `
+metadata: {"name": "example"}
+resources:
+  one:
+    type: thing
+    id: elephant
+    metadata:
+      x: a
+  two:
+    type: thing
+    id: elephant
+    metadata:
+      x: a
+`)
+		next, err := next.WithPrimedResources()
+		assert.NoError(t, err)
+		assert.Len(t, next.Resources, 1)
+	})
+
+	t.Run("one workload - same resource - diff metadata", func(t *testing.T) {
 		next := mustAddWorkload(t, start, `
 metadata: {"name": "example"}
 resources:
