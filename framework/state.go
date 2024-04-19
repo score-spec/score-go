@@ -70,9 +70,9 @@ type ScoreResourceState struct {
 	// State is the internal state local to this resource. It will be persisted to disk when possible.
 	State map[string]interface{} `yaml:"state"`
 
-	// Outputs is the current set of outputs for the resource. This is the output of calling the provider. It doesn't
-	// get persisted to disk.
-	Outputs map[string]interface{} `yaml:"-"`
+	// Outputs is the current set of outputs for the resource. This is the output of calling the provider. It may contain
+	// secrets so be careful when persisting this to disk.
+	Outputs map[string]interface{} `yaml:"outputs,omitempty"`
 	// OutputLookupFunc is function that allows certain in-process providers to defer any output generation. If this is
 	// not provided, it will fall back to using what's in the outputs.
 	OutputLookupFunc OutputLookupFunc `yaml:"-"`
@@ -122,6 +122,7 @@ func (s *State[StateExtras, WorkloadExtras]) WithPrimedResources() (*State[State
 					Params:         res.Params,
 					SourceWorkload: workloadName,
 					State:          map[string]interface{}{},
+					Outputs:        map[string]interface{}{},
 				}
 				primedResourceUids[resUid] = true
 			} else if !primedResourceUids[resUid] {
