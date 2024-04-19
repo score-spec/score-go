@@ -134,11 +134,11 @@ resources:
 		assert.Len(t, start.Resources, 0)
 		assert.Equal(t, map[ResourceUid]ScoreResourceState{
 			"thing.default#example.one": {
-				Type: "thing", Class: "default", Id: "example.one", State: map[string]interface{}{},
+				Type: "thing", Class: "default", Id: "example.one", State: map[string]interface{}{}, Outputs: map[string]interface{}{},
 				SourceWorkload: "example",
 			},
 			"thing2.banana#example.two": {
-				Type: "thing2", Class: "banana", Id: "example.two", State: map[string]interface{}{},
+				Type: "thing2", Class: "banana", Id: "example.two", State: map[string]interface{}{}, Outputs: map[string]interface{}{},
 				SourceWorkload: "example",
 			},
 			"thing3.apple#dog": {
@@ -146,12 +146,14 @@ resources:
 				Metadata:       map[string]interface{}{"annotations": score.ResourceMetadata{"foo": "bar"}},
 				Params:         map[string]interface{}{"color": "green"},
 				SourceWorkload: "example",
+				Outputs:        map[string]interface{}{},
 			},
 			"thing4.default#elephant": {
 				Type: "thing4", Class: "default", Id: "elephant", State: map[string]interface{}{},
 				Metadata:       map[string]interface{}{"x": "y"},
 				Params:         map[string]interface{}{"color": "blue"},
 				SourceWorkload: "example",
+				Outputs:        map[string]interface{}{},
 			},
 		}, next.Resources)
 	})
@@ -244,14 +246,17 @@ resources:
 				"thing.default#example1.one": {
 					Type: "thing", Class: "default", Id: "example1.one", State: map[string]interface{}{},
 					SourceWorkload: "example1",
+					Outputs:        map[string]interface{}{},
 				},
 				"thing.default#example2.one": {
 					Type: "thing", Class: "default", Id: "example2.one", State: map[string]interface{}{},
 					SourceWorkload: "example2",
+					Outputs:        map[string]interface{}{},
 				},
 				"thing2.default#dog": {
 					Type: "thing2", Class: "default", Id: "dog", State: map[string]interface{}{},
 					SourceWorkload: "example1",
+					Outputs:        map[string]interface{}{},
 				},
 			}, next.Resources)
 		})
