@@ -31,7 +31,7 @@ func mustLoadWorkload(t *testing.T, spec string) *score.Workload {
 	return &raw
 }
 
-func mustAddWorkload(t *testing.T, s *State[NoExtras, NoExtras], spec string) *State[NoExtras, NoExtras] {
+func mustAddWorkload(t *testing.T, s *State[NoExtras, NoExtras, NoExtras], spec string) *State[NoExtras, NoExtras, NoExtras] {
 	t.Helper()
 	w := mustLoadWorkload(t, spec)
 	n, err := s.WithWorkload(w, nil, NoExtras{})
@@ -40,7 +40,7 @@ func mustAddWorkload(t *testing.T, s *State[NoExtras, NoExtras], spec string) *S
 }
 
 func TestWithWorkload(t *testing.T) {
-	start := new(State[NoExtras, NoExtras])
+	start := new(State[NoExtras, NoExtras, NoExtras])
 
 	t.Run("one", func(t *testing.T) {
 		next, err := start.WithWorkload(mustLoadWorkload(t, `
@@ -92,7 +92,7 @@ containers:
 }
 
 func TestWithPrimedResources(t *testing.T) {
-	start := new(State[NoExtras, NoExtras])
+	start := new(State[NoExtras, NoExtras, NoExtras])
 
 	t.Run("empty", func(t *testing.T) {
 		next, err := start.WithPrimedResources()
@@ -132,7 +132,7 @@ resources:
 		next, err := next.WithPrimedResources()
 		require.NoError(t, err)
 		assert.Len(t, start.Resources, 0)
-		assert.Equal(t, map[ResourceUid]ScoreResourceState{
+		assert.Equal(t, map[ResourceUid]ScoreResourceState[NoExtras]{
 			"thing.default#example.one": {
 				Type: "thing", Class: "default", Id: "example.one", State: map[string]interface{}{}, Outputs: map[string]interface{}{},
 				SourceWorkload: "example",
@@ -242,7 +242,7 @@ resources:
 			require.NoError(t, err)
 			assert.Len(t, start.Resources, 0)
 			assert.Len(t, next.Resources, 3)
-			assert.Equal(t, map[ResourceUid]ScoreResourceState{
+			assert.Equal(t, map[ResourceUid]ScoreResourceState[NoExtras]{
 				"thing.default#example1.one": {
 					Type: "thing", Class: "default", Id: "example1.one", State: map[string]interface{}{},
 					SourceWorkload: "example1",
@@ -267,7 +267,7 @@ resources:
 func TestGetSortedResourceUids(t *testing.T) {
 
 	t.Run("empty", func(t *testing.T) {
-		s, err := new(State[NoExtras, NoExtras]).WithWorkload(&score.Workload{
+		s, err := new(State[NoExtras, NoExtras, NoExtras]).WithWorkload(&score.Workload{
 			Metadata: map[string]interface{}{"name": "eg"},
 		}, nil, NoExtras{})
 		assert.NoError(t, err)
@@ -277,7 +277,7 @@ func TestGetSortedResourceUids(t *testing.T) {
 	})
 
 	t.Run("one", func(t *testing.T) {
-		s, err := new(State[NoExtras, NoExtras]).WithWorkload(&score.Workload{
+		s, err := new(State[NoExtras, NoExtras, NoExtras]).WithWorkload(&score.Workload{
 			Metadata: map[string]interface{}{"name": "eg"},
 			Resources: map[string]score.Resource{
 				"res": {Type: "thing", Params: map[string]interface{}{}},
@@ -290,7 +290,7 @@ func TestGetSortedResourceUids(t *testing.T) {
 	})
 
 	t.Run("one cycle", func(t *testing.T) {
-		s, err := new(State[NoExtras, NoExtras]).WithWorkload(&score.Workload{
+		s, err := new(State[NoExtras, NoExtras, NoExtras]).WithWorkload(&score.Workload{
 			Metadata: map[string]interface{}{"name": "eg"},
 			Resources: map[string]score.Resource{
 				"res": {Type: "thing", Params: map[string]interface{}{"a": "${resources.res.blah}"}},
@@ -302,7 +302,7 @@ func TestGetSortedResourceUids(t *testing.T) {
 	})
 
 	t.Run("two unrelated", func(t *testing.T) {
-		s, err := new(State[NoExtras, NoExtras]).WithWorkload(&score.Workload{
+		s, err := new(State[NoExtras, NoExtras, NoExtras]).WithWorkload(&score.Workload{
 			Metadata: map[string]interface{}{"name": "eg"},
 			Resources: map[string]score.Resource{
 				"res1": {Type: "thing", Params: map[string]interface{}{}},
@@ -316,7 +316,7 @@ func TestGetSortedResourceUids(t *testing.T) {
 	})
 
 	t.Run("two linked", func(t *testing.T) {
-		s, err := new(State[NoExtras, NoExtras]).WithWorkload(&score.Workload{
+		s, err := new(State[NoExtras, NoExtras, NoExtras]).WithWorkload(&score.Workload{
 			Metadata: map[string]interface{}{"name": "eg"},
 			Resources: map[string]score.Resource{
 				"res1": {Type: "thing", Params: map[string]interface{}{"x": "${resources.res2.blah}"}},
@@ -330,7 +330,7 @@ func TestGetSortedResourceUids(t *testing.T) {
 	})
 
 	t.Run("two cycle", func(t *testing.T) {
-		s, err := new(State[NoExtras, NoExtras]).WithWorkload(&score.Workload{
+		s, err := new(State[NoExtras, NoExtras, NoExtras]).WithWorkload(&score.Workload{
 			Metadata: map[string]interface{}{"name": "eg"},
 			Resources: map[string]score.Resource{
 				"res1": {Type: "thing", Params: map[string]interface{}{"x": "${resources.res2.blah}"}},
@@ -343,7 +343,7 @@ func TestGetSortedResourceUids(t *testing.T) {
 	})
 
 	t.Run("three linked", func(t *testing.T) {
-		s, err := new(State[NoExtras, NoExtras]).WithWorkload(&score.Workload{
+		s, err := new(State[NoExtras, NoExtras, NoExtras]).WithWorkload(&score.Workload{
 			Metadata: map[string]interface{}{"name": "eg"},
 			Resources: map[string]score.Resource{
 				"res1": {Type: "thing", Params: map[string]interface{}{"x": "${resources.res2.blah}"}},
@@ -358,7 +358,7 @@ func TestGetSortedResourceUids(t *testing.T) {
 	})
 
 	t.Run("complex", func(t *testing.T) {
-		s, err := new(State[NoExtras, NoExtras]).WithWorkload(&score.Workload{
+		s, err := new(State[NoExtras, NoExtras, NoExtras]).WithWorkload(&score.Workload{
 			Metadata: map[string]interface{}{"name": "eg"},
 			Resources: map[string]score.Resource{
 				"res1": {Type: "thing", Params: map[string]interface{}{"a": "${resources.res2.blah} ${resources.res3.blah} ${resources.res4.blah} ${resources.res5.blah} ${resources.res6.blah}"}},
@@ -385,9 +385,20 @@ type customWorkloadExtras struct {
 	Animal string `yaml:"animal"`
 }
 
+type customResourceExtras struct {
+	Mineral string `yaml:"mineral"`
+}
+
 func TestCustomExtras(t *testing.T) {
-	s := new(State[customStateExtras, customWorkloadExtras])
-	s.Resources = make(map[ResourceUid]ScoreResourceState)
+	s := new(State[customStateExtras, customWorkloadExtras, customResourceExtras])
+	s.Resources = map[ResourceUid]ScoreResourceState[customResourceExtras]{
+		"thing.default#shared": {
+			Type: "thing", Class: "default", Id: "shared",
+			Metadata: map[string]interface{}{},
+			Params:   map[string]interface{}{},
+			State:    map[string]interface{}{},
+			Extras:   customResourceExtras{Mineral: "diamond"}},
+	}
 	s.SharedState = make(map[string]interface{})
 	s.Extras.Fruit = "apple"
 	s, _ = s.WithWorkload(&score.Workload{
@@ -414,14 +425,27 @@ func TestCustomExtras(t *testing.T) {
 				"animal": "bat",
 			},
 		},
-		"resources":    map[string]interface{}{},
+		"resources": map[string]interface{}{
+			"thing.default#shared": map[string]interface{}{
+				"type":            "thing",
+				"class":           "default",
+				"id":              "shared",
+				"source_workload": "",
+				"provisioner":     "",
+				"mineral":         "diamond",
+				"metadata":        map[string]interface{}{},
+				"params":          map[string]interface{}{},
+				"state":           map[string]interface{}{},
+			},
+		},
 		"shared_state": map[string]interface{}{},
 		"fruit":        "apple",
 	}, rawOut)
 
-	var s2 State[customStateExtras, customWorkloadExtras]
+	var s2 State[customStateExtras, customWorkloadExtras, customResourceExtras]
 	assert.NoError(t, yaml.Unmarshal(raw, &s2))
 	assert.Equal(t, "apple", s2.Extras.Fruit)
 	assert.Equal(t, "bat", s2.Workloads["eg"].Extras.Animal)
+	assert.Equal(t, "diamond", s2.Resources["thing.default#shared"].Extras.Mineral)
 	assert.Equal(t, &s2, s)
 }

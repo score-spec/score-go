@@ -26,11 +26,11 @@ import (
 // State is the mega-structure that contains the state of our workload specifications and resources.
 // Score specs are added to this structure and it stores the current resource set. Extra implementation specific fields
 // are supported by the generic parameters.
-type State[StateExtras any, WorkloadExtras any] struct {
-	Workloads   map[string]ScoreWorkloadState[WorkloadExtras] `yaml:"workloads"`
-	Resources   map[ResourceUid]ScoreResourceState            `yaml:"resources"`
-	SharedState map[string]interface{}                        `yaml:"shared_state"`
-	Extras      StateExtras                                   `yaml:",inline"`
+type State[StateExtras any, WorkloadExtras any, ResourceExtras any] struct {
+	Workloads   map[string]ScoreWorkloadState[WorkloadExtras]      `yaml:"workloads"`
+	Resources   map[ResourceUid]ScoreResourceState[ResourceExtras] `yaml:"resources"`
+	SharedState map[string]interface{}                             `yaml:"shared_state"`
+	Extras      StateExtras                                        `yaml:",inline"`
 }
 
 // NoExtras can be used in place of the state or workload extras if no additional fields are needed.
@@ -49,7 +49,7 @@ type ScoreWorkloadState[WorkloadExtras any] struct {
 }
 
 // ScoreResourceState is the state stored and tracked for each resource.
-type ScoreResourceState struct {
+type ScoreResourceState[ResourceExtras any] struct {
 	// Type is the resource type.
 	Type string `yaml:"type"`
 	// Class is the resource class or 'default' if not provided.
@@ -76,6 +76,9 @@ type ScoreResourceState struct {
 	// OutputLookupFunc is function that allows certain in-process providers to defer any output generation. If this is
 	// not provided, it will fall back to using what's in the outputs.
 	OutputLookupFunc OutputLookupFunc `yaml:"-"`
+
+	// Extras stores any implementation specific extras needed for this resource.
+	Extras ResourceExtras `yaml:",inline"`
 }
 
 type OutputLookupFunc func(keys ...string) (interface{}, error)
@@ -83,7 +86,7 @@ type OutputLookupFunc func(keys ...string) (interface{}, error)
 // WithWorkload returns a new copy of State with the workload added, if the workload already exists with the same name
 // then it will be replaced.
 // This is not a deep copy, but any writes are executed in a copy-on-write manner to avoid modifying the source.
-func (s *State[StateExtras, WorkloadExtras]) WithWorkload(spec *score.Workload, filePath *string, extras WorkloadExtras) (*State[StateExtras, WorkloadExtras], error) {
+func (s *State[StateExtras, WorkloadExtras, ResourceExtras]) WithWorkload(spec *score.Workload, filePath *string, extras WorkloadExtras) (*State[StateExtras, WorkloadExtras, ResourceExtras], error) {
 	out := *s
 	if s.Workloads == nil {
 		out.Workloads = make(map[string]ScoreWorkloadState[WorkloadExtras])
@@ -101,10 +104,10 @@ func (s *State[StateExtras, WorkloadExtras]) WithWorkload(spec *score.Workload, 
 // WithPrimedResources returns a new copy of State with all workload resources resolved to at least their initial type,
 // class and id. New resources will have an empty provider set. Existing resources will not be touched.
 // This is not a deep copy, but any writes are executed in a copy-on-write manner to avoid modifying the source.
-func (s *State[StateExtras, WorkloadExtras]) WithPrimedResources() (*State[StateExtras, WorkloadExtras], error) {
+func (s *State[StateExtras, WorkloadExtras, ResourceExtras]) WithPrimedResources() (*State[StateExtras, WorkloadExtras, ResourceExtras], error) {
 	out := *s
 	if s.Resources == nil {
-		out.Resources = make(map[ResourceUid]ScoreResourceState)
+		out.Resources = make(map[ResourceUid]ScoreResourceState[ResourceExtras])
 	} else {
 		out.Resources = maps.Clone(s.Resources)
 	}
@@ -114,7 +117,7 @@ func (s *State[StateExtras, WorkloadExtras]) WithPrimedResources() (*State[State
 		for resName, res := range workload.Spec.Resources {
 			resUid := NewResourceUid(workloadName, resName, res.Type, res.Class, res.Id)
 			if existing, ok := out.Resources[resUid]; !ok {
-				out.Resources[resUid] = ScoreResourceState{
+				out.Resources[resUid] = ScoreResourceState[ResourceExtras]{
 					Type:           resUid.Type(),
 					Class:          resUid.Class(),
 					Id:             resUid.Id(),
@@ -153,7 +156,7 @@ func (s *State[StateExtras, WorkloadExtras]) WithPrimedResources() (*State[State
 	return &out, nil
 }
 
-func (s *State[StateExtras, WorkloadExtras]) getResourceDependencies(workloadName, resName string) (map[ResourceUid]bool, error) {
+func (s *State[StateExtras, WorkloadExtras, ResourceExtras]) getResourceDependencies(workloadName, resName string) (map[ResourceUid]bool, error) {
 	outMap := make(map[ResourceUid]bool)
 	res := s.Workloads[workloadName].Spec.Resources[resName]
 	if res.Params == nil {
@@ -180,7 +183,7 @@ func (s *State[StateExtras, WorkloadExtras]) getResourceDependencies(workloadNam
 // GetSortedResourceUids returns a topological sorting of the resource uids. The output order is deterministic and
 // ensures that any resource output placeholder statements are strictly evaluated after their referenced resource.
 // If cycles are detected an error will be thrown.
-func (s *State[StateExtras, WorkloadExtras]) GetSortedResourceUids() ([]ResourceUid, error) {
+func (s *State[StateExtras, WorkloadExtras, ResourceExtras]) GetSortedResourceUids() ([]ResourceUid, error) {
 
 	// We're implementing Kahn's algorithm (https://en.wikipedia.org/wiki/Topological_sorting#Kahn's_algorithm).
 	nodesWithNoIncomingEdges := make(map[ResourceUid]bool)
@@ -246,7 +249,7 @@ func (s *State[StateExtras, WorkloadExtras]) GetSortedResourceUids() ([]Resource
 // GetResourceOutputForWorkload returns an output function per resource name in the given workload. This is for
 // passing into the compose translation context to resolve placeholder references.
 // This does not modify the state.
-func (s *State[StateExtras, WorkloadExtras]) GetResourceOutputForWorkload(workloadName string) (map[string]OutputLookupFunc, error) {
+func (s *State[StateExtras, WorkloadExtras, ResourceExtras]) GetResourceOutputForWorkload(workloadName string) (map[string]OutputLookupFunc, error) {
 	workload, ok := s.Workloads[workloadName]
 	if !ok {
 		return nil, fmt.Errorf("workload '%s': does not exist", workloadName)
@@ -266,7 +269,7 @@ func (s *State[StateExtras, WorkloadExtras]) GetResourceOutputForWorkload(worklo
 
 // OutputLookup is a function which can traverse an outputs tree to find a resulting key, this defers to the embedded
 // output function if it exists.
-func (s *ScoreResourceState) OutputLookup(keys ...string) (interface{}, error) {
+func (s *ScoreResourceState[ResourceExtras]) OutputLookup(keys ...string) (interface{}, error) {
 	if s.OutputLookupFunc != nil {
 		return s.OutputLookupFunc(keys...)
 	} else if len(keys) == 0 {
