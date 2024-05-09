@@ -93,7 +93,11 @@ func (s *State[StateExtras, WorkloadExtras, ResourceExtras]) WithWorkload(spec *
 	} else {
 		out.Workloads = maps.Clone(s.Workloads)
 	}
-	out.Workloads[spec.Metadata["name"].(string)] = ScoreWorkloadState[WorkloadExtras]{
+	name, ok := spec.Metadata["name"].(string)
+	if !ok {
+		return nil, fmt.Errorf("metadata: name: is missing or is not a string")
+	}
+	out.Workloads[name] = ScoreWorkloadState[WorkloadExtras]{
 		Spec:   *spec,
 		File:   filePath,
 		Extras: extras,
