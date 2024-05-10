@@ -39,6 +39,14 @@ func mustAddWorkload(t *testing.T, s *State[NoExtras, NoExtras, NoExtras], spec 
 	return n
 }
 
+func checkAndResetGuids[s any](t *testing.T, resources map[ResourceUid]ScoreResourceState[s]) {
+	for uid, s := range resources {
+		assert.NotEmpty(t, s.Guid)
+		s.Guid = "00000000-0000-0000-0000-000000000000"
+		resources[uid] = s
+	}
+}
+
 func TestWithWorkload(t *testing.T) {
 	start := new(State[NoExtras, NoExtras, NoExtras])
 
@@ -132,16 +140,21 @@ resources:
 		next, err := next.WithPrimedResources()
 		require.NoError(t, err)
 		assert.Len(t, start.Resources, 0)
+		checkAndResetGuids(t, next.Resources)
+
 		assert.Equal(t, map[ResourceUid]ScoreResourceState[NoExtras]{
 			"thing.default#example.one": {
+				Guid: "00000000-0000-0000-0000-000000000000",
 				Type: "thing", Class: "default", Id: "example.one", State: map[string]interface{}{}, Outputs: map[string]interface{}{},
 				SourceWorkload: "example",
 			},
 			"thing2.banana#example.two": {
+				Guid: "00000000-0000-0000-0000-000000000000",
 				Type: "thing2", Class: "banana", Id: "example.two", State: map[string]interface{}{}, Outputs: map[string]interface{}{},
 				SourceWorkload: "example",
 			},
 			"thing3.apple#dog": {
+				Guid: "00000000-0000-0000-0000-000000000000",
 				Type: "thing3", Class: "apple", Id: "dog", State: map[string]interface{}{},
 				Metadata:       map[string]interface{}{"annotations": score.ResourceMetadata{"foo": "bar"}},
 				Params:         map[string]interface{}{"color": "green"},
@@ -149,6 +162,7 @@ resources:
 				Outputs:        map[string]interface{}{},
 			},
 			"thing4.default#elephant": {
+				Guid: "00000000-0000-0000-0000-000000000000",
 				Type: "thing4", Class: "default", Id: "elephant", State: map[string]interface{}{},
 				Metadata:       map[string]interface{}{"x": "y"},
 				Params:         map[string]interface{}{"color": "blue"},
@@ -242,18 +256,22 @@ resources:
 			require.NoError(t, err)
 			assert.Len(t, start.Resources, 0)
 			assert.Len(t, next.Resources, 3)
+			checkAndResetGuids(t, next.Resources)
 			assert.Equal(t, map[ResourceUid]ScoreResourceState[NoExtras]{
 				"thing.default#example1.one": {
+					Guid: "00000000-0000-0000-0000-000000000000",
 					Type: "thing", Class: "default", Id: "example1.one", State: map[string]interface{}{},
 					SourceWorkload: "example1",
 					Outputs:        map[string]interface{}{},
 				},
 				"thing.default#example2.one": {
+					Guid: "00000000-0000-0000-0000-000000000000",
 					Type: "thing", Class: "default", Id: "example2.one", State: map[string]interface{}{},
 					SourceWorkload: "example2",
 					Outputs:        map[string]interface{}{},
 				},
 				"thing2.default#dog": {
+					Guid: "00000000-0000-0000-0000-000000000000",
 					Type: "thing2", Class: "default", Id: "dog", State: map[string]interface{}{},
 					SourceWorkload: "example1",
 					Outputs:        map[string]interface{}{},
@@ -393,6 +411,7 @@ func TestCustomExtras(t *testing.T) {
 	s := new(State[customStateExtras, customWorkloadExtras, customResourceExtras])
 	s.Resources = map[ResourceUid]ScoreResourceState[customResourceExtras]{
 		"thing.default#shared": {
+			Guid: "00000000-0000-0000-0000-000000000000",
 			Type: "thing", Class: "default", Id: "shared",
 			Metadata: map[string]interface{}{},
 			Params:   map[string]interface{}{},
@@ -427,6 +446,7 @@ func TestCustomExtras(t *testing.T) {
 		},
 		"resources": map[string]interface{}{
 			"thing.default#shared": map[string]interface{}{
+				"guid":            "00000000-0000-0000-0000-000000000000",
 				"type":            "thing",
 				"class":           "default",
 				"id":              "shared",
