@@ -15,6 +15,7 @@
 package framework
 
 import (
+	"crypto/rand"
 	"fmt"
 	"maps"
 	"reflect"
@@ -50,6 +51,8 @@ type ScoreWorkloadState[WorkloadExtras any] struct {
 
 // ScoreResourceState is the state stored and tracked for each resource.
 type ScoreResourceState[ResourceExtras any] struct {
+	// Guid is a uuid assigned to this "instance" of the resource.
+	Guid string `yaml:"guid"`
 	// Type is the resource type.
 	Type string `yaml:"type"`
 	// Class is the resource class or 'default' if not provided.
@@ -105,6 +108,17 @@ func (s *State[StateExtras, WorkloadExtras, ResourceExtras]) WithWorkload(spec *
 	return &out, nil
 }
 
+// uuidV4 generates a uuid v4 string without dependencies
+func uuidV4() string {
+	// read 16 random bytes
+	d := make([]byte, 16)
+	_, _ = rand.Read(d)
+	// set the version to version 4 (the top 4 bits of the 7th byte)
+	d[6] = (d[6] & 0b_0000_1111) | 0b_0100_0000
+	// format and print the output
+	return fmt.Sprintf("%x-%x-%x-%x-%x", d[:4], d[4:6], d[6:8], d[8:10], d[10:])
+}
+
 // WithPrimedResources returns a new copy of State with all workload resources resolved to at least their initial type,
 // class and id. New resources will have an empty provider set. Existing resources will not be touched.
 // This is not a deep copy, but any writes are executed in a copy-on-write manner to avoid modifying the source.
@@ -122,6 +136,7 @@ func (s *State[StateExtras, WorkloadExtras, ResourceExtras]) WithPrimedResources
 			resUid := NewResourceUid(workloadName, resName, res.Type, res.Class, res.Id)
 			if existing, ok := out.Resources[resUid]; !ok {
 				out.Resources[resUid] = ScoreResourceState[ResourceExtras]{
+					Guid:           uuidV4(),
 					Type:           resUid.Type(),
 					Class:          resUid.Class(),
 					Id:             resUid.Id(),
