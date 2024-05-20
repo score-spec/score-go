@@ -15,3 +15,21 @@
 package types
 
 //go:generate go run github.com/atombender/go-jsonschema@v0.15.0 -v --schema-output=https://score.dev/schemas/score=types.gen.go --schema-package=https://score.dev/schemas/score=types --schema-root-type=https://score.dev/schemas/score=Workload ../schema/files/score-v1b1.json.modified
+
+func (m *ResourceMetadata) UnmarshalYAML(unmarshal func(interface{}) error) error {
+	var out map[string]interface{}
+	if err := unmarshal(&out); err != nil {
+		return err
+	}
+	*m = ResourceMetadata(out)
+	return nil
+}
+
+func (m *WorkloadMetadata) UnmarshalYAML(unmarshal func(interface{}) error) error {
+	var out map[string]interface{}
+	if err := unmarshal(&out); err != nil {
+		return err
+	}
+	*m = WorkloadMetadata(out)
+	return nil
+}
