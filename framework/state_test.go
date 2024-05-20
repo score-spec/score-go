@@ -54,6 +54,8 @@ func TestWithWorkload(t *testing.T) {
 		next, err := start.WithWorkload(mustLoadWorkload(t, `
 metadata:
   name: example
+  annotations:
+    acme.org/x: y
 containers:
   hello-world:
     image: hi
@@ -66,7 +68,12 @@ resources:
 		assert.Len(t, next.Workloads, 1)
 		assert.Nil(t, next.Workloads["example"].File, nil)
 		assert.Equal(t, score.Workload{
-			Metadata:   map[string]interface{}{"name": "example"},
+			Metadata: map[string]interface{}{
+				"name": "example",
+				"annotations": map[string]interface{}{
+					"acme.org/x": "y",
+				},
+			},
 			Containers: map[string]score.Container{"hello-world": {Image: "hi"}},
 			Resources:  map[string]score.Resource{"foo": {Type: "thing"}},
 		}, next.Workloads["example"].Spec)
@@ -156,7 +163,7 @@ resources:
 			"thing3.apple#dog": {
 				Guid: "00000000-0000-0000-0000-000000000000",
 				Type: "thing3", Class: "apple", Id: "dog", State: map[string]interface{}{},
-				Metadata:       map[string]interface{}{"annotations": score.ResourceMetadata{"foo": "bar"}},
+				Metadata:       map[string]interface{}{"annotations": map[string]interface{}{"foo": "bar"}},
 				Params:         map[string]interface{}{"color": "green"},
 				SourceWorkload: "example",
 				Outputs:        map[string]interface{}{},
@@ -170,6 +177,8 @@ resources:
 				Outputs:        map[string]interface{}{},
 			},
 		}, next.Resources)
+
+		assert.NotNil(t, next.Resources["thing3.apple#dog"].Metadata["annotations"].(map[string]interface{}))
 	})
 
 	t.Run("one workload - same resource - same metadata", func(t *testing.T) {
