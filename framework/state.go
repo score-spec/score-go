@@ -96,6 +96,13 @@ func (s *State[StateExtras, WorkloadExtras, ResourceExtras]) WithWorkload(spec *
 	} else {
 		out.Workloads = maps.Clone(s.Workloads)
 	}
+
+	spec.Metadata = coerceAnnotationsType(spec.Metadata)
+	for resName, resource := range spec.Resources {
+		resource.Metadata = coerceAnnotationsType(resource.Metadata)
+		spec.Resources[resName] = resource
+	}
+
 	name, ok := spec.Metadata["name"].(string)
 	if !ok {
 		return nil, fmt.Errorf("metadata: name: is missing or is not a string")
@@ -173,6 +180,19 @@ func (s *State[StateExtras, WorkloadExtras, ResourceExtras]) WithPrimedResources
 		}
 	}
 	return &out, nil
+}
+
+// The metadata maps (workload metadata and resource metadata) decode in a weird way in yaml.v3 which causes type
+// coercions elsewhere in the software to fail. We have to rewrite the type to be clear.
+func coerceAnnotationsType(in map[string]interface{}) map[string]interface{} {
+	if a, ok := in["annotations"].(score.WorkloadMetadata); ok {
+		in = maps.Clone(in)
+		in["annotations"] = map[string]interface{}(a)
+	} else if a, ok := in["annotations"].(score.ResourceMetadata); ok {
+		in = maps.Clone(in)
+		in["annotations"] = map[string]interface{}(a)
+	}
+	return in
 }
 
 func (s *State[StateExtras, WorkloadExtras, ResourceExtras]) getResourceDependencies(workloadName, resName string) (map[ResourceUid]bool, error) {
