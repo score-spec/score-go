@@ -15,6 +15,7 @@
 package framework
 
 import (
+	"encoding/json"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -190,15 +191,25 @@ resources:
     id: elephant
     metadata:
       x: a
+      annotations:
+        acme.org/x: y
   two:
     type: thing
     id: elephant
     metadata:
       x: a
+      annotations:
+        acme.org/x: y
 `)
 		next, err := next.WithPrimedResources()
 		assert.NoError(t, err)
 		assert.Len(t, next.Resources, 1)
+		assert.Equal(t, map[string]interface{}{
+			"annotations": map[string]interface{}{
+				"acme.org/x": "y",
+			},
+			"x": "a",
+		}, next.Resources["thing.default#elephant"].Metadata)
 	})
 
 	t.Run("one workload - same resource - diff metadata", func(t *testing.T) {
@@ -289,6 +300,64 @@ resources:
 		})
 	})
 
+}
+
+func TestEncodeDecodeMetadata_yaml(t *testing.T) {
+	state := new(State[NoExtras, NoExtras, NoExtras])
+	state = mustAddWorkload(t, state, `
+apiVersion: score.dev/v1b1
+metadata:
+  name: example
+  annotations:
+    acme.org/x: a
+containers:
+  main:
+    image: nginx
+resources:
+  eg:
+    type: example
+    metadata:
+      annotations:
+        acme.org/x: b
+`)
+	raw, err := yaml.Marshal(state)
+	assert.NoError(t, err)
+	state = new(State[NoExtras, NoExtras, NoExtras])
+	assert.NoError(t, yaml.Unmarshal(raw, &state))
+	assert.Equal(t, score.WorkloadMetadata{"name": "example", "annotations": map[string]interface{}{"acme.org/x": "a"}}, state.Workloads["example"].Spec.Metadata)
+	assert.Equal(t, score.ResourceMetadata{"annotations": map[string]interface{}{"acme.org/x": "b"}}, state.Workloads["example"].Spec.Resources["eg"].Metadata)
+
+	state, err = state.WithPrimedResources()
+	assert.NoError(t, err)
+	assert.Equal(t, score.WorkloadMetadata{"name": "example", "annotations": map[string]interface{}{"acme.org/x": "a"}}, state.Workloads["example"].Spec.Metadata)
+	assert.Equal(t, score.ResourceMetadata{"annotations": map[string]interface{}{"acme.org/x": "b"}}, state.Workloads["example"].Spec.Resources["eg"].Metadata)
+	assert.Equal(t, map[string]interface{}{"annotations": map[string]interface{}{"acme.org/x": "b"}}, state.Resources["example.default#example.eg"].Metadata)
+}
+
+func TestEncodeDecodeMetadata_json(t *testing.T) {
+	state := new(State[NoExtras, NoExtras, NoExtras])
+	state = mustAddWorkload(t, state, `
+apiVersion: score.dev/v1b1
+metadata:
+  name: example
+  annotations:
+    acme.org/x: a
+containers:
+  main:
+    image: nginx
+resources:
+  eg:
+    type: example
+    metadata:
+      annotations:
+        acme.org/x: b
+`)
+	raw, err := json.Marshal(state)
+	assert.NoError(t, err)
+	state = new(State[NoExtras, NoExtras, NoExtras])
+	assert.NoError(t, json.Unmarshal(raw, &state))
+	assert.Equal(t, score.WorkloadMetadata{"name": "example", "annotations": map[string]interface{}{"acme.org/x": "a"}}, state.Workloads["example"].Spec.Metadata)
+	assert.Equal(t, score.ResourceMetadata{"annotations": map[string]interface{}{"acme.org/x": "b"}}, state.Workloads["example"].Spec.Resources["eg"].Metadata)
 }
 
 func TestGetSortedResourceUids(t *testing.T) {
