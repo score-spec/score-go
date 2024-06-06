@@ -65,7 +65,7 @@
       }
     },
     "containers": {
-      "description": "The declared Score Specification version. The container name must be a valid RFC1123 Label Name of up to 63 characters, including a-z, 0-9, '-' but may not start or end with '-'.",
+      "description": "The set of named containers in the Workload. The container name must be a valid RFC1123 Label Name of up to 63 characters, including a-z, 0-9, '-' but may not start or end with '-'.",
       "type": "object",
       "minProperties": 1,
       "additionalProperties": {
