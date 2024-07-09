@@ -108,6 +108,9 @@ func TestSubstituteString(t *testing.T) {
 		{Input: "$abc", Expected: "$abc"},
 		{Input: "abc $$ abc", Expected: "abc $ abc"},
 		{Input: "$${abc}", Expected: "${abc}"},
+		{Input: "$$${abc}", ExpectedError: "invalid ref 'abc': unknown reference root, use $$ to escape the substitution"},
+		{Input: "$$$${abc}", Expected: "$${abc}"},
+		{Input: "$$$$${abc}", ExpectedError: "invalid ref 'abc': unknown reference root, use $$ to escape the substitution"},
 		{Input: "$${abc .4t3298y *(^&(*}", Expected: "${abc .4t3298y *(^&(*}"},
 		{Input: "my name is ${metadata.name}", Expected: "my name is test-name"},
 		{Input: "my name is ${metadata.thing\\.two}", ExpectedError: "invalid ref 'metadata.thing\\.two': key 'thing.two' not found"},
@@ -160,4 +163,23 @@ func TestSubstituteMap_fail(t *testing.T) {
 		"a": []interface{}{map[string]interface{}{"b": "${metadata.unknown}"}},
 	}, substitutionFunction)
 	assert.EqualError(t, err, "a: 0: b: invalid ref 'metadata.unknown': key 'unknown' not found")
+}
+
+func TestCustomSubstituter_nil(t *testing.T) {
+	s := new(Substituter)
+	_, err := s.SubstituteString("${fizz}")
+	assert.EqualError(t, err, "replacer function is nil")
+}
+
+func TestCustomerUnescaper(t *testing.T) {
+	s := new(Substituter)
+	s.Replacer = func(s string) (string, error) {
+		return strings.ToUpper(s), nil
+	}
+	s.UnEscaper = func(s string) (string, error) {
+		return strings.Repeat(s, 2), nil
+	}
+	x, err := s.SubstituteString("$$ $${thing}")
+	assert.NoError(t, err)
+	assert.Equal(t, "$$$$ $${thing}$${thing}", x)
 }

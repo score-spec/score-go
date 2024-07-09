@@ -24,7 +24,7 @@ import (
 
 var (
 	// placeholderRegEx will search for ${...} with any sequence of characters between them.
-	placeholderRegEx = regexp.MustCompile(`\$(\$|{([^}]*)})`)
+	placeholderRegEx = regexp.MustCompile(`\$((?:\$?{([^}]*)})|\$)`)
 )
 
 func SplitRefParts(ref string) []string {
@@ -36,9 +36,24 @@ func SplitRefParts(ref string) []string {
 	return parts
 }
 
-// SubstituteString replaces all matching '${...}' templates in a source string with whatever is returned
-// from the inner function. Double $'s are unescaped.
-func SubstituteString(src string, inner func(string) (string, error)) (string, error) {
+// A Substituter is a type that supports substitutions of $-sign placeholders in strings. This detects and replaces
+// patterns like: fizz ${var} buzz while supporting custom un-escaping of patterns like $$ and $${var}. The Replacer
+// function is _required_ and the substituter will not function without it, but the UnEscaper is optional and will
+// default to simply replacing sequences of $$ with a $.
+// Overriding the UnEscaper may be necessary if non default behavior is required.
+type Substituter struct {
+	Replacer  func(string) (string, error)
+	UnEscaper func(string) (string, error)
+}
+
+func DefaultUnEscaper(original string) (string, error) {
+	return original[1:], nil
+}
+
+func (s *Substituter) SubstituteString(src string) (string, error) {
+	if s.Replacer == nil {
+		return "", errors.New("replacer function is nil")
+	}
 	var err error
 	result := placeholderRegEx.ReplaceAllStringFunc(src, func(str string) string {
 		// WORKAROUND: ReplaceAllStringFunc(..) does not provide match details
@@ -52,29 +67,36 @@ func SubstituteString(src string, inner func(string) (string, error)) (string, e
 		}
 
 		// support escaped dollars
-		if matches[1] == "$" {
-			return matches[1]
+		if strings.HasPrefix(matches[1], "$") {
+			ue := DefaultUnEscaper
+			if s.UnEscaper != nil {
+				ue = s.UnEscaper
+			}
+			res, subErr := ue(matches[0])
+			if subErr != nil {
+				err = errors.Join(err, fmt.Errorf("failed to unescape '%s': %w", matches[0], subErr))
+			}
+			return res
 		}
 
-		result, subErr := inner(matches[2])
+		result, subErr := s.Replacer(matches[2])
 		err = errors.Join(err, subErr)
 		return result
 	})
 	return result, err
 }
 
-// Substitute does the same thing as SubstituteString but recursively through a map. It returns a copy of the original map.
-func Substitute(source interface{}, inner func(string) (string, error)) (interface{}, error) {
+func (s *Substituter) Substitute(source interface{}) (interface{}, error) {
 	if source == nil {
 		return nil, nil
 	}
 	switch v := source.(type) {
 	case string:
-		return SubstituteString(v, inner)
+		return s.SubstituteString(v)
 	case map[string]interface{}:
 		out := make(map[string]interface{}, len(v))
 		for k, v := range v {
-			v2, err := Substitute(v, inner)
+			v2, err := s.Substitute(v)
 			if err != nil {
 				return nil, fmt.Errorf("%s: %w", k, err)
 			}
@@ -84,7 +106,7 @@ func Substitute(source interface{}, inner func(string) (string, error)) (interfa
 	case []interface{}:
 		out := make([]interface{}, len(v))
 		for i, i2 := range v {
-			i3, err := Substitute(i2, inner)
+			i3, err := s.Substitute(i2)
 			if err != nil {
 				return nil, fmt.Errorf("%d: %w", i, err)
 			}
@@ -94,6 +116,17 @@ func Substitute(source interface{}, inner func(string) (string, error)) (interfa
 	default:
 		return source, nil
 	}
+}
+
+// SubstituteString replaces all matching '${...}' templates in a source string with whatever is returned
+// from the inner function. Double $'s are unescaped using DefaultUnEscaper.
+func SubstituteString(src string, inner func(string) (string, error)) (string, error) {
+	return (&Substituter{Replacer: inner, UnEscaper: DefaultUnEscaper}).SubstituteString(src)
+}
+
+// Substitute does the same thing as SubstituteString but recursively through a map. It returns a copy of the original map.
+func Substitute(source interface{}, inner func(string) (string, error)) (interface{}, error) {
+	return (&Substituter{Replacer: inner, UnEscaper: DefaultUnEscaper}).Substitute(source)
 }
 
 func mapLookupOutput(ctx map[string]interface{}) func(keys ...string) (interface{}, error) {
