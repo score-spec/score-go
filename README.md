@@ -1,4 +1,6 @@
 # score-go
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fscore-spec%2Fscore-go.svg?type=shield)](https://app.fossa.com/projects/git%2Bgithub.com%2Fscore-spec%2Fscore-go?ref=badge_shield)
+
 
 Reference library containing common types and functions for building Score implementations in Go.
 
@@ -88,3 +90,7 @@ And ensure the tests still pass:
 ```sh
 go test -v ./...
 ```
+
+
+## License
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fscore-spec%2Fscore-go.svg?type=large)](https://app.fossa.com/projects/git%2Bgithub.com%2Fscore-spec%2Fscore-go?ref=badge_large)
