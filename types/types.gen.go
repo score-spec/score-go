@@ -122,10 +122,10 @@ type Resource struct {
 	// An optional specialisation of the Resource type.
 	Class *string `json:"class,omitempty" yaml:"class,omitempty" mapstructure:"class,omitempty"`
 
-	// An optional external Resource identifier. When two resources share the same
-	// type, class, and id, they are considered the same resource when used across
-	// related Workloads. The id must be a valid RFC1123 Label Name of up to 63
-	// characters, including a-z, 0-9, '-' but may not start or end with '-'.
+	// An optional Resource identifier. The id may be up to 63 characters, including
+	// one or more labels of a-z, 0-9, '-' not starting or ending with '-' separated
+	// by '.'. When two resources share the same type, class, and id, they are
+	// considered the same resource when used across related Workloads.
 	Id *string `json:"id,omitempty" yaml:"id,omitempty" mapstructure:"id,omitempty"`
 
 	// The metadata for the Resource.
@@ -409,7 +409,7 @@ func (j *ServicePort) UnmarshalJSON(b []byte) error {
 	return nil
 }
 
-// The declared Score Specification version. The container name must be a valid
+// The set of named containers in the Workload. The container name must be a valid
 // RFC1123 Label Name of up to 63 characters, including a-z, 0-9, '-' but may not
 // start or end with '-'.
 type WorkloadContainers map[string]Container
@@ -440,7 +440,7 @@ type Workload struct {
 	// The declared Score Specification version.
 	ApiVersion string `json:"apiVersion" yaml:"apiVersion" mapstructure:"apiVersion"`
 
-	// The declared Score Specification version. The container name must be a valid
+	// The set of named containers in the Workload. The container name must be a valid
 	// RFC1123 Label Name of up to 63 characters, including a-z, 0-9, '-' but may not
 	// start or end with '-'.
 	Containers WorkloadContainers `json:"containers" yaml:"containers" mapstructure:"containers"`

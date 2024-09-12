@@ -69,13 +69,9 @@ func main() {
 
 ## Upgrading the schema version
 
-When the Score JSON schema is updated in <https://github.com/score-spec/schema>, this repo should be updated to match.
+When the Score JSON schema is updated in <https://github.com/score-spec/spec>, this repo should be updated to match.
 
-First update the subtree:
-
-```sh
-make update-schema
-```
+First copy the new `score-v1b1.json` and `samples/` files from the spec repo, into [schema/files](schema/files).
 
 Then regenerate the defined types:
 
