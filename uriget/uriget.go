@@ -246,10 +246,13 @@ func (o *options) getOci(ctx context.Context, u *url.URL) ([]byte, error) {
 		return nil, fmt.Errorf("invalid OCI URL format")
 	}
 	registry := parts[0]
-	repo := strings.Join(parts[1:], "/")
+	repo := strings.Join(parts[1:len(parts)-1], "/")
 	tag := "latest"
-	if u.Fragment != "" {
-		tag = u.Fragment
+	lastPart := parts[len(parts)-1]
+	if strings.Contains(lastPart, ":") {
+		split := strings.Split(lastPart, ":")
+		repo = strings.Join(parts[1:len(parts)-1], "/") + "/" + split[0]
+		tag = split[1]
 	}
 	store, err := oci.New(o.tempDir)
 	if err != nil {
@@ -260,10 +263,14 @@ func (o *options) getOci(ctx context.Context, u *url.URL) ([]byte, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to connect to remote repository: %w", err)
 	}
+	if strings.HasPrefix(repoUrl, "localhost:") || strings.HasPrefix(repoUrl, "127.0.0.1:") {
+		remoteRepo.PlainHTTP = true
+	}
 	manifestDescriptor, err := oras.Copy(ctx, remoteRepo, tag, store, tag, oras.DefaultCopyOptions)
 	if err != nil {
 		return nil, fmt.Errorf("failed to pull OCI image: %w", err)
 	}
-	o.logger.Printf("Pulled OCI image: %s with manifest descriptor : %v", u.String(), manifestDescriptor.Digest)
+
+	o.logger.Printf("Pulled OCI image: %s with manifest descriptor: %v", u.String(), manifestDescriptor.Digest)
 	return []byte(manifestDescriptor.Digest), nil
 }
