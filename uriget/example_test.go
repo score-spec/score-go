@@ -51,7 +51,7 @@ func ExampleWithHttpClient() {
 	fmt.Println(err)
 	// Output: failed to make get request: Get "https://example.com": no proxy
 }
-func ExampleGetFile_Oci() {
+func ExampleGetFile_oci() {
 	testUrl := "oci://ghcr.io/score-spec/score-compose:0.18.0"
 	buff, err := GetFile(context.Background(), testUrl)
 	if err != nil {
