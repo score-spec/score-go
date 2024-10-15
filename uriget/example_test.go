@@ -3,11 +3,8 @@ package uriget
 import (
 	"context"
 	"fmt"
-	"log"
 	"net/http"
 	"net/url"
-	"os"
-	"testing"
 )
 
 func ExampleGetFile_local() {
@@ -54,21 +51,14 @@ func ExampleWithHttpClient() {
 	fmt.Println(err)
 	// Output: failed to make get request: Get "https://example.com": no proxy
 }
-
-func TestGetOci(t *testing.T) {
-	logger := log.New(os.Stdout, "TEST: ", log.LstdFlags)
-	o := &options{
-		tempDir: t.TempDir(),
-		logger:  logger,
-	}
-	testUrl := "oci://localhost:5001/myimage:latest"
-	u, err := url.Parse(testUrl)
+func ExampleWithOci() {
+	testUrl := "oci://ghcr.io/score-spec/score-compose:0.18.0"
+	buff, err := GetFile(context.Background(), testUrl)
 	if err != nil {
-		t.Fatalf("failed to parse URL: %v", err)
+		fmt.Println("failed to pull OCI image:", err)
+		return
 	}
-
-	_, err = o.getOci(context.Background(), u)
-	if err != nil {
-		t.Fatalf("expected no error, got: %v", err)
-	}
+	fmt.Println(len(buff) > 0, err)
+	// Output:
+	// true <nil>
 }
