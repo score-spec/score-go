@@ -1,8 +1,8 @@
 module github.com/score-spec/score-go
 
-go 1.22
+go 1.23
 
-toolchain go1.22.0
+toolchain go1.23.0
 
 require (
 	github.com/mitchellh/mapstructure v1.5.0
