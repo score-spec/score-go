@@ -2,7 +2,7 @@ name: release
 on:
   push:
     tags:
-      - 1.**
+      - v1.**
 permissions: write-all
 jobs:
   release:
