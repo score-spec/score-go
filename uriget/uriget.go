@@ -19,6 +19,7 @@ import (
 
 	"oras.land/oras-go/v2"
 	"oras.land/oras-go/v2/content/oci"
+	"oras.land/oras-go/v2/registry"
 	"oras.land/oras-go/v2/registry/remote"
 )
 
@@ -241,30 +242,21 @@ func (o *options) getGit(ctx context.Context, u *url.URL) ([]byte, error) {
 }
 
 func (o *options) getOci(ctx context.Context, u *url.URL) ([]byte, error) {
-	parts := strings.Split(u.Host+u.Path, "/")
-	if len(parts) < 2 {
-		return nil, fmt.Errorf("invalid OCI URL format")
-	}
-	registry := parts[0]
-	repo := strings.Join(parts[1:len(parts)-1], "/")
-	tag := "latest"
-	lastPart := parts[len(parts)-1]
-	if strings.Contains(lastPart, ":") {
-		split := strings.Split(lastPart, ":")
-		repo = strings.Join(parts[1:len(parts)-1], "/") + "/" + split[0]
-		tag = split[1]
+	ref, err := registry.ParseReference(u.Host + u.Path)
+	if err != nil {
+		return nil, fmt.Errorf("can't parse artifact URL into a valid reference: %w", err)
 	}
 	store, err := oci.New(o.tempDir)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create OCI layout store: %w", err)
 	}
-	repoUrl := fmt.Sprintf("%s/%s", registry, repo)
-	remoteRepo, err := remote.NewRepository(repoUrl)
+	remoteRepo, err := remote.NewRepository(ref.String())
 	if err != nil {
 		return nil, fmt.Errorf("failed to connect to remote repository: %w", err)
 	}
-	if strings.HasPrefix(repoUrl, "localhost:") || strings.HasPrefix(repoUrl, "127.0.0.1:") {
-		remoteRepo.PlainHTTP = true
+	tag := "latest"
+	if ref.Reference != "" {
+		tag = ref.Reference
 	}
 	manifestDescriptor, err := oras.Copy(ctx, remoteRepo, tag, store, tag, oras.DefaultCopyOptions)
 	if err != nil {
