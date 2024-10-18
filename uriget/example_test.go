@@ -51,3 +51,38 @@ func ExampleWithHttpClient() {
 	fmt.Println(err)
 	// Output: failed to make get request: Get "https://example.com": no proxy
 }
+func ExampleGetFile_oci() {
+	testUrl := "oci://ghcr.io/score-spec/score-compose:0.18.0"
+	buff, err := GetFile(context.Background(), testUrl)
+	if err != nil {
+		fmt.Println("failed to pull OCI image:", err)
+		return
+	}
+	fmt.Println(len(buff) > 0)
+	// Output:
+	// true
+}
+
+func ExampleGetFile_ociNoTag() {
+	testUrl := "oci://ghcr.io/score-spec/score-compose"
+	buff, err := GetFile(context.Background(), testUrl)
+	if err != nil {
+		fmt.Println("failed to pull OCI image:", err)
+		return
+	}
+	fmt.Println(len(buff) > 0)
+	// Output:
+	// true
+}
+
+func ExampleGetFile_ociWithDigest() {
+	testUrl := "oci://ghcr.io/score-spec/score-compose@sha256:f3d8d5485a751cbdc91e073df1b6fbcde83f85a86ee3bc7d53e05b00452baedd"
+	buff, err := GetFile(context.Background(), testUrl)
+	if err != nil {
+		fmt.Println("failed to pull OCI image:", err)
+		return
+	}
+	fmt.Println(len(buff) > 0)
+	// Output:
+	// true
+}

@@ -16,6 +16,11 @@ import (
 	"path/filepath"
 	"strings"
 	"time"
+
+	"oras.land/oras-go/v2"
+	"oras.land/oras-go/v2/content/oci"
+	"oras.land/oras-go/v2/registry"
+	"oras.land/oras-go/v2/registry/remote"
 )
 
 // options is a struct holding fields that may need to have overrides in certain environments or during unit testing.
@@ -110,6 +115,8 @@ func GetFile(ctx context.Context, rawUri string, optionFuncs ...Option) ([]byte,
 		fallthrough
 	case "git-https":
 		return opts.getGit(ctx, u)
+	case "oci":
+		return opts.getOci(ctx, u)
 	default:
 		return nil, fmt.Errorf("unsupported scheme '%s'", u.Scheme)
 	}
@@ -232,4 +239,30 @@ func (o *options) getGit(ctx context.Context, u *url.URL) ([]byte, error) {
 	}
 	o.logger.Printf("Read %d bytes from %s", len(buff), filepath.Join(td, subPath))
 	return buff, nil
+}
+
+func (o *options) getOci(ctx context.Context, u *url.URL) ([]byte, error) {
+	ref, err := registry.ParseReference(u.Host + u.Path)
+	if err != nil {
+		return nil, fmt.Errorf("can't parse artifact URL into a valid reference: %w", err)
+	}
+	store, err := oci.New(o.tempDir)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create OCI layout store: %w", err)
+	}
+	remoteRepo, err := remote.NewRepository(ref.String())
+	if err != nil {
+		return nil, fmt.Errorf("failed to connect to remote repository: %w", err)
+	}
+	tag := "latest"
+	if ref.Reference != "" {
+		tag = ref.Reference
+	}
+	manifestDescriptor, err := oras.Copy(ctx, remoteRepo, tag, store, tag, oras.DefaultCopyOptions)
+	if err != nil {
+		return nil, fmt.Errorf("failed to pull OCI image: %w", err)
+	}
+
+	o.logger.Printf("Pulled OCI image: %s with manifest descriptor: %v", u.String(), manifestDescriptor.Digest)
+	return []byte(manifestDescriptor.Digest), nil
 }
