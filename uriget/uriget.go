@@ -6,6 +6,7 @@ package uriget
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"io"
 	"log"
@@ -14,11 +15,11 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"slices"
 	"strings"
 	"time"
 
-	"oras.land/oras-go/v2"
-	"oras.land/oras-go/v2/content/oci"
+	v1 "github.com/opencontainers/image-spec/specs-go/v1"
 	"oras.land/oras-go/v2/registry"
 	"oras.land/oras-go/v2/registry/remote"
 )
@@ -246,23 +247,36 @@ func (o *options) getOci(ctx context.Context, u *url.URL) ([]byte, error) {
 	if err != nil {
 		return nil, fmt.Errorf("can't parse artifact URL into a valid reference: %w", err)
 	}
-	store, err := oci.New(o.tempDir)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create OCI layout store: %w", err)
+	if ref.Reference == "" {
+		ref.Reference = "latest"
 	}
 	remoteRepo, err := remote.NewRepository(ref.String())
 	if err != nil {
 		return nil, fmt.Errorf("failed to connect to remote repository: %w", err)
 	}
-	tag := "latest"
-	if ref.Reference != "" {
-		tag = ref.Reference
-	}
-	manifestDescriptor, err := oras.Copy(ctx, remoteRepo, tag, store, tag, oras.DefaultCopyOptions)
+	_, rc, err := remoteRepo.Manifests().FetchReference(ctx, ref.Reference)
 	if err != nil {
-		return nil, fmt.Errorf("failed to pull OCI image: %w", err)
+		return nil, fmt.Errorf("failed to fetch manifest: %w", err)
 	}
-
-	o.logger.Printf("Pulled OCI image: %s with manifest descriptor: %v", u.String(), manifestDescriptor.Digest)
-	return []byte(manifestDescriptor.Digest), nil
+	defer rc.Close()
+	var manifest v1.Manifest
+	if err = json.NewDecoder(rc).Decode(&manifest); err != nil {
+		return nil, fmt.Errorf("failed to decode manifest: %w", err)
+	}
+	index := slices.IndexFunc(manifest.Layers, func(descriptor v1.Descriptor) bool {
+		return strings.HasSuffix(descriptor.Annotations[v1.AnnotationTitle], ".yaml")
+	})
+	if index < 0 {
+		return nil, fmt.Errorf("no .yaml file found in layers")
+	}
+	_, rc, err = remoteRepo.Blobs().FetchReference(ctx, manifest.Layers[index].Digest.String())
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch blob: %w", err)
+	}
+	defer rc.Close()
+	raw, err := io.ReadAll(rc)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read blob content: %w", err)
+	}
+	return raw, nil
 }
