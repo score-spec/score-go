@@ -63,7 +63,7 @@ func ExampleGetFile_oci() {
 	// true
 }
 
-func ExampleGetFiles_oci_git() {
+func ExampleGetFile_oci_git() {
 	ociTestUrl := "oci://ghcr.io/score-spec/score-compose-community-provisioners:v0.1.0#00-service.provisioners.yaml"
 	ociBuff, err := GetFile(context.Background(), ociTestUrl)
 	if err != nil {
