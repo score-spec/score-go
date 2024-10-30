@@ -286,9 +286,10 @@ func (o *options) getOci(ctx context.Context, u *url.URL) ([]byte, error) {
 		return nil, fmt.Errorf("blob fetch failed: %w", err)
 	}
 	defer rc.Close()
-	raw, err := readLimited(rc, o.limit)
+	buff, err := readLimited(rc, o.limit)
 	if err != nil {
 		return nil, fmt.Errorf("blob read failed: %w", err)
 	}
-	return raw, nil
+	o.logger.Printf("Read %d bytes from %s", len(buff), specifiedFile)
+	return buff, nil
 }
