@@ -264,12 +264,18 @@ func (o *options) getOci(ctx context.Context, u *url.URL) ([]byte, error) {
 		return nil, fmt.Errorf("manifest decode failed: %w", err)
 	}
 	var selectedLayer *v1.Descriptor
+	yamlFileCount := 0
 	for _, layer := range manifest.Layers {
 		title := layer.Annotations[v1.AnnotationTitle]
-		if (specifiedFile != "" && title == specifiedFile) ||
-			(specifiedFile == "" && strings.HasSuffix(title, ".yaml")) {
-			selectedLayer = &layer
-			break
+		if strings.HasSuffix(title, ".yaml") {
+			yamlFileCount++
+			if specifiedFile == "" && yamlFileCount > 1 {
+				return nil, fmt.Errorf("manifest contains %d .yaml files; specify a specific file in the URL fragment", yamlFileCount)
+			}
+			if specifiedFile == "" || title == specifiedFile {
+				selectedLayer = &layer
+				break
+			}
 		}
 	}
 	if selectedLayer == nil {
@@ -280,7 +286,7 @@ func (o *options) getOci(ctx context.Context, u *url.URL) ([]byte, error) {
 		return nil, fmt.Errorf("blob fetch failed: %w", err)
 	}
 	defer rc.Close()
-	raw, err := io.ReadAll(rc)
+	raw, err := readLimited(rc, o.limit)
 	if err != nil {
 		return nil, fmt.Errorf("blob read failed: %w", err)
 	}
