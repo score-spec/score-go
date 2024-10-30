@@ -62,3 +62,39 @@ func ExampleGetFile_oci() {
 	// Output:
 	// true
 }
+
+func ExampleGetFiles_oci_git() {
+	ociTestUrl := "oci://ghcr.io/score-spec/score-compose-community-provisioners:v0.1.0#00-service.provisioners.yaml"
+	ociBuff, err := GetFile(context.Background(), ociTestUrl)
+	if err != nil {
+		fmt.Println("failed to pull OCI image:", err)
+		return
+	}
+	gitTestUrl := "git-https://github.com/score-spec/community-provisioners.git/score-compose/00-service.provisioners.yaml"
+	gitBuff, err := GetFile(context.Background(), gitTestUrl)
+	if err != nil {
+		fmt.Println("failed to pull file in git:", err)
+		return
+	}
+	fmt.Println(len(ociBuff) == len(gitBuff))
+	// Output:
+	// true
+}
+
+func ExampleGetFile_oci_https() {
+	ociTestUrl := "oci://ghcr.io/score-spec/score-compose-community-provisioners:v0.1.0#00-service.provisioners.yaml"
+	ociBuff, err := GetFile(context.Background(), ociTestUrl)
+	if err != nil {
+		fmt.Println("failed to pull OCI image:", err)
+		return
+	}
+	httpsTestUrl := "https://github.com/score-spec/community-provisioners/raw/v0.1.0/score-compose/00-service.provisioners.yaml"
+	httpsbuff, err := GetFile(context.Background(), httpsTestUrl)
+	if err != nil {
+		fmt.Println("failed to pull file by HTTPS:", err)
+		return
+	}
+	fmt.Println(len(ociBuff) == len(httpsbuff))
+	// Output:
+	// true
+}
