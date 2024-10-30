@@ -52,7 +52,7 @@ func ExampleWithHttpClient() {
 	// Output: failed to make get request: Get "https://example.com": no proxy
 }
 func ExampleGetFile_oci() {
-	testUrl := "oci://ghcr.io/score-spec/score-compose-community-provisioners:v0.1.0"
+	testUrl := "oci://ghcr.io/score-spec/score-compose-community-provisioners:v0.1.0#00-service.provisioners.yaml"
 	buff, err := GetFile(context.Background(), testUrl)
 	if err != nil {
 		fmt.Println("failed to pull OCI image:", err)

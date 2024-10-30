@@ -15,7 +15,6 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"slices"
 	"strings"
 	"time"
 
@@ -245,38 +244,45 @@ func (o *options) getGit(ctx context.Context, u *url.URL) ([]byte, error) {
 func (o *options) getOci(ctx context.Context, u *url.URL) ([]byte, error) {
 	ref, err := registry.ParseReference(u.Host + u.Path)
 	if err != nil {
-		return nil, fmt.Errorf("can't parse artifact URL into a valid reference: %w", err)
+		return nil, fmt.Errorf("invalid artifact URL: %w", err)
 	}
 	if ref.Reference == "" {
 		ref.Reference = "latest"
 	}
+	specifiedFile := strings.TrimPrefix(u.Fragment, "#")
 	remoteRepo, err := remote.NewRepository(ref.String())
 	if err != nil {
-		return nil, fmt.Errorf("failed to connect to remote repository: %w", err)
+		return nil, fmt.Errorf("connection to remote repository failed: %w", err)
 	}
 	_, rc, err := remoteRepo.Manifests().FetchReference(ctx, ref.Reference)
 	if err != nil {
-		return nil, fmt.Errorf("failed to fetch manifest: %w", err)
+		return nil, fmt.Errorf("manifest fetch failed: %w", err)
 	}
 	defer rc.Close()
 	var manifest v1.Manifest
 	if err = json.NewDecoder(rc).Decode(&manifest); err != nil {
-		return nil, fmt.Errorf("failed to decode manifest: %w", err)
+		return nil, fmt.Errorf("manifest decode failed: %w", err)
 	}
-	index := slices.IndexFunc(manifest.Layers, func(descriptor v1.Descriptor) bool {
-		return strings.HasSuffix(descriptor.Annotations[v1.AnnotationTitle], ".yaml")
-	})
-	if index < 0 {
-		return nil, fmt.Errorf("no .yaml file found in layers")
+	var selectedLayer *v1.Descriptor
+	for _, layer := range manifest.Layers {
+		title := layer.Annotations[v1.AnnotationTitle]
+		if (specifiedFile != "" && title == specifiedFile) ||
+			(specifiedFile == "" && strings.HasSuffix(title, ".yaml")) {
+			selectedLayer = &layer
+			break
+		}
 	}
-	_, rc, err = remoteRepo.Blobs().FetchReference(ctx, manifest.Layers[index].Digest.String())
+	if selectedLayer == nil {
+		return nil, fmt.Errorf("no matching .yaml file found in layers")
+	}
+	_, rc, err = remoteRepo.Blobs().FetchReference(ctx, selectedLayer.Digest.String())
 	if err != nil {
-		return nil, fmt.Errorf("failed to fetch blob: %w", err)
+		return nil, fmt.Errorf("blob fetch failed: %w", err)
 	}
 	defer rc.Close()
 	raw, err := io.ReadAll(rc)
 	if err != nil {
-		return nil, fmt.Errorf("failed to read blob content: %w", err)
+		return nil, fmt.Errorf("blob read failed: %w", err)
 	}
 	return raw, nil
 }
