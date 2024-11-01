@@ -52,7 +52,7 @@ func ExampleWithHttpClient() {
 	// Output: failed to make get request: Get "https://example.com": no proxy
 }
 func ExampleGetFile_oci() {
-	testUrl := "oci://ghcr.io/score-spec/score-compose:0.18.0"
+	testUrl := "oci://ghcr.io/score-spec/score-compose-community-provisioners:v0.1.0#00-service.provisioners.yaml"
 	buff, err := GetFile(context.Background(), testUrl)
 	if err != nil {
 		fmt.Println("failed to pull OCI image:", err)
@@ -63,26 +63,38 @@ func ExampleGetFile_oci() {
 	// true
 }
 
-func ExampleGetFile_ociNoTag() {
-	testUrl := "oci://ghcr.io/score-spec/score-compose"
-	buff, err := GetFile(context.Background(), testUrl)
+func ExampleGetFile_oci_git() {
+	ociTestUrl := "oci://ghcr.io/score-spec/score-compose-community-provisioners:v0.1.0#00-service.provisioners.yaml"
+	ociBuff, err := GetFile(context.Background(), ociTestUrl)
 	if err != nil {
 		fmt.Println("failed to pull OCI image:", err)
 		return
 	}
-	fmt.Println(len(buff) > 0)
+	gitTestUrl := "git-https://github.com/score-spec/community-provisioners.git/score-compose/00-service.provisioners.yaml"
+	gitBuff, err := GetFile(context.Background(), gitTestUrl)
+	if err != nil {
+		fmt.Println("failed to pull file in git:", err)
+		return
+	}
+	fmt.Println(len(ociBuff) == len(gitBuff))
 	// Output:
 	// true
 }
 
-func ExampleGetFile_ociWithDigest() {
-	testUrl := "oci://ghcr.io/score-spec/score-compose@sha256:f3d8d5485a751cbdc91e073df1b6fbcde83f85a86ee3bc7d53e05b00452baedd"
-	buff, err := GetFile(context.Background(), testUrl)
+func ExampleGetFile_oci_https() {
+	ociTestUrl := "oci://ghcr.io/score-spec/score-compose-community-provisioners:v0.1.0#00-service.provisioners.yaml"
+	ociBuff, err := GetFile(context.Background(), ociTestUrl)
 	if err != nil {
 		fmt.Println("failed to pull OCI image:", err)
 		return
 	}
-	fmt.Println(len(buff) > 0)
+	httpsTestUrl := "https://github.com/score-spec/community-provisioners/raw/v0.1.0/score-compose/00-service.provisioners.yaml"
+	httpsbuff, err := GetFile(context.Background(), httpsTestUrl)
+	if err != nil {
+		fmt.Println("failed to pull file by HTTPS:", err)
+		return
+	}
+	fmt.Println(len(ociBuff) == len(httpsbuff))
 	// Output:
 	// true
 }

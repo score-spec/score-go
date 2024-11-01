@@ -6,6 +6,7 @@ package uriget
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"io"
 	"log"
@@ -17,8 +18,7 @@ import (
 	"strings"
 	"time"
 
-	"oras.land/oras-go/v2"
-	"oras.land/oras-go/v2/content/oci"
+	v1 "github.com/opencontainers/image-spec/specs-go/v1"
 	"oras.land/oras-go/v2/registry"
 	"oras.land/oras-go/v2/registry/remote"
 )
@@ -244,25 +244,52 @@ func (o *options) getGit(ctx context.Context, u *url.URL) ([]byte, error) {
 func (o *options) getOci(ctx context.Context, u *url.URL) ([]byte, error) {
 	ref, err := registry.ParseReference(u.Host + u.Path)
 	if err != nil {
-		return nil, fmt.Errorf("can't parse artifact URL into a valid reference: %w", err)
+		return nil, fmt.Errorf("invalid artifact URL: %w", err)
 	}
-	store, err := oci.New(o.tempDir)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create OCI layout store: %w", err)
+	if ref.Reference == "" {
+		ref.Reference = "latest"
 	}
+	specifiedFile := strings.TrimPrefix(u.Fragment, "#")
 	remoteRepo, err := remote.NewRepository(ref.String())
 	if err != nil {
-		return nil, fmt.Errorf("failed to connect to remote repository: %w", err)
+		return nil, fmt.Errorf("connection to remote repository failed: %w", err)
 	}
-	tag := "latest"
-	if ref.Reference != "" {
-		tag = ref.Reference
-	}
-	manifestDescriptor, err := oras.Copy(ctx, remoteRepo, tag, store, tag, oras.DefaultCopyOptions)
+	_, rc, err := remoteRepo.Manifests().FetchReference(ctx, ref.Reference)
 	if err != nil {
-		return nil, fmt.Errorf("failed to pull OCI image: %w", err)
+		return nil, fmt.Errorf("manifest fetch failed: %w", err)
 	}
-
-	o.logger.Printf("Pulled OCI image: %s with manifest descriptor: %v", u.String(), manifestDescriptor.Digest)
-	return []byte(manifestDescriptor.Digest), nil
+	defer rc.Close()
+	var manifest v1.Manifest
+	if err = json.NewDecoder(rc).Decode(&manifest); err != nil {
+		return nil, fmt.Errorf("manifest decode failed: %w", err)
+	}
+	var selectedLayer *v1.Descriptor
+	yamlFileCount := 0
+	for _, layer := range manifest.Layers {
+		title := layer.Annotations[v1.AnnotationTitle]
+		if strings.HasSuffix(title, ".yaml") {
+			yamlFileCount++
+			if specifiedFile == "" && yamlFileCount > 1 {
+				return nil, fmt.Errorf("manifest contains %d .yaml files; specify a specific file in the URL fragment", yamlFileCount)
+			}
+			if specifiedFile == "" || title == specifiedFile {
+				selectedLayer = &layer
+				break
+			}
+		}
+	}
+	if selectedLayer == nil {
+		return nil, fmt.Errorf("no matching .yaml file found in layers")
+	}
+	_, rc, err = remoteRepo.Blobs().FetchReference(ctx, selectedLayer.Digest.String())
+	if err != nil {
+		return nil, fmt.Errorf("blob fetch failed: %w", err)
+	}
+	defer rc.Close()
+	buff, err := readLimited(rc, o.limit)
+	if err != nil {
+		return nil, fmt.Errorf("blob read failed: %w", err)
+	}
+	o.logger.Printf("Read %d bytes from %s", len(buff), specifiedFile)
+	return buff, nil
 }
