@@ -21,6 +21,9 @@ import (
 	v1 "github.com/opencontainers/image-spec/specs-go/v1"
 	"oras.land/oras-go/v2/registry"
 	"oras.land/oras-go/v2/registry/remote"
+	"oras.land/oras-go/v2/registry/remote/auth"
+	"oras.land/oras-go/v2/registry/remote/credentials"
+	"oras.land/oras-go/v2/registry/remote/retry"
 )
 
 // options is a struct holding fields that may need to have overrides in certain environments or during unit testing.
@@ -250,9 +253,19 @@ func (o *options) getOci(ctx context.Context, u *url.URL) ([]byte, error) {
 		ref.Reference = "latest"
 	}
 	specifiedFile := strings.TrimPrefix(u.Fragment, "#")
+	storeOpts := credentials.StoreOptions{}
+	credStore, err := credentials.NewStoreFromDocker(storeOpts)
+	if err != nil {
+		o.logger.Printf("Warning: Unable to load Docker credentials, continuing without auth. Error: %v", err)
+	}
 	remoteRepo, err := remote.NewRepository(ref.String())
 	if err != nil {
 		return nil, fmt.Errorf("connection to remote repository failed: %w", err)
+	}
+	remoteRepo.Client = &auth.Client{
+		Client:     retry.DefaultClient,
+		Cache:      auth.NewCache(),
+		Credential: credentials.Credential(credStore),
 	}
 	_, rc, err := remoteRepo.Manifests().FetchReference(ctx, ref.Reference)
 	if err != nil {
@@ -260,7 +273,7 @@ func (o *options) getOci(ctx context.Context, u *url.URL) ([]byte, error) {
 	}
 	defer rc.Close()
 	var manifest v1.Manifest
-	if err = json.NewDecoder(rc).Decode(&manifest); err != nil {
+	if err := json.NewDecoder(rc).Decode(&manifest); err != nil {
 		return nil, fmt.Errorf("manifest decode failed: %w", err)
 	}
 	var selectedLayer *v1.Descriptor
