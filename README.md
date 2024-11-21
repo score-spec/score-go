@@ -1,3 +1,6 @@
+[![ci](https://github.com/score-spec/score-k8s/actions/workflows/ci.yaml/badge.svg)](https://github.com/score-spec/score-k8s/actions/workflows/ci.yaml)
+[![Go Reference](https://pkg.go.dev/badge/github.com/score-spec/score-go.svg)](https://pkg.go.dev/github.com/score-spec/score-go)
+
 # score-go
 
 Reference library containing common types and functions for building Score implementations in Go.
