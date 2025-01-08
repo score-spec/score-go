@@ -18,6 +18,9 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"unicode/utf8"
+
+	"golang.org/x/text/encoding/charmap"
 
 	"github.com/score-spec/score-go/types"
 )
@@ -51,6 +54,13 @@ func readFile(baseDir, path string) (string, error) {
 	raw, err := os.ReadFile(path)
 	if err != nil {
 		return "", err
+	}
+
+	if !utf8.Valid(raw) {
+		raw, err = charmap.ISO8859_1.NewDecoder().Bytes(raw)
+		if err != nil {
+			return "", fmt.Errorf("failed to convert raw input bytes into utf-8")
+		}
 	}
 
 	return string(raw), nil
