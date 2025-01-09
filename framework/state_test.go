@@ -253,8 +253,7 @@ resources:
 	})
 
 	t.Run("two workload - nominal", func(t *testing.T) {
-		t.Run("one workload - nominal", func(t *testing.T) {
-			next := mustAddWorkload(t, start, `
+		next := mustAddWorkload(t, start, `
 metadata: {"name": "example1"}
 resources:
   one:
@@ -263,7 +262,7 @@ resources:
     type: thing2
     id: dog
 `)
-			next = mustAddWorkload(t, next, `
+		next = mustAddWorkload(t, next, `
 metadata: {"name": "example2"}
 resources:
   one:
@@ -272,32 +271,31 @@ resources:
     type: thing2
     id: dog
 `)
-			next, err := next.WithPrimedResources()
-			require.NoError(t, err)
-			assert.Len(t, start.Resources, 0)
-			assert.Len(t, next.Resources, 3)
-			checkAndResetGuids(t, next.Resources)
-			assert.Equal(t, map[ResourceUid]ScoreResourceState[NoExtras]{
-				"thing.default#example1.one": {
-					Guid: "00000000-0000-0000-0000-000000000000",
-					Type: "thing", Class: "default", Id: "example1.one", State: map[string]interface{}{},
-					SourceWorkload: "example1",
-					Outputs:        map[string]interface{}{},
-				},
-				"thing.default#example2.one": {
-					Guid: "00000000-0000-0000-0000-000000000000",
-					Type: "thing", Class: "default", Id: "example2.one", State: map[string]interface{}{},
-					SourceWorkload: "example2",
-					Outputs:        map[string]interface{}{},
-				},
-				"thing2.default#dog": {
-					Guid: "00000000-0000-0000-0000-000000000000",
-					Type: "thing2", Class: "default", Id: "dog", State: map[string]interface{}{},
-					SourceWorkload: "example1",
-					Outputs:        map[string]interface{}{},
-				},
-			}, next.Resources)
-		})
+		next, err := next.WithPrimedResources()
+		require.NoError(t, err)
+		assert.Len(t, start.Resources, 0)
+		assert.Len(t, next.Resources, 3)
+		checkAndResetGuids(t, next.Resources)
+		assert.Equal(t, map[ResourceUid]ScoreResourceState[NoExtras]{
+			"thing.default#example1.one": {
+				Guid: "00000000-0000-0000-0000-000000000000",
+				Type: "thing", Class: "default", Id: "example1.one", State: map[string]interface{}{},
+				SourceWorkload: "example1",
+				Outputs:        map[string]interface{}{},
+			},
+			"thing.default#example2.one": {
+				Guid: "00000000-0000-0000-0000-000000000000",
+				Type: "thing", Class: "default", Id: "example2.one", State: map[string]interface{}{},
+				SourceWorkload: "example2",
+				Outputs:        map[string]interface{}{},
+			},
+			"thing2.default#dog": {
+				Guid: "00000000-0000-0000-0000-000000000000",
+				Type: "thing2", Class: "default", Id: "dog", State: map[string]interface{}{},
+				SourceWorkload: "example1",
+				Outputs:        map[string]interface{}{},
+			},
+		}, next.Resources)
 	})
 
 }
