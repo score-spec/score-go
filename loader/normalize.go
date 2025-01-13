@@ -18,6 +18,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"unicode/utf8"
 
 	"github.com/score-spec/score-go/types"
 )
@@ -51,6 +52,10 @@ func readFile(baseDir, path string) (string, error) {
 	raw, err := os.ReadFile(path)
 	if err != nil {
 		return "", err
+	}
+
+	if !utf8.Valid(raw) {
+		return "", fmt.Errorf("file contains non-utf8 characters")
 	}
 
 	return string(raw), nil
