@@ -1,6 +1,8 @@
 [![ci](https://github.com/score-spec/score-go/actions/workflows/ci.yml/badge.svg)](https://github.com/score-spec/score-go/actions/workflows/ci.yml)
 [![Go Reference](https://pkg.go.dev/badge/github.com/score-spec/score-go.svg)](https://pkg.go.dev/github.com/score-spec/score-go)
 [![good first issues](https://img.shields.io/github/issues-search/score-spec/score-go?query=type%3Aissue%20is%3Aopen%20label%3A%22good%20first%20issue%22&label=good%20first%20issues&style=flat&logo=github)](https://github.com/score-spec/score-go/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22)
+[![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/score-spec/score-go/badge)](https://scorecard.dev/viewer/?uri=github.com/score-spec/score-go)
+[![OpenSSF Best Practices](https://www.bestpractices.dev/projects/9914/badge)](https://www.bestpractices.dev/projects/9914)
 
 # score-go
 
