@@ -20,6 +20,7 @@ import (
 	"maps"
 	"reflect"
 	"slices"
+	"sort"
 
 	score "github.com/score-spec/score-go/types"
 )
@@ -120,6 +121,15 @@ func uuidV4() string {
 	return fmt.Sprintf("%x-%x-%x-%x-%x", d[:4], d[4:6], d[6:8], d[8:10], d[10:])
 }
 
+func sortedStringMapKeys[v any](input map[string]v) []string {
+	out := make([]string, 0, len(input))
+	for s := range input {
+		out = append(out, s)
+	}
+	sort.Strings(out)
+	return out
+}
+
 // WithPrimedResources returns a new copy of State with all workload resources resolved to at least their initial type,
 // class and id. New resources will have an empty provider set. Existing resources will not be touched.
 // This is not a deep copy, but any writes are executed in a copy-on-write manner to avoid modifying the source.
@@ -132,8 +142,10 @@ func (s *State[StateExtras, WorkloadExtras, ResourceExtras]) WithPrimedResources
 	}
 
 	primedResourceUids := make(map[ResourceUid]bool)
-	for workloadName, workload := range s.Workloads {
-		for resName, res := range workload.Spec.Resources {
+	for _, workloadName := range sortedStringMapKeys(s.Workloads) {
+		workload := s.Workloads[workloadName]
+		for _, resName := range sortedStringMapKeys(workload.Spec.Resources) {
+			res := workload.Spec.Resources[resName]
 			resUid := NewResourceUid(workloadName, resName, res.Type, res.Class, res.Id)
 			if existing, ok := out.Resources[resUid]; !ok {
 				out.Resources[resUid] = ScoreResourceState[ResourceExtras]{
