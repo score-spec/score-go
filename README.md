@@ -88,3 +88,13 @@ And ensure the tests still pass:
 ```sh
 go test -v ./...
 ```
+
+### License
+
+[![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
+
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fscore-spec%2Fscore-go.svg?type=shield&issueType=license)](https://app.fossa.com/projects/git%2Bgithub.com%2Fscore-spec%2Fscore-go?ref=badge_shield&issueType=license)
+
+### Code of conduct
+
+[![Contributor Covenant](https://img.shields.io/badge/Contributor%20Covenant-2.1-4baaaa.svg)](CODE_OF_CONDUCT.md)
