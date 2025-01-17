@@ -89,6 +89,8 @@ containers:
         ---
         ${resources.env.APP_CONFIG}
       noExpand: true
+    - target: /etc/hello-world/binary
+      binaryContent: aGVsbG8=
     volumes:
     - source: ${resources.data}
       path: sub/path
@@ -105,6 +107,10 @@ containers:
       httpGet:
         path: /alive
         port: 8080
+      exec:
+        command:
+        - echo
+        - hello
     readinessProbe:
       httpGet:
         host: "1.1.1.1"
@@ -166,6 +172,10 @@ resources:
 								Content:  stringRef("---\n${resources.env.APP_CONFIG}\n"),
 								NoExpand: boolRef(true),
 							},
+							{
+								Target:        "/etc/hello-world/binary",
+								BinaryContent: stringRef("aGVsbG8="),
+							},
 						},
 						Volumes: []types.ContainerVolumesElem{
 							{
@@ -186,13 +196,16 @@ resources:
 							},
 						},
 						LivenessProbe: &types.ContainerProbe{
-							HttpGet: types.HttpProbe{
+							HttpGet: &types.HttpProbe{
 								Path: "/alive",
 								Port: 8080,
 							},
+							Exec: &types.ExecProbe{
+								Command: []string{"echo", "hello"},
+							},
 						},
 						ReadinessProbe: &types.ContainerProbe{
-							HttpGet: types.HttpProbe{
+							HttpGet: &types.HttpProbe{
 								Host:   stringRef("1.1.1.1"),
 								Scheme: schemeRef(types.HttpProbeSchemeHTTPS),
 								Path:   "/ready",

@@ -49,6 +49,9 @@ containers:
     - target: /etc/hello-world/config.yaml
       mode: "666"
       content: "${resources.env.APP_CONFIG}"
+    - target: /etc/hello-world/binary
+      mode: "755"
+      binaryContent: "aGVsbG8="
     volumes:
     - source: ${resources.data}
       path: sub/path
@@ -65,6 +68,10 @@ containers:
       httpGet:
         path: /alive
         port: 8080
+      exec:
+        command:
+        - echo
+        - hello
     readinessProbe:
       httpGet:
         path: /ready
@@ -599,7 +606,19 @@ func TestSchema(t *testing.T) {
 			Message: "/containers/hello/files/0/source",
 		},
 		{
-			Name: "containers.*.files.*.noExpand isset to true",
+			Name: "containers.*.files.*.binaryContent is bad format",
+			Src: func() map[string]interface{} {
+				src := newTestDocument()
+				var hello = src["containers"].(map[string]interface{})["hello"].(map[string]interface{})
+				var file = hello["files"].([]interface{})[0].(map[string]interface{})
+				delete(file, "content")
+				file["binaryContent"] = map[string]interface{}{}
+				return src
+			}(),
+			Message: "/containers/hello/files/0/binaryContent",
+		},
+		{
+			Name: "containers.*.files.*.noExpand is set to true",
 			Src: func() map[string]interface{} {
 				src := newTestDocument()
 				var hello = src["containers"].(map[string]interface{})["hello"].(map[string]interface{})
@@ -988,17 +1007,29 @@ func TestSchema(t *testing.T) {
 			Message: "/containers/hello/livenessProbe",
 		},
 		{
-			Name: "containers.*.livenessProbe is empty",
+			Name: "containers.*.livenessProbe.exec is nil",
 			Src: func() map[string]interface{} {
 				src := newTestDocument()
 				var hello = src["containers"].(map[string]interface{})["hello"].(map[string]interface{})
-				hello["livenessProbe"] = map[string]interface{}{}
+				hello["livenessProbe"].(map[string]interface{})["exec"] = nil
 				return src
 			}(),
-			Message: "/containers/hello/livenessProbe",
+			Message: "/containers/hello/livenessProbe/exec",
 		},
 		{
-			Name: "containers.*.livenessProbe.httpGet is not set",
+			Name: "containers.*.livenessProbe.exec is bad",
+			Src: func() map[string]interface{} {
+				src := newTestDocument()
+				var hello = src["containers"].(map[string]interface{})["hello"].(map[string]interface{})
+				hello["livenessProbe"].(map[string]interface{})["exec"] = map[string]interface{}{
+					"command": true,
+				}
+				return src
+			}(),
+			Message: "/containers/hello/livenessProbe/exec/command",
+		},
+		{
+			Name: "containers.*.livenessProbe.httpGet is nil",
 			Src: func() map[string]interface{} {
 				src := newTestDocument()
 				var hello = src["containers"].(map[string]interface{})["hello"].(map[string]interface{})
@@ -1228,14 +1259,14 @@ func TestSchema(t *testing.T) {
 			Message: "/containers/hello/readinessProbe",
 		},
 		{
-			Name: "containers.*.readinessProbe is empty",
+			Name: "containers.*.readinessProbe.exec is nil",
 			Src: func() map[string]interface{} {
 				src := newTestDocument()
 				var hello = src["containers"].(map[string]interface{})["hello"].(map[string]interface{})
-				hello["readinessProbe"] = map[string]interface{}{}
+				hello["readinessProbe"].(map[string]interface{})["exec"] = nil
 				return src
 			}(),
-			Message: "/containers/hello/readinessProbe",
+			Message: "/containers/hello/readinessProbe/exec",
 		},
 		{
 			Name: "containers.*.readinessProbe.httpGet is not set",
@@ -1245,7 +1276,7 @@ func TestSchema(t *testing.T) {
 				hello["readinessProbe"].(map[string]interface{})["httpGet"] = nil
 				return src
 			}(),
-			Message: "/containers/hello/readinessProbe",
+			Message: "/containers/hello/readinessProbe/httpGet",
 		},
 		{
 			Name: "containers.*.readinessProbe.httpGet.path is missing",
