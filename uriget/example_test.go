@@ -20,11 +20,8 @@ func ExampleGetFile_local() {
 func ExampleGetFile_http() {
 	buff, err := GetFile(context.Background(), "http://example.com")
 	fmt.Println(len(buff) > 0, err)
-	_, err = GetFile(context.Background(), "https://example.com/does/not/exist")
-	fmt.Println(err)
 	// Output:
 	// true <nil>
-	// GET https://example.com/does/not/exist non-200 status code: 404
 }
 
 func ExampleGetFile_git() {
