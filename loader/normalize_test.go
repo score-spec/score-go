@@ -19,8 +19,9 @@ import (
 	"io"
 	"testing"
 
-	"github.com/score-spec/score-go/types"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/score-spec/score-go/types"
 )
 
 func TestNormalize(t *testing.T) {
@@ -32,7 +33,7 @@ func TestNormalize(t *testing.T) {
 		Error  error
 	}{
 		{
-			Name: "Embeds source file",
+			Name: "Embeds source files",
 			Input: &types.Workload{
 				ApiVersion: "score.dev/v1b1",
 				Metadata: types.WorkloadMetadata{
@@ -46,6 +47,10 @@ func TestNormalize(t *testing.T) {
 								Target:   "/etc/hello-world/config.yaml",
 								Mode:     stringRef("666"),
 								NoExpand: boolRef(true),
+							},
+							{
+								Source: stringRef("./test_binary_file"),
+								Target: "/etc/hello-world/binary",
 							},
 						},
 					},
@@ -64,6 +69,10 @@ func TestNormalize(t *testing.T) {
 								Mode:     stringRef("666"),
 								Content:  stringRef("Hello World\n"),
 								NoExpand: boolRef(true),
+							},
+							{
+								Target:        "/etc/hello-world/binary",
+								BinaryContent: stringRef("XVLOjEyq5FKgHDGMAYMdp+crq4I="),
 							},
 						},
 					},

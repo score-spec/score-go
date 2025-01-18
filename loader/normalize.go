@@ -15,6 +15,7 @@
 package loader
 
 import (
+	"encoding/base64"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -33,9 +34,14 @@ func Normalize(w *types.Workload, baseDir string) error {
 				if err != nil {
 					return fmt.Errorf("embedding file '%s' for container '%s': %w", *f.Source, name, err)
 				}
-
 				c.Files[i].Source = nil
-				c.Files[i].Content = &raw
+				if utf8.Valid(raw) {
+					content := string(raw)
+					c.Files[i].Content = &content
+				} else {
+					content := base64.StdEncoding.EncodeToString(raw)
+					c.Files[i].BinaryContent = &content
+				}
 			}
 		}
 	}
@@ -44,19 +50,15 @@ func Normalize(w *types.Workload, baseDir string) error {
 }
 
 // readFile reads a text file into memory
-func readFile(baseDir, path string) (string, error) {
+func readFile(baseDir, path string) ([]byte, error) {
 	if !filepath.IsAbs(path) {
 		path = filepath.Join(baseDir, path)
 	}
 
 	raw, err := os.ReadFile(path)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
-	if !utf8.Valid(raw) {
-		return "", fmt.Errorf("file contains non-utf8 characters")
-	}
-
-	return string(raw), nil
+	return raw, nil
 }

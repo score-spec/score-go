@@ -50,6 +50,8 @@ containers:
     - target: /etc/hello-world/config.yaml
       mode: "666"
       content: "${resources.env.APP_CONFIG}"
+    - target: /etc/hello-world/binary
+      content: "aGVsbG8="
     volumes:
     - source: ${resources.data}
       path: sub/path
