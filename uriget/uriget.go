@@ -94,6 +94,9 @@ const ()
 // - file or no scheme: attempts to read the file from local file system.
 // - git-ssh / git-https: attempts to perform a sparse checkout of just the target file.
 func GetFile(ctx context.Context, rawUri string, optionFuncs ...Option) ([]byte, error) {
+	if rawUri == "-" {
+		return getStdinFile(ctx)
+	}
 	u, err := url.Parse(rawUri)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse: %w", err)
@@ -120,6 +123,21 @@ func GetFile(ctx context.Context, rawUri string, optionFuncs ...Option) ([]byte,
 	default:
 		return nil, fmt.Errorf("unsupported scheme '%s'", u.Scheme)
 	}
+}
+
+func getStdinFile(ctx context.Context) ([]byte, error) {
+	// Check if stdin is being piped
+	stat, err := os.Stdin.Stat()
+	if err != nil {
+		return nil, err
+	}
+
+	// Check if stdin is a pipe
+	if (stat.Mode() & os.ModeCharDevice) == 0 {
+		return io.ReadAll(os.Stdin)
+	}
+
+	return nil, fmt.Errorf("no stdin data provided")
 }
 
 func readLimited(r io.Reader, limit int) ([]byte, error) {
