@@ -23,6 +23,21 @@ import (
 	"oras.land/oras-go/v2/registry/remote"
 )
 
+func GetStdinFile(ctx context.Context) ([]byte, error) {
+	// Check if stdin is being piped
+	stat, err := os.Stdin.Stat()
+	if err != nil {
+		return nil, err
+	}
+
+	// Check if stdin is a pipe
+	if (stat.Mode() & os.ModeCharDevice) == 0 {
+		return io.ReadAll(os.Stdin)
+	}
+
+	return nil, fmt.Errorf("no stdin data provided")
+}
+
 // options is a struct holding fields that may need to have overrides in certain environments or during unit testing.
 // The options struct can be modified by using Option functions. See defaultOptions.
 type options struct {
