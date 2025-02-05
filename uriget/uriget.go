@@ -93,6 +93,7 @@ const ()
 // - http/https: reads the file using http.
 // - file or no scheme: attempts to read the file from local file system.
 // - git-ssh / git-https: attempts to perform a sparse checkout of just the target file.
+// - oci: retrieves a file from a remote OCI registry based on the reference and optional fragment.
 func GetFile(ctx context.Context, rawUri string, optionFuncs ...Option) ([]byte, error) {
 	u, err := url.Parse(rawUri)
 	if err != nil {
