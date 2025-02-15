@@ -94,9 +94,6 @@ const ()
 // - file or no scheme: attempts to read the file from local file system.
 // - git-ssh / git-https: attempts to perform a sparse checkout of just the target file.
 func GetFile(ctx context.Context, rawUri string, optionFuncs ...Option) ([]byte, error) {
-	if rawUri == "-" {
-		return getStdinFile(ctx)
-	}
 	u, err := url.Parse(rawUri)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse: %w", err)
@@ -134,7 +131,14 @@ func getStdinFile(ctx context.Context) ([]byte, error) {
 
 	// Check if stdin is a pipe
 	if (stat.Mode() & os.ModeCharDevice) == 0 {
-		return io.ReadAll(os.Stdin)
+		data, err := io.ReadAll(os.Stdin)
+		if err != nil {
+			return nil, err
+		}
+		if len(data) == 0 {
+			return nil, fmt.Errorf("stdin is empty")
+		}
+		return data, nil
 	}
 
 	return nil, fmt.Errorf("no stdin data provided")
@@ -172,6 +176,11 @@ func (o *options) getHttp(ctx context.Context, u *url.URL) ([]byte, error) {
 
 func (o *options) getFile(ctx context.Context, u *url.URL) ([]byte, error) {
 	targetPath := u.Host + u.Path
+	rawUri := u.String()
+	if rawUri == "-" {
+		return getStdinFile(ctx)
+	}
+
 	if strings.HasPrefix(targetPath, "~/") {
 		hd, err := os.UserHomeDir()
 		if err != nil {
