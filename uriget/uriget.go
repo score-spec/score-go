@@ -126,6 +126,28 @@ func GetFile(ctx context.Context, rawUri string, optionFuncs ...Option) ([]byte,
 	}
 }
 
+func getStdinFile(ctx context.Context) ([]byte, error) {
+	// Check if stdin is being piped
+	stat, err := os.Stdin.Stat()
+	if err != nil {
+		return nil, err
+	}
+
+	// Check if stdin is a pipe
+	if (stat.Mode() & os.ModeCharDevice) == 0 {
+		data, err := io.ReadAll(os.Stdin)
+		if err != nil {
+			return nil, err
+		}
+		if len(data) == 0 {
+			return nil, fmt.Errorf("stdin is empty")
+		}
+		return data, nil
+	}
+
+	return nil, fmt.Errorf("no stdin data provided")
+}
+
 func readLimited(r io.Reader, limit int) ([]byte, error) {
 	if buff, err := io.ReadAll(io.LimitReader(r, int64(limit+1))); err == nil && len(buff) > limit {
 		return nil, fmt.Errorf("%d byte limit exceeded", limit)
@@ -158,6 +180,11 @@ func (o *options) getHttp(ctx context.Context, u *url.URL) ([]byte, error) {
 
 func (o *options) getFile(ctx context.Context, u *url.URL) ([]byte, error) {
 	targetPath := u.Host + u.Path
+	rawUri := u.String()
+	if rawUri == "-" {
+		return getStdinFile(ctx)
+	}
+
 	if strings.HasPrefix(targetPath, "~/") {
 		hd, err := os.UserHomeDir()
 		if err != nil {

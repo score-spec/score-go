@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"os"
+	"testing"
 )
 
 func ExampleGetFile_local() {
@@ -15,6 +17,59 @@ func ExampleGetFile_local() {
 	// Output:
 	// true <nil>
 	// open ./does/not/exist.txt: no such file or directory
+}
+
+func TestGetStdinFile(t *testing.T) {
+
+	tempFile, err := os.CreateTemp("", "test_stdin_file")
+	if err != nil {
+		t.Fatalf("Failed to create temporary file: %v", err)
+	}
+	defer os.Remove(tempFile.Name())
+
+	testData := "This is a test."
+	if _, err := tempFile.WriteString(testData); err != nil {
+		t.Fatalf("Failed to write to temporary file: %v", err)
+	}
+	if _, err := tempFile.Seek(0, 0); err != nil {
+		t.Fatalf("Failed to seek in temporary file: %v", err)
+	}
+
+	originalStdin := os.Stdin
+	defer func() { os.Stdin = originalStdin }()
+	os.Stdin = tempFile
+
+	ctx := context.Background()
+	output, err := getStdinFile(ctx)
+	if err != nil {
+		t.Fatalf("Failed to read from stdin: %v", err)
+	}
+	if string(output) != testData {
+		t.Errorf("Expected %s, but got %s", testData, string(output))
+	}
+
+}
+
+func TestGetStdinFile_NoData(t *testing.T) {
+	// Step 1: Backup the original os.Stdin
+	originalStdin := os.Stdin
+	defer func() { os.Stdin = originalStdin }() // Restore original os.Stdin after the test
+
+	// Step 2: Assign an empty os.Stdin
+	tempFile, err := os.CreateTemp("", "test_stdin_empty")
+	if err != nil {
+		t.Fatalf("Failed to create temporary file: %v", err)
+	}
+	defer os.Remove(tempFile.Name()) // Clean up
+
+	os.Stdin = tempFile // Changed line
+
+	// Step 3: Call the function and verify the output
+	ctx := context.Background()
+	_, err = getStdinFile(ctx)
+	if err == nil {
+		t.Fatalf("Expected an error when no stdin data is provided, but got none")
+	}
 }
 
 func ExampleGetFile_http() {
