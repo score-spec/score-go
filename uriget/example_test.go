@@ -104,7 +104,7 @@ func ExampleWithHttpClient() {
 	// Output: failed to make get request: Get "https://example.com": no proxy
 }
 func ExampleGetFile_oci() {
-	testUrl := "oci://ghcr.io/score-spec/score-compose-community-provisioners:v0.1.0#00-service.provisioners.yaml"
+	testUrl := "oci://ghcr.io/score-spec/score-compose-community-provisioners:latest#10-service.provisioners.yaml"
 	buff, err := GetFile(context.Background(), testUrl)
 	if err != nil {
 		fmt.Println("failed to pull OCI image:", err)
@@ -116,13 +116,13 @@ func ExampleGetFile_oci() {
 }
 
 func ExampleGetFile_oci_git() {
-	ociTestUrl := "oci://ghcr.io/score-spec/score-compose-community-provisioners:v0.1.0#00-service.provisioners.yaml"
+	ociTestUrl := "oci://ghcr.io/score-spec/score-compose-community-provisioners:latest#10-service.provisioners.yaml"
 	ociBuff, err := GetFile(context.Background(), ociTestUrl)
 	if err != nil {
 		fmt.Println("failed to pull OCI image:", err)
 		return
 	}
-	gitTestUrl := "git-https://github.com/score-spec/community-provisioners.git/score-compose/00-service.provisioners.yaml"
+	gitTestUrl := "git-https://github.com/score-spec/community-provisioners.git/score-compose/10-service.provisioners.yaml"
 	gitBuff, err := GetFile(context.Background(), gitTestUrl)
 	if err != nil {
 		fmt.Println("failed to pull file in git:", err)
@@ -134,13 +134,13 @@ func ExampleGetFile_oci_git() {
 }
 
 func ExampleGetFile_oci_https() {
-	ociTestUrl := "oci://ghcr.io/score-spec/score-compose-community-provisioners:v0.1.0#00-service.provisioners.yaml"
+	ociTestUrl := "oci://ghcr.io/score-spec/score-compose-community-provisioners:latest#10-service.provisioners.yaml"
 	ociBuff, err := GetFile(context.Background(), ociTestUrl)
 	if err != nil {
 		fmt.Println("failed to pull OCI image:", err)
 		return
 	}
-	httpsTestUrl := "https://github.com/score-spec/community-provisioners/raw/v0.1.0/score-compose/00-service.provisioners.yaml"
+	httpsTestUrl := "https://github.com/score-spec/community-provisioners/raw/main/score-compose/10-service.provisioners.yaml"
 	httpsbuff, err := GetFile(context.Background(), httpsTestUrl)
 	if err != nil {
 		fmt.Println("failed to pull file by HTTPS:", err)
