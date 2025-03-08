@@ -42,7 +42,7 @@ To check and update all files, run:
 
 ```
 $ go install github.com/google/addlicense@latest
-$ addlicense -l apache -v -ignore '**/*.yaml' -c Humanitec ./loader ./schema ./types ./pkg
+$ addlicense -l apache -v -ignore '**/*.yaml' -c Humanitec ./loader ./schema ./types ./formatter
 ```
 
 ## Feature requests
