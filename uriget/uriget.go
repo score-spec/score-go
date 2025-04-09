@@ -290,6 +290,7 @@ func (o *options) getOci(ctx context.Context, u *url.URL) ([]byte, error) {
 	if err != nil {
 		return nil, fmt.Errorf("connection to remote repository failed: %w", err)
 	}
+	remoteRepo.PlainHTTP = strings.HasPrefix(ref.Registry, "localhost") || strings.HasPrefix(ref.Registry, "127.0.0.1")
 	remoteRepo.Client = &auth.Client{
 		Client:     retry.DefaultClient,
 		Cache:      auth.NewCache(),
