@@ -27,7 +27,8 @@ import (
 	"github.com/score-spec/score-go/types"
 )
 
-// ValidateJson validates a json structure read from the given reader source.
+// ValidateJson validates a json structure read from the given reader source. Generally, you must call
+// ApplyCommonUpgradeTransforms on the raw structure first unless the input contains zero deprecated concepts.
 // For all validation errors, the returned error would be a *jsonschema.ValidationError.
 func ValidateJson(r io.Reader) error {
 	var obj map[string]interface{}
@@ -41,7 +42,8 @@ func ValidateJson(r io.Reader) error {
 	return Validate(obj)
 }
 
-// ValidateYaml validates a yaml structure read from the given reader source.
+// ValidateYaml validates a yaml structure read from the given reader source. Generally, you must call
+// ApplyCommonUpgradeTransforms on the raw structure first unless the input contains zero deprecated concepts.
 // For all validation errors returned error would be a *jsonschema.ValidationError.
 func ValidateYaml(r io.Reader) error {
 	var obj map[string]interface{}
@@ -63,7 +65,8 @@ func ValidateSpec(spec *types.Workload) error {
 	return ValidateYaml(bytes.NewReader(intermediate))
 }
 
-// Validate validates the source structure which should be a decoded map.
+// Validate validates the source structure which should be a decoded map. Generally, you must call
+// ApplyCommonUpgradeTransforms on the raw structure first unless the input contains zero deprecated concepts.
 // For all validation errors returned error would be a *jsonschema.ValidationError.
 func Validate(src map[string]interface{}) error {
 	schema, err := jsonschema.CompileString("", ScoreSchemaV1b1)
@@ -92,6 +95,7 @@ func ApplyCommonUpgradeTransforms(rawScore map[string]interface{}) ([]string, er
 
 			// We no longer support multi-line content. Update any arrays in line to be newline-separated
 			if filesStruct, ok := containerStruct["files"].([]interface{}); ok {
+				filesAsMap := make(map[string]interface{})
 				for i, rawFileStruct := range filesStruct {
 					fileStruct, ok := rawFileStruct.(map[string]interface{})
 					if !ok {
@@ -109,11 +113,22 @@ func ApplyCommonUpgradeTransforms(rawScore map[string]interface{}) ([]string, er
 						fileStruct["content"] = sb.String()
 						changes = append(changes, fmt.Sprintf("containers.%s.files.%d.content: converted from array", name, i))
 					}
+
+					target, ok := fileStruct["target"].(string)
+					if !ok {
+						return nil, fmt.Errorf("containers.%s.files.%d.target: is missing or is not a string", name, i)
+					}
+					delete(fileStruct, "target")
+					filesAsMap[target] = fileStruct
 				}
+
+				containerStruct["files"] = filesAsMap
+				changes = append(changes, fmt.Sprintf("containers.%s.files: migrated to object", name))
 			}
 
 			// We have fixed the naming of the read_only field. It is now readOnly.
 			if volumesStruct, ok := containerStruct["volumes"].([]interface{}); ok {
+				volumesAsMap := make(map[string]interface{})
 				for i, rawVolumeStruct := range volumesStruct {
 					volumeStruct, ok := rawVolumeStruct.(map[string]interface{})
 					if !ok {
@@ -124,7 +139,17 @@ func ApplyCommonUpgradeTransforms(rawScore map[string]interface{}) ([]string, er
 						volumeStruct["readOnly"] = before
 						changes = append(changes, fmt.Sprintf("containers.%s.volumes.%d.read_only: migrated to readOnly", name, i))
 					}
+
+					target, ok := volumeStruct["target"].(string)
+					if !ok {
+						return nil, fmt.Errorf("containers.%s.volumes.%d.target: is missing or is not a string", name, i)
+					}
+					delete(volumeStruct, "target")
+					volumesAsMap[target] = volumeStruct
 				}
+
+				containerStruct["volumes"] = volumesAsMap
+				changes = append(changes, fmt.Sprintf("containers.%s.volumes: migrated to object", name))
 			}
 		}
 	}
