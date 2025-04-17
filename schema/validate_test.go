@@ -47,16 +47,16 @@ containers:
     variables:
       FRIEND: World!
     files:
-    - target: /etc/hello-world/config.yaml
-      mode: "666"
-      content: "${resources.env.APP_CONFIG}"
-    - target: /etc/hello-world/binary
-      content: "aGVsbG8="
+      /etc/hello-world/config.yaml:
+        mode: "666"
+        content: "${resources.env.APP_CONFIG}"
+      /etc/hello-world/binary:
+        content: "aGVsbG8="
     volumes:
-    - source: ${resources.data}
-      path: sub/path
-      target: /mnt/data
-      readOnly: true
+      /mnt/data:
+        source: ${resources.data}
+        path: sub/path
+        readOnly: true
     resources:
       limits:
         memory: "128Mi"
@@ -207,21 +207,19 @@ func TestValidateJson(t *testing.T) {
       "variables": {
         "FRIEND": "World!"
       },
-      "files": [
-        {
-          "target": "/etc/hello-world/config.yaml",
+      "files": {
+        "/etc/hello-world/config.yaml": {
           "mode": "666",
           "content": "${resources.env.APP_CONFIG}"
         }
-      ],
-      "volumes": [
-        {
+      },
+      "volumes": {
+        "/mnt/data": {
           "source": "${resources.data}",
           "path": "sub/path",
-          "target": "/mnt/data",
           "readOnly": true
         }
-      ],
+      },
       "resources": {
         "limits": {
           "memory": "128Mi",
@@ -464,11 +462,11 @@ containers:
 	// apply transforms
 	changes, err := ApplyCommonUpgradeTransforms(obj)
 	assert.NoError(t, err)
-	assert.Len(t, changes, 2)
+	assert.Len(t, changes, 4)
 
 	// second validation attempt should succeed
 	assert.NoError(t, Validate(obj))
 
-	assert.Equal(t, "line1\nline2", obj["containers"].(map[string]interface{})["hello"].(map[string]interface{})["files"].([]interface{})[0].(map[string]interface{})["content"])
-	assert.Equal(t, true, obj["containers"].(map[string]interface{})["hello"].(map[string]interface{})["volumes"].([]interface{})[0].(map[string]interface{})["readOnly"])
+	assert.Equal(t, "line1\nline2", obj["containers"].(map[string]interface{})["hello"].(map[string]interface{})["files"].(map[string]interface{})["/etc/hello-world/config.yaml"].(map[string]interface{})["content"])
+	assert.Equal(t, true, obj["containers"].(map[string]interface{})["hello"].(map[string]interface{})["volumes"].(map[string]interface{})["/mnt/data"].(map[string]interface{})["readOnly"])
 }

@@ -46,17 +46,17 @@ containers:
     variables:
       FRIEND: World!
     files:
-    - target: /etc/hello-world/config.yaml
-      mode: "666"
-      content: "${resources.env.APP_CONFIG}"
-    - target: /etc/hello-world/binary
-      mode: "755"
-      binaryContent: "aGVsbG8="
+      /etc/hello-world/config.yaml:
+        mode: "666"
+        content: "${resources.env.APP_CONFIG}"
+      /etc/hello-world/binary:
+        mode: "755"
+        binaryContent: "aGVsbG8="
     volumes:
-    - source: ${resources.data}
-      path: sub/path
-      target: /mnt/data
-      readOnly: true
+      /mnt/data:
+        source: ${resources.data}
+        path: sub/path
+        readOnly: true
     resources:
       limits:
         memory: "128Mi"
@@ -498,131 +498,98 @@ func TestSchema(t *testing.T) {
 			Src: func() map[string]interface{} {
 				src := newTestDocument()
 				var hello = src["containers"].(map[string]interface{})["hello"].(map[string]interface{})
-				hello["files"] = []interface{}{}
+				hello["files"] = map[string]interface{}{}
 				return src
 			}(),
 			Message: "",
 		},
 		{
-			Name: "containers.*.files.*.target is missing",
-			Src: func() map[string]interface{} {
-				src := newTestDocument()
-				var hello = src["containers"].(map[string]interface{})["hello"].(map[string]interface{})
-				var file = hello["files"].([]interface{})[0].(map[string]interface{})
-				delete(file, "target")
-				return src
-			}(),
-			Message: "/containers/hello/files/0",
-		},
-		{
-			Name: "containers.*.files.*.target is not set",
-			Src: func() map[string]interface{} {
-				src := newTestDocument()
-				var hello = src["containers"].(map[string]interface{})["hello"].(map[string]interface{})
-				var file = hello["files"].([]interface{})[0].(map[string]interface{})
-				file["target"] = nil
-				return src
-			}(),
-			Message: "/containers/hello/files/0/target",
-		},
-		{
-			Name: "containers.*.files.*.target is not a string",
-			Src: func() map[string]interface{} {
-				src := newTestDocument()
-				var hello = src["containers"].(map[string]interface{})["hello"].(map[string]interface{})
-				var file = hello["files"].([]interface{})[0].(map[string]interface{})
-				file["target"] = 12
-				return src
-			}(),
-			Message: "/containers/hello/files/0/target",
-		},
-		{
 			Name: "containers.*.files.*.mode is not set",
 			Src: func() map[string]interface{} {
 				src := newTestDocument()
-				var hello = src["containers"].(map[string]interface{})["hello"].(map[string]interface{})
-				var file = hello["files"].([]interface{})[0].(map[string]interface{})
+				var files = src["containers"].(map[string]interface{})["hello"].(map[string]interface{})["files"].(map[string]interface{})
+				var file = files["/etc/hello-world/config.yaml"].(map[string]interface{})
 				file["mode"] = nil
 				return src
 			}(),
-			Message: "/containers/hello/files/0/mode",
+			Message: "/containers/hello/files/~1etc~1hello-world~1config.yaml/mode",
 		},
 		{
 			Name: "containers.*.files.*.mode is not a string",
 			Src: func() map[string]interface{} {
 				src := newTestDocument()
-				var hello = src["containers"].(map[string]interface{})["hello"].(map[string]interface{})
-				var file = hello["files"].([]interface{})[0].(map[string]interface{})
+				var files = src["containers"].(map[string]interface{})["hello"].(map[string]interface{})["files"].(map[string]interface{})
+				var file = files["/etc/hello-world/config.yaml"].(map[string]interface{})
 				file["mode"] = 12
 				return src
 			}(),
-			Message: "/containers/hello/files/0/mode",
+			Message: "/containers/hello/files/~1etc~1hello-world~1config.yaml/mode",
 		},
 		{
 			Name: "containers.*.files.*.source is missing",
 			Src: func() map[string]interface{} {
 				src := newTestDocument()
-				var hello = src["containers"].(map[string]interface{})["hello"].(map[string]interface{})
-				var file = hello["files"].([]interface{})[0].(map[string]interface{})
+				var files = src["containers"].(map[string]interface{})["hello"].(map[string]interface{})["files"].(map[string]interface{})
+				var file = files["/etc/hello-world/config.yaml"].(map[string]interface{})
 				delete(file, "content")
 				return src
 			}(),
-			Message: "/containers/hello/files/0",
+			Message: "/containers/hello/files/~1etc~1hello-world~1config.yaml",
 		},
 		{
 			Name: "containers.*.files.*.source is not set",
 			Src: func() map[string]interface{} {
 				src := newTestDocument()
-				var hello = src["containers"].(map[string]interface{})["hello"].(map[string]interface{})
-				var file = hello["files"].([]interface{})[0].(map[string]interface{})
+				var files = src["containers"].(map[string]interface{})["hello"].(map[string]interface{})["files"].(map[string]interface{})
+				var file = files["/etc/hello-world/config.yaml"].(map[string]interface{})
 				delete(file, "content")
 				file["source"] = nil
 				return src
 			}(),
-			Message: "/containers/hello/files/0",
+			Message: "/containers/hello/files/~1etc~1hello-world~1config.yaml",
 		},
 		{
 			Name: "containers.*.files.*.source is empty",
 			Src: func() map[string]interface{} {
 				src := newTestDocument()
-				var hello = src["containers"].(map[string]interface{})["hello"].(map[string]interface{})
-				var file = hello["files"].([]interface{})[0].(map[string]interface{})
+				var files = src["containers"].(map[string]interface{})["hello"].(map[string]interface{})["files"].(map[string]interface{})
+				var file = files["/etc/hello-world/config.yaml"].(map[string]interface{})
 				delete(file, "content")
 				file["source"] = ""
 				return src
 			}(),
-			Message: "/containers/hello/files/0/source",
+			Message: "/containers/hello/files/~1etc~1hello-world~1config.yaml/source",
 		},
 		{
 			Name: "containers.*.files.*.source is not a string",
 			Src: func() map[string]interface{} {
 				src := newTestDocument()
-				var hello = src["containers"].(map[string]interface{})["hello"].(map[string]interface{})
-				var file = hello["files"].([]interface{})[0].(map[string]interface{})
+				var files = src["containers"].(map[string]interface{})["hello"].(map[string]interface{})["files"].(map[string]interface{})
+				var file = files["/etc/hello-world/config.yaml"].(map[string]interface{})
 				delete(file, "content")
 				file["source"] = 5
 				return src
 			}(),
-			Message: "/containers/hello/files/0/source",
+			Message: "/containers/hello/files/~1etc~1hello-world~1config.yaml/source",
 		},
 		{
 			Name: "containers.*.files.*.binaryContent is bad format",
 			Src: func() map[string]interface{} {
 				src := newTestDocument()
-				var hello = src["containers"].(map[string]interface{})["hello"].(map[string]interface{})
-				var file = hello["files"].([]interface{})[0].(map[string]interface{})
+				var files = src["containers"].(map[string]interface{})["hello"].(map[string]interface{})["files"].(map[string]interface{})
+				var file = files["/etc/hello-world/config.yaml"].(map[string]interface{})
 				delete(file, "content")
 				file["binaryContent"] = map[string]interface{}{}
 				return src
 			}(),
-			Message: "/containers/hello/files/0/binaryContent",
+			Message: "/containers/hello/files/~1etc~1hello-world~1config.yaml/binaryContent",
 		},
 		{
 			Name: "containers.*.files.*.noExpand is set to true",
 			Src: func() map[string]interface{} {
 				src := newTestDocument()
-				var hello = src["containers"].(map[string]interface{})["hello"].(map[string]interface{})
-				var file = hello["files"].([]interface{})[0].(map[string]interface{})
+				var files = src["containers"].(map[string]interface{})["hello"].(map[string]interface{})["files"].(map[string]interface{})
+				var file = files["/etc/hello-world/config.yaml"].(map[string]interface{})
 				file["noExpand"] = true
 				return src
 			}(),
@@ -632,8 +599,8 @@ func TestSchema(t *testing.T) {
 			Name: "containers.*.files.*.noExpand isset to false",
 			Src: func() map[string]interface{} {
 				src := newTestDocument()
-				var hello = src["containers"].(map[string]interface{})["hello"].(map[string]interface{})
-				var file = hello["files"].([]interface{})[0].(map[string]interface{})
+				var files = src["containers"].(map[string]interface{})["hello"].(map[string]interface{})["files"].(map[string]interface{})
+				var file = files["/etc/hello-world/config.yaml"].(map[string]interface{})
 				file["noExpand"] = false
 				return src
 			}(),
@@ -643,71 +610,71 @@ func TestSchema(t *testing.T) {
 			Name: "containers.*.files.*.noExpand is not a boolean",
 			Src: func() map[string]interface{} {
 				src := newTestDocument()
-				var hello = src["containers"].(map[string]interface{})["hello"].(map[string]interface{})
-				var file = hello["files"].([]interface{})[0].(map[string]interface{})
+				var files = src["containers"].(map[string]interface{})["hello"].(map[string]interface{})["files"].(map[string]interface{})
+				var file = files["/etc/hello-world/config.yaml"].(map[string]interface{})
 				delete(file, "content")
 				file["noExpand"] = 5
 				return src
 			}(),
-			Message: "/containers/hello/files/0/noExpand",
+			Message: "/containers/hello/files/~1etc~1hello-world~1config.yaml/noExpand",
 		},
 		{
 			Name: "containers.*.files.*.content is missing",
 			Src: func() map[string]interface{} {
 				src := newTestDocument()
-				var hello = src["containers"].(map[string]interface{})["hello"].(map[string]interface{})
-				var file = hello["files"].([]interface{})[0].(map[string]interface{})
+				var files = src["containers"].(map[string]interface{})["hello"].(map[string]interface{})["files"].(map[string]interface{})
+				var file = files["/etc/hello-world/config.yaml"].(map[string]interface{})
 				delete(file, "content")
 				return src
 			}(),
-			Message: "/containers/hello/files/0",
+			Message: "/containers/hello/files/~1etc~1hello-world~1config.yaml",
 		},
 		{
 			Name: "containers.*.files.*.content is not set",
 			Src: func() map[string]interface{} {
 				src := newTestDocument()
-				var hello = src["containers"].(map[string]interface{})["hello"].(map[string]interface{})
-				var file = hello["files"].([]interface{})[0].(map[string]interface{})
+				var files = src["containers"].(map[string]interface{})["hello"].(map[string]interface{})["files"].(map[string]interface{})
+				var file = files["/etc/hello-world/config.yaml"].(map[string]interface{})
 				file["content"] = nil
 				return src
 			}(),
-			Message: "/containers/hello/files/0/content",
+			Message: "/containers/hello/files/~1etc~1hello-world~1config.yaml/content",
 		},
 		{
 			Name: "containers.*.files.*.content is not a string",
 			Src: func() map[string]interface{} {
 				src := newTestDocument()
-				var hello = src["containers"].(map[string]interface{})["hello"].(map[string]interface{})
-				var file = hello["files"].([]interface{})[0].(map[string]interface{})
+				var files = src["containers"].(map[string]interface{})["hello"].(map[string]interface{})["files"].(map[string]interface{})
+				var file = files["/etc/hello-world/config.yaml"].(map[string]interface{})
 				file["content"] = 5
 				return src
 			}(),
-			Message: "/containers/hello/files/0/content",
+			Message: "/containers/hello/files/~1etc~1hello-world~1config.yaml/content",
 		},
 		{
 			Name: "containers.*.files.*.content is an empty array",
 			Src: func() map[string]interface{} {
 				src := newTestDocument()
-				var hello = src["containers"].(map[string]interface{})["hello"].(map[string]interface{})
-				var file = hello["files"].([]interface{})[0].(map[string]interface{})
+				var files = src["containers"].(map[string]interface{})["hello"].(map[string]interface{})["files"].(map[string]interface{})
+				var file = files["/etc/hello-world/config.yaml"].(map[string]interface{})
 				file["content"] = []interface{}{}
 				return src
 			}(),
-			Message: "/containers/hello/files/0/content",
+			Message: "/containers/hello/files/~1etc~1hello-world~1config.yaml/content",
 		},
 		{
 			Name: "containers.*.files.*.content is an array of strings",
 			Src: func() map[string]interface{} {
 				src := newTestDocument()
-				var hello = src["containers"].(map[string]interface{})["hello"].(map[string]interface{})
-				var file = hello["files"].([]interface{})[0].(map[string]interface{})
+				var files = src["containers"].(map[string]interface{})["hello"].(map[string]interface{})["files"].(map[string]interface{})
+				var file = files["/etc/hello-world/config.yaml"].(map[string]interface{})
 				file["content"] = []interface{}{
 					"Line 1",
 					"Line 2",
 				}
 				return src
 			}(),
-			Message: "/containers/hello/files/0/content",
+			Message: "/containers/hello/files/~1etc~1hello-world~1config.yaml/content",
 		},
 
 		// containers.*.volumes
@@ -727,7 +694,7 @@ func TestSchema(t *testing.T) {
 			Src: func() map[string]interface{} {
 				src := newTestDocument()
 				var hello = src["containers"].(map[string]interface{})["hello"].(map[string]interface{})
-				hello["volumes"] = []interface{}{}
+				hello["volumes"] = map[string]interface{}{}
 				return src
 			}(),
 			Message: "",
@@ -737,110 +704,77 @@ func TestSchema(t *testing.T) {
 			Src: func() map[string]interface{} {
 				src := newTestDocument()
 				var hello = src["containers"].(map[string]interface{})["hello"].(map[string]interface{})
-				var volumes = hello["volumes"].([]interface{})[0].(map[string]interface{})
+				var volumes = hello["volumes"].(map[string]interface{})["/mnt/data"].(map[string]interface{})
 				delete(volumes, "source")
 				return src
 			}(),
-			Message: "/containers/hello/volumes/0",
+			Message: "/containers/hello/volumes/~1mnt~1data",
 		},
 		{
 			Name: "containers.*.volumes.*.source is not set",
 			Src: func() map[string]interface{} {
 				src := newTestDocument()
 				var hello = src["containers"].(map[string]interface{})["hello"].(map[string]interface{})
-				var volumes = hello["volumes"].([]interface{})[0].(map[string]interface{})
+				var volumes = hello["volumes"].(map[string]interface{})["/mnt/data"].(map[string]interface{})
 				volumes["source"] = nil
 				return src
 			}(),
-			Message: "/containers/hello/volumes/0/source",
+			Message: "/containers/hello/volumes/~1mnt~1data/source",
 		},
 		{
 			Name: "containers.*.volumes.*.source is not a string",
 			Src: func() map[string]interface{} {
 				src := newTestDocument()
 				var hello = src["containers"].(map[string]interface{})["hello"].(map[string]interface{})
-				var volumes = hello["volumes"].([]interface{})[0].(map[string]interface{})
+				var volumes = hello["volumes"].(map[string]interface{})["/mnt/data"].(map[string]interface{})
 				volumes["source"] = 12
 				return src
 			}(),
-			Message: "/containers/hello/volumes/0/source",
+			Message: "/containers/hello/volumes/~1mnt~1data/source",
 		},
 		{
 			Name: "containers.*.volumes.*.path is not set",
 			Src: func() map[string]interface{} {
 				src := newTestDocument()
 				var hello = src["containers"].(map[string]interface{})["hello"].(map[string]interface{})
-				var volumes = hello["volumes"].([]interface{})[0].(map[string]interface{})
+				var volumes = hello["volumes"].(map[string]interface{})["/mnt/data"].(map[string]interface{})
 				volumes["path"] = nil
 				return src
 			}(),
-			Message: "/containers/hello/volumes/0/path",
+			Message: "/containers/hello/volumes/~1mnt~1data/path",
 		},
 		{
 			Name: "containers.*.volumes.*.path is not a string",
 			Src: func() map[string]interface{} {
 				src := newTestDocument()
 				var hello = src["containers"].(map[string]interface{})["hello"].(map[string]interface{})
-				var volumes = hello["volumes"].([]interface{})[0].(map[string]interface{})
+				var volumes = hello["volumes"].(map[string]interface{})["/mnt/data"].(map[string]interface{})
 				volumes["path"] = 12
 				return src
 			}(),
-			Message: "/containers/hello/volumes/0/path",
-		},
-		{
-			Name: "containers.*.volumes.*.target is missing",
-			Src: func() map[string]interface{} {
-				src := newTestDocument()
-				var hello = src["containers"].(map[string]interface{})["hello"].(map[string]interface{})
-				var volumes = hello["volumes"].([]interface{})[0].(map[string]interface{})
-				delete(volumes, "target")
-				return src
-			}(),
-			Message: "/containers/hello/volumes/0",
-		},
-		{
-			Name: "containers.*.volumes.*.target is not set",
-			Src: func() map[string]interface{} {
-				src := newTestDocument()
-				var hello = src["containers"].(map[string]interface{})["hello"].(map[string]interface{})
-				var volumes = hello["volumes"].([]interface{})[0].(map[string]interface{})
-				volumes["target"] = nil
-				return src
-			}(),
-			Message: "/containers/hello/volumes/0/target",
-		},
-		{
-			Name: "containers.*.volumes.*.target is not a string",
-			Src: func() map[string]interface{} {
-				src := newTestDocument()
-				var hello = src["containers"].(map[string]interface{})["hello"].(map[string]interface{})
-				var volumes = hello["volumes"].([]interface{})[0].(map[string]interface{})
-				volumes["target"] = 12
-				return src
-			}(),
-			Message: "/containers/hello/volumes/0/target",
+			Message: "/containers/hello/volumes/~1mnt~1data/path",
 		},
 		{
 			Name: "containers.*.volumes.*.readOnly is not set",
 			Src: func() map[string]interface{} {
 				src := newTestDocument()
 				var hello = src["containers"].(map[string]interface{})["hello"].(map[string]interface{})
-				var volumes = hello["volumes"].([]interface{})[0].(map[string]interface{})
+				var volumes = hello["volumes"].(map[string]interface{})["/mnt/data"].(map[string]interface{})
 				volumes["readOnly"] = nil
 				return src
 			}(),
-			Message: "/containers/hello/volumes/0/readOnly",
+			Message: "/containers/hello/volumes/~1mnt~1data/readOnly",
 		},
 		{
 			Name: "containers.*.volumes.*.readOnly is not a boolean",
 			Src: func() map[string]interface{} {
 				src := newTestDocument()
 				var hello = src["containers"].(map[string]interface{})["hello"].(map[string]interface{})
-				var volumes = hello["volumes"].([]interface{})[0].(map[string]interface{})
+				var volumes = hello["volumes"].(map[string]interface{})["/mnt/data"].(map[string]interface{})
 				volumes["readOnly"] = 12
 				return src
 			}(),
-			Message: "/containers/hello/volumes/0/readOnly",
+			Message: "/containers/hello/volumes/~1mnt~1data/readOnly",
 		},
 
 		// containers.*.resources

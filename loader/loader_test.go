@@ -83,19 +83,19 @@ containers:
     variables:
       FRIEND: World!
     files:
-    - target: /etc/hello-world/config.yaml
-      mode: "666"
-      content: |
-        ---
-        ${resources.env.APP_CONFIG}
-      noExpand: true
-    - target: /etc/hello-world/binary
-      binaryContent: aGVsbG8=
+      /etc/hello-world/config.yaml:
+        mode: "666"
+        content: |
+          ---
+          ${resources.env.APP_CONFIG}
+        noExpand: true
+      /etc/hello-world/binary:
+        binaryContent: aGVsbG8=
     volumes:
-    - source: ${resources.data}
-      path: sub/path
-      target: /mnt/data
-      readOnly: true
+      /mnt/data:
+        source: ${resources.data}
+        path: sub/path
+        readOnly: true
     resources:
       limits:
         memory: "128Mi"
@@ -165,23 +165,20 @@ resources:
 						Variables: map[string]string{
 							"FRIEND": "World!",
 						},
-						Files: []types.ContainerFilesElem{
-							{
-								Target:   "/etc/hello-world/config.yaml",
+						Files: map[string]types.ContainerFile{
+							"/etc/hello-world/config.yaml": {
 								Mode:     stringRef("666"),
 								Content:  stringRef("---\n${resources.env.APP_CONFIG}\n"),
 								NoExpand: boolRef(true),
 							},
-							{
-								Target:        "/etc/hello-world/binary",
+							"/etc/hello-world/binary": {
 								BinaryContent: stringRef("aGVsbG8="),
 							},
 						},
-						Volumes: []types.ContainerVolumesElem{
-							{
+						Volumes: map[string]types.ContainerVolume{
+							"/mnt/data": {
 								Source:   "${resources.data}",
 								Path:     stringRef("sub/path"),
-								Target:   "/mnt/data",
 								ReadOnly: boolRef(true),
 							},
 						},

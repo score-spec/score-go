@@ -198,12 +198,6 @@
       "type": "object",
       "additionalProperties": false,
       "properties": {
-        "target": {
-          "description": "(Deprecated) The file path to expose in the container. This is only used in Score workloads that describe files as an array.",
-          "deprecated": true,
-          "type": "string",
-          "minLength": 1
-        },
         "mode": {
           "description": "The optional file access mode in octal encoding. For example 0600.",
           "type": "string",
@@ -260,11 +254,6 @@
           "description": "An optional sub path in the volume.",
           "type": "string"
         },
-        "target": {
-          "description": "(Deprecated) The target mount on the container. This is only used in Score workloads that describe volumes as an array.",
-          "deprecated": true,
-          "type": "string"
-        },
         "readOnly": {
           "description": "Indicates if the volume should be mounted in a read-only mode.",
           "type": "boolean"
@@ -310,40 +299,16 @@
           }
         },
         "files": {
-          "description": "The extra files to mount into the container. Described as a map of target paths to file details. The array form is deprecated.",
-          "oneOf": [
-            {
-              "type": "array",
-              "deprecated": true,
-              "items": {
-                "$ref": "#/$defs/containerFile"
-              }
-            },
-            {
-              "type": "object",
-              "additionalProperties": {
-                "$ref": "#/$defs/containerFile"
-              }
-            }
-          ]
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/$defs/containerFile"
+          }
         },
         "volumes": {
-          "description": "The volumes to mount. Described as a map of target paths to volume details. The array form is deprecated.",
-          "oneOf": [
-            {
-              "type": "array",
-              "deprecated": true,
-              "items": {
-                "$ref": "#/$defs/containerVolume"
-              }
-            },
-            {
-              "type": "object",
-              "additionalProperties": {
-                "$ref": "#/$defs/containerVolume"
-              }
-            }
-          ]
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/$defs/containerVolume"
+          }
         },
         "resources": {
           "description": "The compute resources for the container.",
@@ -387,7 +352,9 @@
       "description": "An executable health probe.",
       "type": "object",
       "additionalProperties": false,
-      "required": ["command"],
+      "required": [
+        "command"
+      ],
       "properties": {
         "command": {
           "description": "The command and arguments to execute within the container.",

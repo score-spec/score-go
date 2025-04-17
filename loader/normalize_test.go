@@ -41,16 +41,14 @@ func TestNormalize(t *testing.T) {
 				},
 				Containers: types.WorkloadContainers{
 					"hello": types.Container{
-						Files: []types.ContainerFilesElem{
-							{
+						Files: map[string]types.ContainerFile{
+							"/etc/hello-world/config.yaml": {
 								Source:   stringRef("./test_file.txt"),
-								Target:   "/etc/hello-world/config.yaml",
 								Mode:     stringRef("666"),
 								NoExpand: boolRef(true),
 							},
-							{
+							"/etc/hello-world/binary": {
 								Source: stringRef("./test_binary_file"),
-								Target: "/etc/hello-world/binary",
 							},
 						},
 					},
@@ -63,15 +61,13 @@ func TestNormalize(t *testing.T) {
 				},
 				Containers: types.WorkloadContainers{
 					"hello": types.Container{
-						Files: []types.ContainerFilesElem{
-							{
-								Target:   "/etc/hello-world/config.yaml",
+						Files: map[string]types.ContainerFile{
+							"/etc/hello-world/config.yaml": {
 								Mode:     stringRef("666"),
 								Content:  stringRef("Hello World\n"),
 								NoExpand: boolRef(true),
 							},
-							{
-								Target:        "/etc/hello-world/binary",
+							"/etc/hello-world/binary": {
 								BinaryContent: stringRef("XVLOjEyq5FKgHDGMAYMdp+crq4I="),
 							},
 						},
@@ -88,10 +84,9 @@ func TestNormalize(t *testing.T) {
 				},
 				Containers: types.WorkloadContainers{
 					"hello": types.Container{
-						Files: []types.ContainerFilesElem{
-							{
+						Files: map[string]types.ContainerFile{
+							"/etc/hello-world/config.yaml": {
 								Source:   stringRef("./not_existing.txt"),
-								Target:   "/etc/hello-world/config.yaml",
 								Mode:     stringRef("666"),
 								NoExpand: boolRef(true),
 							},
