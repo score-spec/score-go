@@ -122,7 +122,7 @@ func ExampleGetFile_oci_git() {
 		fmt.Println("failed to pull OCI image:", err)
 		return
 	}
-	gitTestUrl := "git-https://github.com/score-spec/community-provisioners.git/score-compose/10-service.provisioners.yaml"
+	gitTestUrl := "git-https://github.com/score-spec/community-provisioners.git/service/score-compose/10-service.provisioners.yaml"
 	gitBuff, err := GetFile(context.Background(), gitTestUrl)
 	if err != nil {
 		fmt.Println("failed to pull file in git:", err)
@@ -140,7 +140,7 @@ func ExampleGetFile_oci_https() {
 		fmt.Println("failed to pull OCI image:", err)
 		return
 	}
-	httpsTestUrl := "https://github.com/score-spec/community-provisioners/raw/main/score-compose/10-service.provisioners.yaml"
+	httpsTestUrl := "https://github.com/score-spec/community-provisioners/raw/main/service/score-compose/10-service.provisioners.yaml"
 	httpsbuff, err := GetFile(context.Background(), httpsTestUrl)
 	if err != nil {
 		fmt.Println("failed to pull file by HTTPS:", err)
