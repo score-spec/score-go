@@ -20,6 +20,8 @@ import (
 	"os"
 
 	"github.com/olekukonko/tablewriter"
+	"github.com/olekukonko/tablewriter/renderer"
+	"github.com/olekukonko/tablewriter/tw"
 	"gopkg.in/yaml.v3"
 )
 
@@ -48,14 +50,31 @@ func (t *TableOutputFormatter) Display() error {
 	if t.Out == nil {
 		t.Out = os.Stdout
 	}
-	table := tablewriter.NewWriter(t.Out)
-	table.SetHeader(t.Headers)
-	table.AppendBulk(t.Rows)
-	table.SetAutoWrapText(false)
-	table.SetRowLine(true)
-	table.SetCenterSeparator("+")
-	table.SetColumnSeparator("|")
-	table.SetRowSeparator("-")
+
+	style := tw.NewSymbolCustom("score-spec").
+		WithColumn("|").
+		WithRow("-").
+		WithTopLeft("+").
+		WithTopRight("+").
+		WithBottomLeft("+").
+		WithBottomRight("+").
+		WithMidLeft("+").
+		WithMidRight("+").
+		WithCenter("+")
+
+	tableRenderer := tablewriter.WithRenderer(renderer.NewBlueprint(tw.Rendition{
+		Symbols: style,
+		Settings: tw.Settings{
+			Separators: tw.Separators{BetweenRows: tw.On},
+		},
+	}))
+
+	table := tablewriter.NewTable(t.Out,
+		tableRenderer,
+	)
+
+	table.Header(t.Headers)
+	table.Bulk(t.Rows)
 	table.Render()
 	return nil
 }
