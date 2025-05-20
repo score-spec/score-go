@@ -16,5 +16,5 @@ package schema
 
 import _ "embed"
 
-//go:embed files/score-v1b1.json
+//go:embed files/score-v1b1.json.for-validation
 var ScoreSchemaV1b1 string

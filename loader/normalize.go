@@ -28,20 +28,21 @@ import (
 // * embedding container file sources as content
 func Normalize(w *types.Workload, baseDir string) error {
 	for name, c := range w.Containers {
-		for i, f := range c.Files {
+		for target, f := range c.Files {
 			if f.Source != nil {
 				raw, err := readFile(baseDir, *f.Source)
 				if err != nil {
 					return fmt.Errorf("embedding file '%s' for container '%s': %w", *f.Source, name, err)
 				}
-				c.Files[i].Source = nil
+				f.Source = nil
 				if utf8.Valid(raw) {
 					content := string(raw)
-					c.Files[i].Content = &content
+					f.Content = &content
 				} else {
 					content := base64.StdEncoding.EncodeToString(raw)
-					c.Files[i].BinaryContent = &content
+					f.BinaryContent = &content
 				}
+				c.Files[target] = f
 			}
 		}
 	}
