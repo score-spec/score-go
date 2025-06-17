@@ -310,7 +310,7 @@
           }
         },
         "files": {
-          "description": "The extra files to mount into the container. Described as a map of target paths to file details. The array form is deprecated.",
+          "description": "The extra files to mount into the container. Described as a map of target paths to file details. The array form is deprecated.", 
           "oneOf": [
             {
               "type": "array",
@@ -322,8 +322,8 @@
             {
               "type": "object",
               "additionalProperties": {
-                "$ref": "#/$defs/containerFile"
-              }
+                    "$ref": "#/$defs/containerFile"
+                  }
             }
           ]
         },
@@ -340,10 +340,42 @@
             {
               "type": "object",
               "additionalProperties": {
-                "$ref": "#/$defs/containerVolume"
+                    "$ref": "#/$defs/containerVolume"
               }
             }
           ]
+        },
+        "before": {
+          "description": "A list of containers which should run before a main process.",
+          "type": "array",
+          "additionalProperties": false,
+          "required": ["containers", "ready"],
+          "items": {
+            "type": "object",
+            "properties": {
+              "containers": {
+                "description": "The list of containers to run before the main process.",
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "description": "A container ID in this implementation.",
+                  "minLength": 2,
+                  "maxLength": 63,
+                  "pattern": "^[a-z0-9][a-z0-9-]{0,61}[a-z0-9]$"
+                }
+              },
+              "ready": {
+                "description": "The status of the container before the next container are started.",
+                "title": "Ready",
+                "type": "string",
+                "enum": [
+                  "started",
+                  "healthy",
+                  "complete"
+                ]
+              }
+            }
+          }
         },
         "resources": {
           "description": "The compute resources for the container.",
