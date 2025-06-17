@@ -11,6 +11,9 @@ type Container struct {
 	// If specified, overrides the arguments passed to the container entrypoint.
 	Args []string `json:"args,omitempty" yaml:"args,omitempty" mapstructure:"args,omitempty"`
 
+	// A list of containers which should run before a main process.
+	Before []ContainerBeforeElem `json:"before,omitempty" yaml:"before,omitempty" mapstructure:"before,omitempty"`
+
 	// If specified, overrides the entrypoint defined in the container image.
 	Command []string `json:"command,omitempty" yaml:"command,omitempty" mapstructure:"command,omitempty"`
 
@@ -35,6 +38,20 @@ type Container struct {
 	// Volumes corresponds to the JSON schema field "volumes".
 	Volumes ContainerVolumes `json:"volumes,omitempty" yaml:"volumes,omitempty" mapstructure:"volumes,omitempty"`
 }
+
+type ContainerBeforeElem struct {
+	// The list of containers to run before the main process.
+	Containers []string `json:"containers,omitempty" yaml:"containers,omitempty" mapstructure:"containers,omitempty"`
+
+	// The status of the container before the next container are started.
+	Ready *ContainerBeforeElemReady `json:"ready,omitempty" yaml:"ready,omitempty" mapstructure:"ready,omitempty"`
+}
+
+type ContainerBeforeElemReady string
+
+const ContainerBeforeElemReadyComplete ContainerBeforeElemReady = "complete"
+const ContainerBeforeElemReadyHealthy ContainerBeforeElemReady = "healthy"
+const ContainerBeforeElemReadyStarted ContainerBeforeElemReady = "started"
 
 // The details of a file to mount in the container. One of 'source', 'content', or
 // 'binaryContent' must be provided.
@@ -188,52 +205,134 @@ type ServicePortProtocol string
 const ServicePortProtocolTCP ServicePortProtocol = "TCP"
 const ServicePortProtocolUDP ServicePortProtocol = "UDP"
 
-// Score workload specification
-type Workload struct {
-	// The declared Score Specification version.
-	ApiVersion string `json:"apiVersion" yaml:"apiVersion" mapstructure:"apiVersion"`
-
-	// The set of named containers in the Workload. The container name must be a valid
-	// RFC1123 Label Name of up to 63 characters, including a-z, 0-9, '-' but may not
-	// start or end with '-'.
-	Containers WorkloadContainers `json:"containers" yaml:"containers" mapstructure:"containers"`
-
-	// The metadata description of the Workload.
-	Metadata WorkloadMetadata `json:"metadata" yaml:"metadata" mapstructure:"metadata"`
-
-	// The Resource dependencies needed by the Workload. The resource name must be a
-	// valid RFC1123 Label Name of up to 63 characters, including a-z, 0-9, '-' but
-	// may not start or end with '-'.
-	Resources WorkloadResources `json:"resources,omitempty" yaml:"resources,omitempty" mapstructure:"resources,omitempty"`
-
-	// The service that the workload provides.
-	Service *WorkloadService `json:"service,omitempty" yaml:"service,omitempty" mapstructure:"service,omitempty"`
-}
-
-// The set of named containers in the Workload. The container name must be a valid
-// RFC1123 Label Name of up to 63 characters, including a-z, 0-9, '-' but may not
-// start or end with '-'.
-type WorkloadContainers map[string]Container
-
-// The metadata description of the Workload.
-type WorkloadMetadata map[string]interface{}
-
 // UnmarshalJSON implements json.Unmarshaler.
-func (j *ServicePort) UnmarshalJSON(b []byte) error {
+func (j *ExecProbe) UnmarshalJSON(b []byte) error {
 	var raw map[string]interface{}
 	if err := json.Unmarshal(b, &raw); err != nil {
 		return err
 	}
-	if v, ok := raw["port"]; !ok || v == nil {
-		return fmt.Errorf("field port in ServicePort: required")
+	if v, ok := raw["command"]; !ok || v == nil {
+		return fmt.Errorf("field command in ExecProbe: required")
 	}
-	type Plain ServicePort
+	type Plain ExecProbe
 	var plain Plain
 	if err := json.Unmarshal(b, &plain); err != nil {
 		return err
 	}
-	*j = ServicePort(plain)
+	*j = ExecProbe(plain)
 	return nil
+}
+
+var enumValues_ContainerBeforeElemReady = []interface{}{
+	"started",
+	"healthy",
+	"complete",
+}
+
+// UnmarshalJSON implements json.Unmarshaler.
+func (j *Container) UnmarshalJSON(b []byte) error {
+	var raw map[string]interface{}
+	if err := json.Unmarshal(b, &raw); err != nil {
+		return err
+	}
+	if v, ok := raw["image"]; !ok || v == nil {
+		return fmt.Errorf("field image in Container: required")
+	}
+	type Plain Container
+	var plain Plain
+	if err := json.Unmarshal(b, &plain); err != nil {
+		return err
+	}
+	if len(plain.Image) < 1 {
+		return fmt.Errorf("field %s length: must be >= %d", "image", 1)
+	}
+	*j = Container(plain)
+	return nil
+}
+
+// UnmarshalJSON implements json.Unmarshaler.
+func (j *ContainerVolume) UnmarshalJSON(b []byte) error {
+	var raw map[string]interface{}
+	if err := json.Unmarshal(b, &raw); err != nil {
+		return err
+	}
+	if v, ok := raw["source"]; !ok || v == nil {
+		return fmt.Errorf("field source in ContainerVolume: required")
+	}
+	type Plain ContainerVolume
+	var plain Plain
+	if err := json.Unmarshal(b, &plain); err != nil {
+		return err
+	}
+	*j = ContainerVolume(plain)
+	return nil
+}
+
+// UnmarshalJSON implements json.Unmarshaler.
+func (j *ContainerFile) UnmarshalJSON(b []byte) error {
+	var raw map[string]interface{}
+	if err := json.Unmarshal(b, &raw); err != nil {
+		return err
+	}
+	type Plain ContainerFile
+	var plain Plain
+	if err := json.Unmarshal(b, &plain); err != nil {
+		return err
+	}
+	if plain.Source != nil && len(*plain.Source) < 1 {
+		return fmt.Errorf("field %s length: must be >= %d", "source", 1)
+	}
+	*j = ContainerFile(plain)
+	return nil
+}
+
+// UnmarshalJSON implements json.Unmarshaler.
+func (j *HttpProbeScheme) UnmarshalJSON(b []byte) error {
+	var v string
+	if err := json.Unmarshal(b, &v); err != nil {
+		return err
+	}
+	var ok bool
+	for _, expected := range enumValues_HttpProbeScheme {
+		if reflect.DeepEqual(v, expected) {
+			ok = true
+			break
+		}
+	}
+	if !ok {
+		return fmt.Errorf("invalid value (expected one of %#v): %#v", enumValues_HttpProbeScheme, v)
+	}
+	*j = HttpProbeScheme(v)
+	return nil
+}
+
+// UnmarshalJSON implements json.Unmarshaler.
+func (j *HttpProbe) UnmarshalJSON(b []byte) error {
+	var raw map[string]interface{}
+	if err := json.Unmarshal(b, &raw); err != nil {
+		return err
+	}
+	if v, ok := raw["path"]; !ok || v == nil {
+		return fmt.Errorf("field path in HttpProbe: required")
+	}
+	if v, ok := raw["port"]; !ok || v == nil {
+		return fmt.Errorf("field port in HttpProbe: required")
+	}
+	type Plain HttpProbe
+	var plain Plain
+	if err := json.Unmarshal(b, &plain); err != nil {
+		return err
+	}
+	if plain.Host != nil && len(*plain.Host) < 1 {
+		return fmt.Errorf("field %s length: must be >= %d", "host", 1)
+	}
+	*j = HttpProbe(plain)
+	return nil
+}
+
+var enumValues_ServicePortProtocol = []interface{}{
+	"TCP",
+	"UDP",
 }
 
 // UnmarshalJSON implements json.Unmarshaler.
@@ -273,35 +372,6 @@ func (j *Resource) UnmarshalJSON(b []byte) error {
 }
 
 // UnmarshalJSON implements json.Unmarshaler.
-func (j *HttpProbe) UnmarshalJSON(b []byte) error {
-	var raw map[string]interface{}
-	if err := json.Unmarshal(b, &raw); err != nil {
-		return err
-	}
-	if v, ok := raw["path"]; !ok || v == nil {
-		return fmt.Errorf("field path in HttpProbe: required")
-	}
-	if v, ok := raw["port"]; !ok || v == nil {
-		return fmt.Errorf("field port in HttpProbe: required")
-	}
-	type Plain HttpProbe
-	var plain Plain
-	if err := json.Unmarshal(b, &plain); err != nil {
-		return err
-	}
-	if plain.Host != nil && len(*plain.Host) < 1 {
-		return fmt.Errorf("field %s length: must be >= %d", "host", 1)
-	}
-	*j = HttpProbe(plain)
-	return nil
-}
-
-var enumValues_ServicePortProtocol = []interface{}{
-	"TCP",
-	"UDP",
-}
-
-// UnmarshalJSON implements json.Unmarshaler.
 func (j *ServicePortProtocol) UnmarshalJSON(b []byte) error {
 	var v string
 	if err := json.Unmarshal(b, &v); err != nil {
@@ -318,6 +388,26 @@ func (j *ServicePortProtocol) UnmarshalJSON(b []byte) error {
 		return fmt.Errorf("invalid value (expected one of %#v): %#v", enumValues_ServicePortProtocol, v)
 	}
 	*j = ServicePortProtocol(v)
+	return nil
+}
+
+// UnmarshalJSON implements json.Unmarshaler.
+func (j *ContainerBeforeElemReady) UnmarshalJSON(b []byte) error {
+	var v string
+	if err := json.Unmarshal(b, &v); err != nil {
+		return err
+	}
+	var ok bool
+	for _, expected := range enumValues_ContainerBeforeElemReady {
+		if reflect.DeepEqual(v, expected) {
+			ok = true
+			break
+		}
+	}
+	if !ok {
+		return fmt.Errorf("invalid value (expected one of %#v): %#v", enumValues_ContainerBeforeElemReady, v)
+	}
+	*j = ContainerBeforeElemReady(v)
 	return nil
 }
 
@@ -345,87 +435,36 @@ func (j *HttpProbeHttpHeadersElem) UnmarshalJSON(b []byte) error {
 	return nil
 }
 
-// UnmarshalJSON implements json.Unmarshaler.
-func (j *ContainerVolume) UnmarshalJSON(b []byte) error {
-	var raw map[string]interface{}
-	if err := json.Unmarshal(b, &raw); err != nil {
-		return err
-	}
-	if v, ok := raw["source"]; !ok || v == nil {
-		return fmt.Errorf("field source in ContainerVolume: required")
-	}
-	type Plain ContainerVolume
-	var plain Plain
-	if err := json.Unmarshal(b, &plain); err != nil {
-		return err
-	}
-	*j = ContainerVolume(plain)
-	return nil
-}
-
-// UnmarshalJSON implements json.Unmarshaler.
-func (j *HttpProbeScheme) UnmarshalJSON(b []byte) error {
-	var v string
-	if err := json.Unmarshal(b, &v); err != nil {
-		return err
-	}
-	var ok bool
-	for _, expected := range enumValues_HttpProbeScheme {
-		if reflect.DeepEqual(v, expected) {
-			ok = true
-			break
-		}
-	}
-	if !ok {
-		return fmt.Errorf("invalid value (expected one of %#v): %#v", enumValues_HttpProbeScheme, v)
-	}
-	*j = HttpProbeScheme(v)
-	return nil
-}
-
 var enumValues_HttpProbeScheme = []interface{}{
 	"HTTP",
 	"HTTPS",
 }
 
 // UnmarshalJSON implements json.Unmarshaler.
-func (j *Container) UnmarshalJSON(b []byte) error {
+func (j *ServicePort) UnmarshalJSON(b []byte) error {
 	var raw map[string]interface{}
 	if err := json.Unmarshal(b, &raw); err != nil {
 		return err
 	}
-	if v, ok := raw["image"]; !ok || v == nil {
-		return fmt.Errorf("field image in Container: required")
+	if v, ok := raw["port"]; !ok || v == nil {
+		return fmt.Errorf("field port in ServicePort: required")
 	}
-	type Plain Container
+	type Plain ServicePort
 	var plain Plain
 	if err := json.Unmarshal(b, &plain); err != nil {
 		return err
 	}
-	if len(plain.Image) < 1 {
-		return fmt.Errorf("field %s length: must be >= %d", "image", 1)
-	}
-	*j = Container(plain)
+	*j = ServicePort(plain)
 	return nil
 }
 
-// UnmarshalJSON implements json.Unmarshaler.
-func (j *ExecProbe) UnmarshalJSON(b []byte) error {
-	var raw map[string]interface{}
-	if err := json.Unmarshal(b, &raw); err != nil {
-		return err
-	}
-	if v, ok := raw["command"]; !ok || v == nil {
-		return fmt.Errorf("field command in ExecProbe: required")
-	}
-	type Plain ExecProbe
-	var plain Plain
-	if err := json.Unmarshal(b, &plain); err != nil {
-		return err
-	}
-	*j = ExecProbe(plain)
-	return nil
-}
+// The set of named containers in the Workload. The container name must be a valid
+// RFC1123 Label Name of up to 63 characters, including a-z, 0-9, '-' but may not
+// start or end with '-'.
+type WorkloadContainers map[string]Container
+
+// The metadata description of the Workload.
+type WorkloadMetadata map[string]interface{}
 
 // The Resource dependencies needed by the Workload. The resource name must be a
 // valid RFC1123 Label Name of up to 63 characters, including a-z, 0-9, '-' but may
@@ -445,22 +484,26 @@ type WorkloadService struct {
 	Ports WorkloadServicePorts `json:"ports,omitempty" yaml:"ports,omitempty" mapstructure:"ports,omitempty"`
 }
 
-// UnmarshalJSON implements json.Unmarshaler.
-func (j *ContainerFile) UnmarshalJSON(b []byte) error {
-	var raw map[string]interface{}
-	if err := json.Unmarshal(b, &raw); err != nil {
-		return err
-	}
-	type Plain ContainerFile
-	var plain Plain
-	if err := json.Unmarshal(b, &plain); err != nil {
-		return err
-	}
-	if plain.Source != nil && len(*plain.Source) < 1 {
-		return fmt.Errorf("field %s length: must be >= %d", "source", 1)
-	}
-	*j = ContainerFile(plain)
-	return nil
+// Score workload specification
+type Workload struct {
+	// The declared Score Specification version.
+	ApiVersion string `json:"apiVersion" yaml:"apiVersion" mapstructure:"apiVersion"`
+
+	// The set of named containers in the Workload. The container name must be a valid
+	// RFC1123 Label Name of up to 63 characters, including a-z, 0-9, '-' but may not
+	// start or end with '-'.
+	Containers WorkloadContainers `json:"containers" yaml:"containers" mapstructure:"containers"`
+
+	// The metadata description of the Workload.
+	Metadata WorkloadMetadata `json:"metadata" yaml:"metadata" mapstructure:"metadata"`
+
+	// The Resource dependencies needed by the Workload. The resource name must be a
+	// valid RFC1123 Label Name of up to 63 characters, including a-z, 0-9, '-' but
+	// may not start or end with '-'.
+	Resources WorkloadResources `json:"resources,omitempty" yaml:"resources,omitempty" mapstructure:"resources,omitempty"`
+
+	// The service that the workload provides.
+	Service *WorkloadService `json:"service,omitempty" yaml:"service,omitempty" mapstructure:"service,omitempty"`
 }
 
 // UnmarshalJSON implements json.Unmarshaler.
