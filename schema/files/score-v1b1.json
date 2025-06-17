@@ -310,7 +310,7 @@
           }
         },
         "files": {
-          "description": "The extra files to mount into the container. Described as a map of target paths to file details. The array form is deprecated.",
+          "description": "The extra files to mount into the container. Described as a map of target paths to file details. The array form is deprecated.", 
           "oneOf": [
             {
               "type": "array",
@@ -322,7 +322,18 @@
             {
               "type": "object",
               "additionalProperties": {
-                "$ref": "#/$defs/containerFile"
+                "allOf": [
+                  {
+                    "not": {
+                      "type": "object",
+                      "additionalProperties": true,
+                      "required": ["target"]
+                    }
+                  },
+                  {
+                    "$ref": "#/$defs/containerFile"
+                  }
+                ]
               }
             }
           ]
@@ -340,7 +351,18 @@
             {
               "type": "object",
               "additionalProperties": {
-                "$ref": "#/$defs/containerVolume"
+                "allOf": [
+                  {
+                    "not": {
+                      "type": "object",
+                      "additionalProperties": true,
+                      "required": ["target"]
+                    }
+                  },
+                  {
+                    "$ref": "#/$defs/containerVolume"
+                  }
+                ]
               }
             }
           ]
