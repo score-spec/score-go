@@ -57,7 +57,7 @@ type ContainerFile struct {
 	Source *string `json:"source,omitempty" yaml:"source,omitempty" mapstructure:"source,omitempty"`
 }
 
-type ContainerFiles map[string]interface{}
+type ContainerFiles map[string]ContainerFile
 
 // The probe may be defined as either http, command execution, or both. The
 // execProbe should be preferred if the Score implementation supports both types.
@@ -92,7 +92,7 @@ type ContainerVolume struct {
 	Source string `json:"source" yaml:"source" mapstructure:"source"`
 }
 
-type ContainerVolumes map[string]interface{}
+type ContainerVolumes map[string]ContainerVolume
 
 // An executable health probe.
 type ExecProbe struct {

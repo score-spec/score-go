@@ -301,39 +301,13 @@
         "files": {
           "type": "object",
           "additionalProperties": {
-            "allOf": [
-              {
-                "not": {
-                  "type": "object",
-                  "additionalProperties": true,
-                  "required": [
-                    "target"
-                  ]
-                }
-              },
-              {
-                "$ref": "#/$defs/containerFile"
-              }
-            ]
+            "$ref": "#/$defs/containerFile"
           }
         },
         "volumes": {
           "type": "object",
           "additionalProperties": {
-            "allOf": [
-              {
-                "not": {
-                  "type": "object",
-                  "additionalProperties": true,
-                  "required": [
-                    "target"
-                  ]
-                }
-              },
-              {
-                "$ref": "#/$defs/containerVolume"
-              }
-            ]
+            "$ref": "#/$defs/containerVolume"
           }
         },
         "resources": {
