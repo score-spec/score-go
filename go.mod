@@ -1,8 +1,8 @@
 module github.com/score-spec/score-go
 
-go 1.24
+go 1.25
 
-toolchain go1.24.4
+toolchain go1.25.0
 
 require (
 	github.com/mitchellh/mapstructure v1.5.0
@@ -21,7 +21,7 @@ require (
 	github.com/olekukonko/errors v1.1.0 // indirect
 	github.com/olekukonko/ll v0.0.9 // indirect
 	github.com/rivo/uniseg v0.4.7 // indirect
-	golang.org/x/sys v0.33.0 // indirect
+	golang.org/x/sys v0.35.0 // indirect
 )
 
 require (
@@ -29,5 +29,5 @@ require (
 	github.com/olekukonko/tablewriter v1.0.9
 	github.com/opencontainers/go-digest v1.0.0 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
-	golang.org/x/sync v0.15.0 // indirect
+	golang.org/x/sync v0.16.0 // indirect
 )
