@@ -20,6 +20,6 @@ jobs:
           go vet ./...
           go test ./... --cover
       - name: Install license check tool
-        run: go install github.com/google/addlicense@dc31ac9ffcca99c9457226366135701794b128c0
+        run: go install github.com/google/addlicense@b289835c0741ba2fb92dd5f61af070e79c69a55e # v1.2.0
       - name: Check licenses
-        run: addlicense -l apache -check -v -ignore '**/*.yaml' -c Humanitec ./loader ./schema ./types ./pkg
+        run: addlicense -l apache -check -v -ignore '**/*.yaml' -c 'The Score Authors' ./formatter ./framework ./loader ./schema ./types ./uriget
