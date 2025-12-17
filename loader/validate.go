@@ -19,12 +19,11 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/score-spec/score-go/framework"
 	"github.com/score-spec/score-go/types"
 )
 
 var (
-	// Differnete from framework version as does not match escaped placeholders
-	placeholderMatch        = regexp.MustCompile(`\$\{[^}]+\}`)
 	validplaceholderContent = regexp.MustCompile(`^[a-zA-Z0-9_-]+(\.[a-zA-Z0-9_-]+)+$`)
 )
 
@@ -43,33 +42,24 @@ func (e *ValidationError) Error() string {
 // allPlaceholdersInString returns all placeholders in the string.
 // All plaecholders are returned, including duplicates.
 func allPlaceholdersInString(s string) []string {
-	// Escaping rule for $ is every pair of $$ should bcome a literal $
-	// This means that $$${placeholder} should resolve to $<placeholder value>.
-	// As we are only interested in the placeholder and not the rest of the
-	// string, we can replace all $$ with another character and then look
-	// for the placeholder.
-	return placeholderMatch.FindAllString(strings.ReplaceAll(s, "$$", "_"), -1)
+	placeholders := []string{}
+	// SubstituteString only returns errors from the inner func or a missconfigured substitutor object
+	framework.SubstituteString(s, func(placeholder string) (string, error) {
+		placeholders = append(placeholders, placeholder)
+		return "", nil
+	})
+	return placeholders
 }
 
 // allPlaceholdersIn returns all placeholders in the map or slice.
 // All plaecholders are returned, including duplicates.
 func allPlaceholdersIn(o any) []string {
 	placeholders := []string{}
-	if o == nil {
-		return placeholders
-	}
-	switch v := o.(type) {
-	case map[string]any:
-		for _, val := range v {
-			placeholders = append(placeholders, allPlaceholdersIn(val)...)
-		}
-	case []any:
-		for _, val := range v {
-			placeholders = append(placeholders, allPlaceholdersIn(val)...)
-		}
-	case string:
-		placeholders = allPlaceholdersInString(v)
-	}
+	// Substitute only returns errors from the inner func or a missconfigured substitutor object
+	framework.Substitute(o, func(placeholder string) (string, error) {
+		placeholders = append(placeholders, placeholder)
+		return "", nil
+	})
 	return placeholders
 }
 
@@ -83,24 +73,24 @@ func listAllPlaceholders(workload *types.Workload) []string {
 		for _, file := range container.Files {
 			if (file.NoExpand == nil || !*file.NoExpand) && file.Content != nil {
 				for _, placeholder := range allPlaceholdersInString(*file.Content) {
-					placeholderSet[placeholder[2:len(placeholder)-1]] = struct{}{}
+					placeholderSet[placeholder] = struct{}{}
 				}
 			}
 		}
 		for _, variable := range container.Variables {
 			for _, placeholder := range allPlaceholdersInString(variable) {
-				placeholderSet[placeholder[2:len(placeholder)-1]] = struct{}{}
+				placeholderSet[placeholder] = struct{}{}
 			}
 		}
 		for _, volume := range container.Volumes {
 			for _, placeholder := range allPlaceholdersInString(volume.Source) {
-				placeholderSet[placeholder[2:len(placeholder)-1]] = struct{}{}
+				placeholderSet[placeholder] = struct{}{}
 			}
 		}
 	}
 	for _, resource := range workload.Resources {
 		for _, placeholder := range allPlaceholdersIn(map[string]any(resource.Params)) {
-			placeholderSet[placeholder[2:len(placeholder)-1]] = struct{}{}
+			placeholderSet[placeholder] = struct{}{}
 		}
 	}
 	placeholders := make([]string, len(placeholderSet))
@@ -147,7 +137,7 @@ func Validate(workload *types.Workload) error {
 			}
 		case "metadata":
 		default:
-			errMsgs = append(errMsgs, fmt.Sprintf("placeholder ${%s} has unknown first element of \"%s\"", placeholder, placeholderParts[0]))
+			errMsgs = append(errMsgs, fmt.Sprintf("placeholder ${%s} has unsupported first element of \"%s\"", placeholder, placeholderParts[0]))
 		}
 	}
 	if len(errMsgs) > 0 {

@@ -156,7 +156,7 @@ func TestValidatePlaceholders(t *testing.T) {
 				"INVALID": "Placeholder ${cheese.res-one.value}",
 			},
 			errorContains: []string{
-				"${cheese.res-one.value} has unknown first element",
+				"${cheese.res-one.value} has unsupported first element",
 			},
 		},
 		{
