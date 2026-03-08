@@ -42,4 +42,5 @@ jobs:
             - [ ] Submit PR review
           branch: upgrade-go
           delete-branch: true
+          signoff: true
           draft: always-true # Because of: https://github.com/peter-evans/create-pull-request/blob/main/docs/concepts-guidelines.md#triggering-further-workflow-runs.
