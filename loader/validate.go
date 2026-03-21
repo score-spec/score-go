@@ -116,6 +116,12 @@ func listAllPlaceholders(workload *types.Workload) []string {
 // - The first element in a placeholder must be "resources" or "metadata"
 //
 // - All resource placeholders must resolve to a resource in the workload
+//
+// - All container names referenced in before entries must exist
+//
+// - A container may not reference itself in a before entry
+//
+// - The before relationships must not contain cycles
 func Validate(workload *types.Workload) error {
 	errMsgs := []string{}
 	placeholders := listAllPlaceholders(workload)
@@ -140,6 +146,59 @@ func Validate(workload *types.Workload) error {
 			errMsgs = append(errMsgs, fmt.Sprintf("placeholder ${%s} has unsupported first element of \"%s\"", placeholder, placeholderParts[0]))
 		}
 	}
+
+	// Validate container before relationships.
+	containerNames := make(map[string]struct{}, len(workload.Containers))
+	for name := range workload.Containers {
+		containerNames[name] = struct{}{}
+	}
+	// waitingFor[A] = list of containers that A must wait for (A's before dependencies).
+	waitingFor := make(map[string][]string)
+	for containerName, container := range workload.Containers {
+		for _, beforeElem := range container.Before {
+			for _, dep := range beforeElem.Containers {
+				if dep == containerName {
+					errMsgs = append(errMsgs, fmt.Sprintf("container %q has a self-referencing before entry", containerName))
+					continue
+				}
+				if _, exists := containerNames[dep]; !exists {
+					errMsgs = append(errMsgs, fmt.Sprintf("container %q before refers to unknown container %q", containerName, dep))
+					continue
+				}
+				waitingFor[containerName] = append(waitingFor[containerName], dep)
+			}
+		}
+	}
+	// DFS cycle detection using white/gray/black coloring.
+	const (
+		white = 0
+		gray  = 1
+		black = 2
+	)
+	color := make(map[string]int)
+	var dfs func(node string) bool
+	dfs = func(node string) bool {
+		color[node] = gray
+		for _, dep := range waitingFor[node] {
+			if color[dep] == gray {
+				return true
+			}
+			if color[dep] == white {
+				if dfs(dep) {
+					return true
+				}
+			}
+		}
+		color[node] = black
+		return false
+	}
+	for name := range workload.Containers {
+		if color[name] == white && dfs(name) {
+			errMsgs = append(errMsgs, "containers before relationships contain a cycle")
+			break
+		}
+	}
+
 	if len(errMsgs) > 0 {
 		return &ValidationError{
 			Messages: errMsgs,
