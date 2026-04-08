@@ -5,7 +5,7 @@ go 1.26
 toolchain go1.26.1
 
 require (
-	github.com/mitchellh/mapstructure v1.5.0
+	github.com/go-viper/mapstructure/v2 v2.5.0
 	github.com/opencontainers/image-spec v1.1.1
 	github.com/santhosh-tekuri/jsonschema/v5 v5.3.1
 	github.com/stretchr/testify v1.11.1
