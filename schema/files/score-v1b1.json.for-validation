@@ -360,6 +360,34 @@
             }
           }
         },
+        "before": {
+          "description": "Defines before which other containers this container should be started.",
+          "type": "object",
+          "propertyNames": {
+            "minLength": 2,
+            "maxLength": 63,
+            "pattern": "^[a-z0-9][a-z0-9-]{0,61}[a-z0-9]$"
+          },
+          "additionalProperties": {
+            "type": "object",
+            "required": [
+              "ready"
+            ],
+            "additionalProperties": false,
+            "properties": {
+              "ready": {
+                "description": "The status of the container before the next containers are started.",
+                "title": "Ready",
+                "type": "string",
+                "enum": [
+                  "started",
+                  "healthy",
+                  "complete"
+                ]
+              }
+            }
+          }
+        },
         "livenessProbe": {
           "description": "The liveness probe for the container.",
           "$ref": "#/$defs/containerProbe"

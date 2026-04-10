@@ -11,8 +11,9 @@ type Container struct {
 	// If specified, overrides the arguments passed to the container entrypoint.
 	Args []string `json:"args,omitempty" yaml:"args,omitempty" mapstructure:"args,omitempty"`
 
-	// A list of containers which should run before a main process.
-	Before []ContainerBeforeElem `json:"before,omitempty" yaml:"before,omitempty" mapstructure:"before,omitempty"`
+	// Defines before which other containers this container should be started.
+	Before ContainerBefore `json:"before,omitempty" yaml:"before,omitempty" mapstructure:"before,omitempty"`
+
 
 	// If specified, overrides the entrypoint defined in the container image.
 	Command []string `json:"command,omitempty" yaml:"command,omitempty" mapstructure:"command,omitempty"`
@@ -39,19 +40,23 @@ type Container struct {
 	Volumes ContainerVolumes `json:"volumes,omitempty" yaml:"volumes,omitempty" mapstructure:"volumes,omitempty"`
 }
 
-type ContainerBeforeElem struct {
-	// The list of containers to run before the main process.
-	Containers []string `json:"containers,omitempty" yaml:"containers,omitempty" mapstructure:"containers,omitempty"`
+// ContainerBefore is a mapping of container names to their ready conditions,
+// defining which containers must reach a certain state before this container starts.
+type ContainerBefore map[string]ContainerBeforeEntry
 
-	// The status of the container before the next container are started.
-	Ready *ContainerBeforeElemReady `json:"ready,omitempty" yaml:"ready,omitempty" mapstructure:"ready,omitempty"`
+// ContainerBeforeEntry defines the ready condition for a container in the before mapping.
+type ContainerBeforeEntry struct {
+	// The status of the container before the next containers are started.
+	Ready ContainerBeforeReady `json:"ready" yaml:"ready" mapstructure:"ready"`
 }
 
-type ContainerBeforeElemReady string
+// ContainerBeforeReady represents the ready condition for ordered container start.
+type ContainerBeforeReady string
 
-const ContainerBeforeElemReadyComplete ContainerBeforeElemReady = "complete"
-const ContainerBeforeElemReadyHealthy ContainerBeforeElemReady = "healthy"
-const ContainerBeforeElemReadyStarted ContainerBeforeElemReady = "started"
+const ContainerBeforeReadyStarted  ContainerBeforeReady = "started"
+const ContainerBeforeReadyHealthy  ContainerBeforeReady = "healthy"
+const ContainerBeforeReadyComplete ContainerBeforeReady = "complete"
+
 
 // The details of a file to mount in the container. One of 'source', 'content', or
 // 'binaryContent' must be provided.
