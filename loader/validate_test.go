@@ -229,10 +229,12 @@ func TestValidatePlaceholders(t *testing.T) {
 	}
 }
 
-func ready(r types.ContainerBeforeElemReady) *types.ContainerBeforeElemReady { return &r }
-
-func before(containers ...string) types.ContainerBeforeElem {
-	return types.ContainerBeforeElem{Containers: containers, Ready: ready(types.ContainerBeforeElemReadyStarted)}
+func before(containers ...string) types.ContainerBefore {
+	b := types.ContainerBefore{}
+	for _, c := range containers {
+		b[c] = types.ContainerBeforeEntry{Ready: types.ContainerBeforeReadyStarted}
+	}
+	return b
 }
 
 func TestValidateContainerBefore(t *testing.T) {
@@ -251,55 +253,55 @@ func TestValidateContainerBefore(t *testing.T) {
 		{
 			name: "valid linear chain",
 			containers: types.WorkloadContainers{
-				"a": {Image: "img", Before: []types.ContainerBeforeElem{before("b")}},
-				"b": {Image: "img", Before: []types.ContainerBeforeElem{before("c")}},
+				"a": {Image: "img", Before: before("b")},
+				"b": {Image: "img", Before: before("c")},
 				"c": {Image: "img"},
 			},
 		},
 		{
 			name: "valid diamond",
 			containers: types.WorkloadContainers{
-				"a": {Image: "img", Before: []types.ContainerBeforeElem{before("b", "c")}},
-				"b": {Image: "img", Before: []types.ContainerBeforeElem{before("d")}},
-				"c": {Image: "img", Before: []types.ContainerBeforeElem{before("d")}},
+				"a": {Image: "img", Before: before("b", "c")},
+				"b": {Image: "img", Before: before("d")},
+				"c": {Image: "img", Before: before("d")},
 				"d": {Image: "img"},
 			},
 		},
 		{
 			name: "unknown container",
 			containers: types.WorkloadContainers{
-				"a": {Image: "img", Before: []types.ContainerBeforeElem{before("nonexistent")}},
+				"a": {Image: "img", Before: before("nonexistent")},
 			},
 			errorContains: []string{`container "a" before refers to unknown container "nonexistent"`},
 		},
 		{
 			name: "self reference",
 			containers: types.WorkloadContainers{
-				"a": {Image: "img", Before: []types.ContainerBeforeElem{before("a")}},
+				"a": {Image: "img", Before: before("a")},
 			},
 			errorContains: []string{`container "a" has a self-referencing before entry`},
 		},
 		{
 			name: "two-node cycle",
 			containers: types.WorkloadContainers{
-				"a": {Image: "img", Before: []types.ContainerBeforeElem{before("b")}},
-				"b": {Image: "img", Before: []types.ContainerBeforeElem{before("a")}},
+				"a": {Image: "img", Before: before("b")},
+				"b": {Image: "img", Before: before("a")},
 			},
 			errorContains: []string{"containers before relationships contain a cycle"},
 		},
 		{
 			name: "three-node cycle",
 			containers: types.WorkloadContainers{
-				"a": {Image: "img", Before: []types.ContainerBeforeElem{before("b")}},
-				"b": {Image: "img", Before: []types.ContainerBeforeElem{before("c")}},
-				"c": {Image: "img", Before: []types.ContainerBeforeElem{before("a")}},
+				"a": {Image: "img", Before: before("b")},
+				"b": {Image: "img", Before: before("c")},
+				"c": {Image: "img", Before: before("a")},
 			},
 			errorContains: []string{"containers before relationships contain a cycle"},
 		},
 		{
 			name: "multiple unknown containers",
 			containers: types.WorkloadContainers{
-				"a": {Image: "img", Before: []types.ContainerBeforeElem{before("x", "y")}},
+				"a": {Image: "img", Before: before("x", "y")},
 			},
 			errorContains: []string{
 				`container "a" before refers to unknown container "x"`,
@@ -309,8 +311,11 @@ func TestValidateContainerBefore(t *testing.T) {
 		{
 			name: "unknown and cycle are both reported",
 			containers: types.WorkloadContainers{
-				"a": {Image: "img", Before: []types.ContainerBeforeElem{before("ghost"), before("b")}},
-				"b": {Image: "img", Before: []types.ContainerBeforeElem{before("a")}},
+				"a": {Image: "img", Before: types.ContainerBefore{
+					"ghost": {Ready: types.ContainerBeforeReadyStarted},
+					"b":     {Ready: types.ContainerBeforeReadyStarted},
+				}},
+				"b": {Image: "img", Before: before("a")},
 			},
 			errorContains: []string{
 				`container "a" before refers to unknown container "ghost"`,
@@ -333,3 +338,4 @@ func TestValidateContainerBefore(t *testing.T) {
 		})
 	}
 }
+

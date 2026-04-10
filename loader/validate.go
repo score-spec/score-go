@@ -155,18 +155,16 @@ func Validate(workload *types.Workload) error {
 	// waitingFor[A] = list of containers that A must wait for (A's before dependencies).
 	waitingFor := make(map[string][]string)
 	for containerName, container := range workload.Containers {
-		for _, beforeElem := range container.Before {
-			for _, dep := range beforeElem.Containers {
-				if dep == containerName {
-					errMsgs = append(errMsgs, fmt.Sprintf("container %q has a self-referencing before entry", containerName))
-					continue
-				}
-				if _, exists := containerNames[dep]; !exists {
-					errMsgs = append(errMsgs, fmt.Sprintf("container %q before refers to unknown container %q", containerName, dep))
-					continue
-				}
-				waitingFor[containerName] = append(waitingFor[containerName], dep)
+		for dep := range container.Before {
+			if dep == containerName {
+				errMsgs = append(errMsgs, fmt.Sprintf("container %q has a self-referencing before entry", containerName))
+				continue
 			}
+			if _, exists := containerNames[dep]; !exists {
+				errMsgs = append(errMsgs, fmt.Sprintf("container %q before refers to unknown container %q", containerName, dep))
+				continue
+			}
+			waitingFor[containerName] = append(waitingFor[containerName], dep)
 		}
 	}
 	// DFS cycle detection using white/gray/black coloring.
