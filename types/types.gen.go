@@ -228,7 +228,7 @@ func (j *ExecProbe) UnmarshalJSON(b []byte) error {
 	return nil
 }
 
-var enumValues_ContainerBeforeElemReady = []interface{}{
+var enumValues_ContainerBeforeReady = []interface{}{
 	"started",
 	"healthy",
 	"complete",
@@ -397,22 +397,22 @@ func (j *ServicePortProtocol) UnmarshalJSON(b []byte) error {
 }
 
 // UnmarshalJSON implements json.Unmarshaler.
-func (j *ContainerBeforeElemReady) UnmarshalJSON(b []byte) error {
+func (j *ContainerBeforeReady) UnmarshalJSON(b []byte) error {
 	var v string
 	if err := json.Unmarshal(b, &v); err != nil {
 		return err
 	}
 	var ok bool
-	for _, expected := range enumValues_ContainerBeforeElemReady {
+	for _, expected := range enumValues_ContainerBeforeReady {
 		if reflect.DeepEqual(v, expected) {
 			ok = true
 			break
 		}
 	}
 	if !ok {
-		return fmt.Errorf("invalid value (expected one of %#v): %#v", enumValues_ContainerBeforeElemReady, v)
+		return fmt.Errorf("invalid value (expected one of %#v): %#v", enumValues_ContainerBeforeReady, v)
 	}
-	*j = ContainerBeforeElemReady(v)
+	*j = ContainerBeforeReady(v)
 	return nil
 }
 
