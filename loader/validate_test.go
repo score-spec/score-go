@@ -22,6 +22,14 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func workloadWithContainers(containers types.WorkloadContainers) *types.Workload {
+	return &types.Workload{
+		ApiVersion: "score.dev/v1b1",
+		Metadata:   types.WorkloadMetadata{"name": "test"},
+		Containers: containers,
+	}
+}
+
 func workloadWith(files types.ContainerFiles, variables types.ContainerVariables, volumes types.ContainerVolumes, resources types.WorkloadResources) *types.Workload {
 	return &types.Workload{
 		ApiVersion: "score.dev/v1b1",
@@ -102,7 +110,7 @@ func TestValidatePlaceholders(t *testing.T) {
 					Content: stringRef("No placeholders"),
 				},
 				"/usr/local/four": {
-					Content: stringRef("Escaped $${plaholder}"),
+					Content: stringRef("Escaped $${placeholder}"),
 				},
 				"/usr/local/five": {
 					Content:  stringRef("Invalid placeholder with NoExpand: ${this is invalid}"),
@@ -208,6 +216,111 @@ func TestValidatePlaceholders(t *testing.T) {
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
 			workload := workloadWith(testCase.files, testCase.variables, testCase.volumes, testCase.resources)
+			err := Validate(workload)
+			if len(testCase.errorContains) == 0 {
+				assert.NoError(t, err)
+				return
+			}
+			require.Error(t, err)
+			for _, msg := range testCase.errorContains {
+				assert.ErrorContains(t, err, msg)
+			}
+		})
+	}
+}
+
+func ready(r types.ContainerBeforeElemReady) *types.ContainerBeforeElemReady { return &r }
+
+func before(containers ...string) types.ContainerBeforeElem {
+	return types.ContainerBeforeElem{Containers: containers, Ready: ready(types.ContainerBeforeElemReadyStarted)}
+}
+
+func TestValidateContainerBefore(t *testing.T) {
+	testCases := []struct {
+		name          string
+		containers    types.WorkloadContainers
+		errorContains []string
+	}{
+		{
+			name: "no before",
+			containers: types.WorkloadContainers{
+				"a": {Image: "img"},
+				"b": {Image: "img"},
+			},
+		},
+		{
+			name: "valid linear chain",
+			containers: types.WorkloadContainers{
+				"a": {Image: "img", Before: []types.ContainerBeforeElem{before("b")}},
+				"b": {Image: "img", Before: []types.ContainerBeforeElem{before("c")}},
+				"c": {Image: "img"},
+			},
+		},
+		{
+			name: "valid diamond",
+			containers: types.WorkloadContainers{
+				"a": {Image: "img", Before: []types.ContainerBeforeElem{before("b", "c")}},
+				"b": {Image: "img", Before: []types.ContainerBeforeElem{before("d")}},
+				"c": {Image: "img", Before: []types.ContainerBeforeElem{before("d")}},
+				"d": {Image: "img"},
+			},
+		},
+		{
+			name: "unknown container",
+			containers: types.WorkloadContainers{
+				"a": {Image: "img", Before: []types.ContainerBeforeElem{before("nonexistent")}},
+			},
+			errorContains: []string{`container "a" before refers to unknown container "nonexistent"`},
+		},
+		{
+			name: "self reference",
+			containers: types.WorkloadContainers{
+				"a": {Image: "img", Before: []types.ContainerBeforeElem{before("a")}},
+			},
+			errorContains: []string{`container "a" has a self-referencing before entry`},
+		},
+		{
+			name: "two-node cycle",
+			containers: types.WorkloadContainers{
+				"a": {Image: "img", Before: []types.ContainerBeforeElem{before("b")}},
+				"b": {Image: "img", Before: []types.ContainerBeforeElem{before("a")}},
+			},
+			errorContains: []string{"containers before relationships contain a cycle"},
+		},
+		{
+			name: "three-node cycle",
+			containers: types.WorkloadContainers{
+				"a": {Image: "img", Before: []types.ContainerBeforeElem{before("b")}},
+				"b": {Image: "img", Before: []types.ContainerBeforeElem{before("c")}},
+				"c": {Image: "img", Before: []types.ContainerBeforeElem{before("a")}},
+			},
+			errorContains: []string{"containers before relationships contain a cycle"},
+		},
+		{
+			name: "multiple unknown containers",
+			containers: types.WorkloadContainers{
+				"a": {Image: "img", Before: []types.ContainerBeforeElem{before("x", "y")}},
+			},
+			errorContains: []string{
+				`container "a" before refers to unknown container "x"`,
+				`container "a" before refers to unknown container "y"`,
+			},
+		},
+		{
+			name: "unknown and cycle are both reported",
+			containers: types.WorkloadContainers{
+				"a": {Image: "img", Before: []types.ContainerBeforeElem{before("ghost"), before("b")}},
+				"b": {Image: "img", Before: []types.ContainerBeforeElem{before("a")}},
+			},
+			errorContains: []string{
+				`container "a" before refers to unknown container "ghost"`,
+				"containers before relationships contain a cycle",
+			},
+		},
+	}
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			workload := workloadWithContainers(testCase.containers)
 			err := Validate(workload)
 			if len(testCase.errorContains) == 0 {
 				assert.NoError(t, err)
