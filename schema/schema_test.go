@@ -931,7 +931,7 @@ func TestSchema(t *testing.T) {
 		// containers.*.before
 		//
 		{
-			Name: "containers.*.before is not set",
+			Name: "containers.*.before is null",
 			Src: func() map[string]interface{} {
 				src := newTestDocument()
 				var hello = src["containers"].(map[string]interface{})["hello"].(map[string]interface{})
