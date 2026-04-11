@@ -311,7 +311,7 @@
           }
         },
         "before": {
-          "description": "Defines before which other containers this container should be started.",
+          "description": "Containers which should be started before this container.",
           "type": "object",
           "propertyNames": {
             "minLength": 2,
@@ -326,7 +326,7 @@
             "additionalProperties": false,
             "properties": {
               "ready": {
-                "description": "The status of the container before the next containers are started.",
+                "description": "The status of the container before the next container is started.",
                 "title": "Ready",
                 "type": "string",
                 "enum": [
