@@ -928,6 +928,112 @@ func TestSchema(t *testing.T) {
 			Message: "/containers/hello/resources/requests/cpu",
 		},
 
+		// containers.*.before
+		//
+		{
+			Name: "containers.*.before is null",
+			Src: func() map[string]interface{} {
+				src := newTestDocument()
+				var hello = src["containers"].(map[string]interface{})["hello"].(map[string]interface{})
+				hello["before"] = nil
+				return src
+			}(),
+			Message: "/containers/hello/before",
+		},
+		{
+			Name: "containers.*.before is empty",
+			Src: func() map[string]interface{} {
+				src := newTestDocument()
+				var hello = src["containers"].(map[string]interface{})["hello"].(map[string]interface{})
+				hello["before"] = map[string]interface{}{}
+				return src
+			}(),
+			Message: "",
+		},
+		{
+			Name: "containers.*.before with valid ready condition",
+			Src: func() map[string]interface{} {
+				src := newTestDocument()
+				var hello = src["containers"].(map[string]interface{})["hello"].(map[string]interface{})
+				hello["before"] = map[string]interface{}{
+					"other-container": map[string]interface{}{
+						"ready": "complete",
+					},
+				}
+				return src
+			}(),
+			Message: "",
+		},
+		{
+			Name: "containers.*.before with started ready condition",
+			Src: func() map[string]interface{} {
+				src := newTestDocument()
+				var hello = src["containers"].(map[string]interface{})["hello"].(map[string]interface{})
+				hello["before"] = map[string]interface{}{
+					"other-container": map[string]interface{}{
+						"ready": "started",
+					},
+				}
+				return src
+			}(),
+			Message: "",
+		},
+		{
+			Name: "containers.*.before with healthy ready condition",
+			Src: func() map[string]interface{} {
+				src := newTestDocument()
+				var hello = src["containers"].(map[string]interface{})["hello"].(map[string]interface{})
+				hello["before"] = map[string]interface{}{
+					"other-container": map[string]interface{}{
+						"ready": "healthy",
+					},
+				}
+				return src
+			}(),
+			Message: "",
+		},
+		{
+			Name: "containers.*.before.*.ready is invalid",
+			Src: func() map[string]interface{} {
+				src := newTestDocument()
+				var hello = src["containers"].(map[string]interface{})["hello"].(map[string]interface{})
+				hello["before"] = map[string]interface{}{
+					"other-container": map[string]interface{}{
+						"ready": "running",
+					},
+				}
+				return src
+			}(),
+			Message: "/containers/hello/before/other-container/ready",
+		},
+		{
+			Name: "containers.*.before.*.ready is missing",
+			Src: func() map[string]interface{} {
+				src := newTestDocument()
+				var hello = src["containers"].(map[string]interface{})["hello"].(map[string]interface{})
+				hello["before"] = map[string]interface{}{
+					"other-container": map[string]interface{}{},
+				}
+				return src
+			}(),
+			Message: "/containers/hello/before/other-container",
+		},
+		{
+			Name: "containers.*.before.* has extra property",
+			Src: func() map[string]interface{} {
+				src := newTestDocument()
+				var hello = src["containers"].(map[string]interface{})["hello"].(map[string]interface{})
+				hello["before"] = map[string]interface{}{
+					"other-container": map[string]interface{}{
+						"ready":   "complete",
+						"timeout": "30s",
+					},
+				}
+				return src
+			}(),
+			Message: "/containers/hello/before/other-container",
+		},
+
 		// containers.*.livenessProbe
 		//
 		{
