@@ -29,6 +29,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"sort"
 	"strings"
 	"time"
 
@@ -39,6 +40,14 @@ import (
 	"oras.land/oras-go/v2/registry/remote/credentials"
 	"oras.land/oras-go/v2/registry/remote/retry"
 )
+
+// FileContent holds the URI and content of a file retrieved by GetFiles.
+type FileContent struct {
+	// URI is the URI or path of the file.
+	URI string
+	// Content is the raw bytes of the file.
+	Content []byte
+}
 
 // options is a struct holding fields that may need to have overrides in certain environments or during unit testing.
 // The options struct can be modified by using Option functions. See defaultOptions.
@@ -121,23 +130,50 @@ func GetFile(ctx context.Context, rawUri string, optionFuncs ...Option) ([]byte,
 		optionFunc(opts)
 	}
 	switch strings.ToLower(u.Scheme) {
-	case "http":
-		fallthrough
-	case "https":
+	case "http", "https":
 		return opts.getHttp(ctx, u)
-	case "file":
-		fallthrough
-	case "":
+	case "file", "":
 		return opts.getFile(ctx, u)
-	case "git-ssh":
-		fallthrough
-	case "git-https":
+	case "git-ssh", "git-https":
 		return opts.getGit(ctx, u)
 	case "oci":
 		return opts.getOci(ctx, u)
 	default:
 		return nil, fmt.Errorf("unsupported scheme '%s'", u.Scheme)
 	}
+}
+
+// GetFiles is like GetFile but with support for importing multiple files from a directory. Currently, directory
+// support is only implemented for the file scheme. For other schemes (http, git, oci), the target is treated as a
+// single file and returned as a single-element slice.
+//
+// TODO: Add directory support for git and oci schemes.
+func GetFiles(ctx context.Context, rawUri string, optionFuncs ...Option) ([]FileContent, error) {
+	u, err := url.Parse(rawUri)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse: %w", err)
+	}
+	opts := &options{}
+	for _, optionFunc := range append(defaultOptions, optionFuncs...) {
+		optionFunc(opts)
+	}
+	var content []byte
+	switch strings.ToLower(u.Scheme) {
+	case "file", "":
+		return opts.getFileOrDir(ctx, u)
+	case "http", "https":
+		content, err = opts.getHttp(ctx, u)
+	case "git-ssh", "git-https":
+		content, err = opts.getGit(ctx, u)
+	case "oci":
+		content, err = opts.getOci(ctx, u)
+	default:
+		return nil, fmt.Errorf("unsupported scheme '%s'", u.Scheme)
+	}
+	if err != nil {
+		return nil, err
+	}
+	return []FileContent{{URI: rawUri, Content: content}}, nil
 }
 
 func getStdinFile(ctx context.Context) ([]byte, error) {
@@ -217,6 +253,82 @@ func (o *options) getFile(ctx context.Context, u *url.URL) ([]byte, error) {
 	}
 	o.logger.Printf("Read %d bytes from %s", len(buff), targetPath)
 	return buff, nil
+}
+
+// getFileOrDir resolves a file:// or bare path URI. If the path is a directory, it reads all files (non-recursively)
+// sorted by name. If it's a single file, it returns a single-element slice.
+func (o *options) getFileOrDir(ctx context.Context, u *url.URL) ([]FileContent, error) {
+	targetPath := u.Host + u.Path
+	rawUri := u.String()
+	if rawUri == "-" {
+		content, err := getStdinFile(ctx)
+		if err != nil {
+			return nil, err
+		}
+		return []FileContent{{URI: "-", Content: content}}, nil
+	}
+
+	if strings.HasPrefix(targetPath, "~/") {
+		hd, err := os.UserHomeDir()
+		if err != nil {
+			return nil, fmt.Errorf("failed to find user home dir: %w", err)
+		}
+		targetPath = filepath.Join(hd, targetPath[2:])
+	}
+
+	info, err := os.Stat(targetPath)
+	if err != nil {
+		return nil, err
+	}
+
+	if !info.IsDir() {
+		f, err := os.Open(targetPath)
+		if err != nil {
+			return nil, err
+		}
+		defer func() { _ = f.Close() }()
+		buff, err := readLimited(f, o.limit)
+		if err != nil {
+			return nil, fmt.Errorf("failed to read file: %w", err)
+		}
+		o.logger.Printf("Read %d bytes from %s", len(buff), targetPath)
+		return []FileContent{{URI: targetPath, Content: buff}}, nil
+	}
+
+	entries, err := os.ReadDir(targetPath)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read directory: %w", err)
+	}
+
+	// Filter to skip sub-directories
+	var fileNames []string
+	for _, entry := range entries {
+		if !entry.IsDir() {
+			fileNames = append(fileNames, entry.Name())
+		}
+	}
+	sort.Strings(fileNames)
+
+	if len(fileNames) == 0 {
+		return nil, fmt.Errorf("directory %s contains no files", targetPath)
+	}
+
+	var out []FileContent
+	for _, name := range fileNames {
+		filePath := filepath.Join(targetPath, name)
+		f, err := os.Open(filePath)
+		if err != nil {
+			return nil, fmt.Errorf("failed to open %s: %w", filePath, err)
+		}
+		buff, err := readLimited(f, o.limit)
+		_ = f.Close()
+		if err != nil {
+			return nil, fmt.Errorf("failed to read %s: %w", filePath, err)
+		}
+		o.logger.Printf("Read %d bytes from %s", len(buff), filePath)
+		out = append(out, FileContent{URI: filePath, Content: buff})
+	}
+	return out, nil
 }
 
 func (o *options) getGit(ctx context.Context, u *url.URL) ([]byte, error) {

@@ -17,9 +17,11 @@ package uriget
 import (
 	"context"
 	"fmt"
+	"log"
 	"net/http"
 	"net/url"
 	"os"
+	"path/filepath"
 	"testing"
 )
 
@@ -163,4 +165,123 @@ func ExampleGetFile_oci_https() {
 	fmt.Println(len(ociBuff) == len(httpsbuff))
 	// Output:
 	// true
+}
+
+func ExampleGetFiles_local() {
+	results, err := GetFiles(context.Background(), "../README.md")
+	fmt.Println(len(results) == 1, len(results[0].Content) > 0, err)
+	// Output:
+	// true true <nil>
+}
+
+func TestGetFiles_SingleFile(t *testing.T) {
+	td := t.TempDir()
+	filePath := filepath.Join(td, "test.yaml")
+	if err := os.WriteFile(filePath, []byte("hello"), 0644); err != nil {
+		t.Fatal(err)
+	}
+	results, err := GetFiles(context.Background(), filePath, WithLogger(log.New(os.Stderr, "", 0)))
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if len(results) != 1 {
+		t.Fatalf("expected 1 result, got %d", len(results))
+	}
+	if string(results[0].Content) != "hello" {
+		t.Errorf("expected content 'hello', got '%s'", results[0].Content)
+	}
+}
+
+func TestGetFiles_Directory(t *testing.T) {
+	td := t.TempDir()
+	// Create files in non-alphabetical order to verify sorting
+	files := map[string]string{
+		"c-provisioner.yaml": "content-c",
+		"a-provisioner.yaml": "content-a",
+		"b-provisioner.yaml": "content-b",
+	}
+	for name, content := range files {
+		if err := os.WriteFile(filepath.Join(td, name), []byte(content), 0644); err != nil {
+			t.Fatal(err)
+		}
+	}
+	results, err := GetFiles(context.Background(), td, WithLogger(log.New(os.Stderr, "", 0)))
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if len(results) != 3 {
+		t.Fatalf("expected 3 results, got %d", len(results))
+	}
+	// Verify sorted order and full path URIs
+	expected := []struct {
+		uri     string
+		content string
+	}{
+		{filepath.Join(td, "a-provisioner.yaml"), "content-a"},
+		{filepath.Join(td, "b-provisioner.yaml"), "content-b"},
+		{filepath.Join(td, "c-provisioner.yaml"), "content-c"},
+	}
+	for i, e := range expected {
+		if results[i].URI != e.uri {
+			t.Errorf("result[%d]: expected URI '%s', got '%s'", i, e.uri, results[i].URI)
+		}
+		if string(results[i].Content) != e.content {
+			t.Errorf("result[%d]: expected content '%s', got '%s'", i, e.content, results[i].Content)
+		}
+	}
+}
+
+func TestGetFiles_DirectorySkipsSubdirs(t *testing.T) {
+	td := t.TempDir()
+	if err := os.WriteFile(filepath.Join(td, "file.yaml"), []byte("data"), 0644); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Mkdir(filepath.Join(td, "subdir"), 0755); err != nil {
+		t.Fatal(err)
+	}
+	results, err := GetFiles(context.Background(), td, WithLogger(log.New(os.Stderr, "", 0)))
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if len(results) != 1 {
+		t.Fatalf("expected 1 result (subdir skipped), got %d", len(results))
+	}
+	if results[0].URI != filepath.Join(td, "file.yaml") {
+		t.Errorf("expected URI '%s', got '%s'", filepath.Join(td, "file.yaml"), results[0].URI)
+	}
+}
+
+func TestGetFiles_EmptyDirectory(t *testing.T) {
+	td := t.TempDir()
+	_, err := GetFiles(context.Background(), td, WithLogger(log.New(os.Stderr, "", 0)))
+	if err == nil {
+		t.Fatal("expected error for empty directory, got nil")
+	}
+}
+
+func TestGetFiles_NonExistentPath(t *testing.T) {
+	_, err := GetFiles(context.Background(), "/does/not/exist", WithLogger(log.New(os.Stderr, "", 0)))
+	if err == nil {
+		t.Fatal("expected error for non-existent path, got nil")
+	}
+}
+
+func TestGetFiles_DirectoryWithFileScheme(t *testing.T) {
+	td := t.TempDir()
+	if err := os.WriteFile(filepath.Join(td, "a.yaml"), []byte("aaa"), 0644); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(td, "b.yaml"), []byte("bbb"), 0644); err != nil {
+		t.Fatal(err)
+	}
+	results, err := GetFiles(context.Background(), "file://"+td, WithLogger(log.New(os.Stderr, "", 0)))
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if len(results) != 2 {
+		t.Fatalf("expected 2 results, got %d", len(results))
+	}
+	if results[0].URI != filepath.Join(td, "a.yaml") || results[1].URI != filepath.Join(td, "b.yaml") {
+		t.Errorf("unexpected URIs: %s, %s", results[0].URI, results[1].URI)
+	}
 }
