@@ -22,6 +22,7 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 )
 
@@ -283,5 +284,112 @@ func TestGetFiles_DirectoryWithFileScheme(t *testing.T) {
 	}
 	if results[0].URI != filepath.Join(td, "a.yaml") || results[1].URI != filepath.Join(td, "b.yaml") {
 		t.Errorf("unexpected URIs: %s, %s", results[0].URI, results[1].URI)
+	}
+}
+
+func TestGetFiles_GitDirectory(t *testing.T) {
+	results, err := GetFiles(context.Background(), "git-https://github.com/score-spec/community-provisioners.git/dns/score-compose", WithLogger(log.New(os.Stderr, "", 0)))
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if len(results) == 0 {
+		t.Fatal("expected at least one file from git directory")
+	}
+	// Verify files are sorted by name
+	for i := 1; i < len(results); i++ {
+		if results[i].URI < results[i-1].URI {
+			t.Errorf("results not sorted: %s came after %s", results[i].URI, results[i-1].URI)
+		}
+	}
+	// Verify all results have content
+	for _, r := range results {
+		if len(r.Content) == 0 {
+			t.Errorf("empty content for %s", r.URI)
+		}
+	}
+}
+
+func TestGetFiles_GitDirectoryWithTrailingSlash(t *testing.T) {
+	results, err := GetFiles(context.Background(), "git-https://github.com/score-spec/community-provisioners.git/dns/score-compose/", WithLogger(log.New(os.Stderr, "", 0)))
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if len(results) == 0 {
+		t.Fatal("expected at least one file from git directory with trailing slash")
+	}
+}
+
+func TestGetFiles_GitSingleFile(t *testing.T) {
+	results, err := GetFiles(context.Background(), "git-https://github.com/score-spec/score.dev.git/README.md", WithLogger(log.New(os.Stderr, "", 0)))
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if len(results) != 1 {
+		t.Fatalf("expected 1 result, got %d", len(results))
+	}
+	if len(results[0].Content) == 0 {
+		t.Error("expected non-empty content")
+	}
+}
+
+func TestGetFiles_GitDirectorySkipsSubdirs(t *testing.T) {
+	// The "dns" directory contains subdirectories (score-compose, score-k8s) and a file (score.yaml).
+	// Only the file should be returned, subdirectories should be skipped.
+	results, err := GetFiles(context.Background(), "git-https://github.com/score-spec/community-provisioners.git/dns", WithLogger(log.New(os.Stderr, "", 0)))
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	for _, r := range results {
+		// URI should be a file path relative to the subPath, not contain nested dirs
+		if strings.Contains(r.URI, "/") && strings.HasPrefix(r.URI, "dns/") {
+			parts := strings.Split(strings.TrimPrefix(r.URI, "dns/"), "/")
+			if len(parts) > 1 {
+				t.Errorf("expected only immediate files, got nested path: %s", r.URI)
+			}
+		}
+	}
+}
+
+func TestGetFiles_GitInvalidUrl(t *testing.T) {
+	_, err := GetFiles(context.Background(), "git-https://github.com/score-spec/community-provisioners/dns", WithLogger(log.New(os.Stderr, "", 0)))
+	if err == nil {
+		t.Fatal("expected error for invalid git url without .git/, got nil")
+	}
+}
+
+func TestParseGitUrl(t *testing.T) {
+	tests := []struct {
+		name      string
+		rawUrl    string
+		wantSub   string
+		wantErr   bool
+	}{
+		{"file path", "git-https://github.com/org/repo.git/path/to/file.yaml", "path/to/file.yaml", false},
+		{"dir path", "git-https://github.com/org/repo.git/path/to/dir", "path/to/dir", false},
+		{"dir with trailing slash", "git-https://github.com/org/repo.git/path/to/dir/", "path/to/dir", false},
+		{"missing .git/", "git-https://github.com/org/repo/path", "", true},
+		{"empty subpath", "git-https://github.com/org/repo.git/", "", true},
+		{"empty repo", "git-https://.git/file", "", true},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			u, err := url.Parse(tt.rawUrl)
+			if err != nil {
+				t.Fatalf("failed to parse url: %v", err)
+			}
+			_, subPath, err := parseGitUrl(u)
+			if tt.wantErr {
+				if err == nil {
+					t.Error("expected error, got nil")
+				}
+				return
+			}
+			if err != nil {
+				t.Fatalf("unexpected error: %v", err)
+			}
+			if subPath != tt.wantSub {
+				t.Errorf("expected subPath %q, got %q", tt.wantSub, subPath)
+			}
+		})
 	}
 }
