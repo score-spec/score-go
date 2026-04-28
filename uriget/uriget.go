@@ -120,6 +120,8 @@ const ()
 // - file or no scheme: attempts to read the file from local file system.
 // - git-ssh / git-https: attempts to perform a sparse checkout of just the target file.
 // - oci: retrieves a file from a remote OCI registry based on the reference and optional fragment.
+//
+// Deprecated: Use GetFiles instead, which supports both single files and directories.
 func GetFile(ctx context.Context, rawUri string, optionFuncs ...Option) ([]byte, error) {
 	u, err := url.Parse(rawUri)
 	if err != nil {
@@ -144,10 +146,10 @@ func GetFile(ctx context.Context, rawUri string, optionFuncs ...Option) ([]byte,
 }
 
 // GetFiles is like GetFile but with support for importing multiple files from a directory. Currently, directory
-// support is only implemented for the file scheme. For other schemes (http, git, oci), the target is treated as a
+// support is implemented for the file and git schemes. For other schemes (http, oci), the target is treated as a
 // single file and returned as a single-element slice.
 //
-// TODO: Add directory support for git and oci schemes.
+// TODO: Add directory support for oci scheme.
 func GetFiles(ctx context.Context, rawUri string, optionFuncs ...Option) ([]FileContent, error) {
 	u, err := url.Parse(rawUri)
 	if err != nil {
@@ -164,7 +166,7 @@ func GetFiles(ctx context.Context, rawUri string, optionFuncs ...Option) ([]File
 	case "http", "https":
 		content, err = opts.getHttp(ctx, u)
 	case "git-ssh", "git-https":
-		content, err = opts.getGit(ctx, u)
+		return opts.getGitFileOrDir(ctx, u)
 	case "oci":
 		content, err = opts.getOci(ctx, u)
 	default:
@@ -342,49 +344,12 @@ func (o *options) getGit(ctx context.Context, u *url.URL) ([]byte, error) {
 	u.Path = parts[0] + ".git"
 	subPath := parts[1]
 
-	td, err := os.MkdirTemp(os.TempDir(), "score-go")
+	td, err := o.gitSparseCheckout(ctx, u.String(), subPath)
 	if err != nil {
-		return nil, fmt.Errorf("failed to make temp dir")
-	} else if err := os.Chmod(td, 0700); err != nil {
-		return nil, fmt.Errorf("failed to chown temp dir")
+		return nil, err
 	}
-	defer func() {
-		_ = os.RemoveAll(td)
-	}()
+	defer func() { _ = os.RemoveAll(td) }()
 
-	gitBinary, err := exec.LookPath("git")
-	if err != nil {
-		return nil, fmt.Errorf("failed to find git binary on the local system: %w", err)
-	}
-	gitRemote := "origin"
-	getRef := "HEAD"
-
-	c := exec.CommandContext(ctx, gitBinary, "init")
-	c.Dir = td
-	if output, err := c.CombinedOutput(); err != nil {
-		o.logger.Printf("command output: %s", output)
-		return nil, fmt.Errorf("failed to init git repo in %s: %w", td, err)
-	}
-	c = exec.CommandContext(ctx, gitBinary, "remote", "add", gitRemote, u.String())
-	c.Dir = td
-	if output, err := c.CombinedOutput(); err != nil {
-		o.logger.Printf("command output: %s", output)
-		return nil, fmt.Errorf("failed to set git remote to %s: %w", u.String(), err)
-	}
-	o.logger.Printf("Initialized git remote in %s for %s", td, u.String())
-	// https://stackoverflow.com/questions/61587133/cloning-single-file-from-git-repository
-	c = exec.CommandContext(ctx, gitBinary, "sparse-checkout", "set", "--no-cone", "--sparse-index", subPath)
-	c.Dir = td
-	if output, err := c.CombinedOutput(); err != nil {
-		o.logger.Printf("command output: %s", output)
-		return nil, fmt.Errorf("failed to set sparse checkout: %w", err)
-	}
-	c = exec.CommandContext(ctx, gitBinary, "pull", gitRemote, getRef, "--depth=1")
-	c.Dir = td
-	if output, err := c.CombinedOutput(); err != nil {
-		o.logger.Printf("command output: %s", output)
-		return nil, fmt.Errorf("failed to fetch: %w", err)
-	}
 	f, err := os.Open(filepath.Join(td, subPath))
 	if err != nil {
 		return nil, err
@@ -396,6 +361,128 @@ func (o *options) getGit(ctx context.Context, u *url.URL) ([]byte, error) {
 	}
 	o.logger.Printf("Read %d bytes from %s", len(buff), filepath.Join(td, subPath))
 	return buff, nil
+}
+
+// parseGitUrl parses a git URI and returns the remote URL and the sub-path within the repo.
+// It accepts paths with or without a trailing slash.
+func parseGitUrl(u *url.URL) (remoteUrl string, subPath string, err error) {
+	u.Scheme = strings.TrimPrefix(u.Scheme, "git-")
+	u.RawQuery = ""
+	u.Fragment = ""
+	parts := strings.SplitN(u.Path, ".git/", 2)
+	if len(parts) == 1 || parts[0] == "" || parts[1] == "" {
+		return "", "", fmt.Errorf("invalid git url, expected a path with ../<REPO>.git/<PATH>")
+	}
+	u.Path = parts[0] + ".git"
+	subPath = strings.TrimSuffix(parts[1], "/")
+	return u.String(), subPath, nil
+}
+
+// gitSparseCheckout performs a sparse checkout of the given subPath from the git remote into a temp directory.
+// The caller is responsible for cleaning up the returned temp directory.
+func (o *options) gitSparseCheckout(ctx context.Context, remoteUrl string, subPath string) (string, error) {
+	td, err := os.MkdirTemp(os.TempDir(), "score-go")
+	if err != nil {
+		return "", fmt.Errorf("failed to make temp dir")
+	} else if err := os.Chmod(td, 0700); err != nil {
+		_ = os.RemoveAll(td)
+		return "", fmt.Errorf("failed to chown temp dir")
+	}
+
+	gitBinary, err := exec.LookPath("git")
+	if err != nil {
+		_ = os.RemoveAll(td)
+		return "", fmt.Errorf("failed to find git binary on the local system: %w", err)
+	}
+
+	for _, step := range []struct {
+		args   []string
+		errMsg string
+	}{
+		{[]string{"init"}, "failed to init git repo in " + td},
+		{[]string{"remote", "add", "origin", remoteUrl}, "failed to set git remote to " + remoteUrl},
+		{[]string{"sparse-checkout", "set", "--no-cone", "--sparse-index", subPath}, "failed to set sparse checkout"},
+		{[]string{"pull", "origin", "HEAD", "--depth=1"}, "failed to fetch"},
+	} {
+		c := exec.CommandContext(ctx, gitBinary, step.args...)
+		c.Dir = td
+		if output, err := c.CombinedOutput(); err != nil {
+			o.logger.Printf("command output: %s", output)
+			_ = os.RemoveAll(td)
+			return "", fmt.Errorf("%s: %w", step.errMsg, err)
+		}
+	}
+	o.logger.Printf("Initialized git remote in %s for %s", td, remoteUrl)
+	return td, nil
+}
+
+// getGitFileOrDir is like getGit but returns multiple files if the subPath is a directory.
+func (o *options) getGitFileOrDir(ctx context.Context, u *url.URL) ([]FileContent, error) {
+	originalUri := u.String()
+	remoteUrl, subPath, err := parseGitUrl(u)
+	if err != nil {
+		return nil, err
+	}
+
+	td, err := o.gitSparseCheckout(ctx, remoteUrl, subPath)
+	if err != nil {
+		return nil, err
+	}
+	defer func() { _ = os.RemoveAll(td) }()
+
+	fullPath := filepath.Join(td, subPath)
+	info, err := os.Stat(fullPath)
+	if err != nil {
+		return nil, err
+	}
+
+	if !info.IsDir() {
+		f, err := os.Open(fullPath)
+		if err != nil {
+			return nil, err
+		}
+		defer func() { _ = f.Close() }()
+		buff, err := readLimited(f, o.limit)
+		if err != nil {
+			return nil, fmt.Errorf("failed to read file: %w", err)
+		}
+		o.logger.Printf("Read %d bytes from %s", len(buff), fullPath)
+		return []FileContent{{URI: originalUri, Content: buff}}, nil
+	}
+
+	entries, err := os.ReadDir(fullPath)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read directory: %w", err)
+	}
+
+	var fileNames []string
+	for _, entry := range entries {
+		if !entry.IsDir() {
+			fileNames = append(fileNames, entry.Name())
+		}
+	}
+	sort.Strings(fileNames)
+
+	if len(fileNames) == 0 {
+		return nil, fmt.Errorf("directory %s contains no files", subPath)
+	}
+
+	var out []FileContent
+	for _, name := range fileNames {
+		filePath := filepath.Join(fullPath, name)
+		f, err := os.Open(filePath)
+		if err != nil {
+			return nil, fmt.Errorf("failed to open %s: %w", filePath, err)
+		}
+		buff, err := readLimited(f, o.limit)
+		_ = f.Close()
+		if err != nil {
+			return nil, fmt.Errorf("failed to read %s: %w", filePath, err)
+		}
+		o.logger.Printf("Read %d bytes from %s", len(buff), filePath)
+		out = append(out, FileContent{URI: subPath + "/" + name, Content: buff})
+	}
+	return out, nil
 }
 
 func (o *options) getOci(ctx context.Context, u *url.URL) ([]byte, error) {
