@@ -52,11 +52,13 @@ containers:
         content: "${resources.env.APP_CONFIG}"
       /etc/hello-world/binary:
         content: "aGVsbG8="
+      /etc/hello-world/config-shorthand: "${resources.env.APP_CONFIG}"
     volumes:
       /mnt/data:
         source: ${resources.data}
         path: sub/path
         readOnly: true
+      /volumes/data/short: ${resources.data}
     resources:
       limits:
         memory: "128Mi"
@@ -211,14 +213,16 @@ func TestValidateJson(t *testing.T) {
         "/etc/hello-world/config.yaml": {
           "mode": "666",
           "content": "${resources.env.APP_CONFIG}"
-        }
+        },
+        "/etc/hello-world/config-short.yaml": "${resources.env.APP_CONFIG}"
       },
       "volumes": {
         "/mnt/data": {
           "source": "${resources.data}",
           "path": "sub/path",
           "readOnly": true
-        }
+        },
+        "/volumes/data/short": "${resources.data}"
       },
       "resources": {
         "limits": {

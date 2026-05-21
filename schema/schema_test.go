@@ -504,6 +504,16 @@ func TestSchema(t *testing.T) {
 			Message: "",
 		},
 		{
+			Name: "containers.*.files supports shorthand string",
+			Src: func() map[string]interface{} {
+				src := newTestDocument()
+				var files = src["containers"].(map[string]interface{})["hello"].(map[string]interface{})["files"].(map[string]interface{})
+				files["/etc/hello-world/config.yaml"] = "${resources.env.APP_CONFIG}"
+				return src
+			}(),
+			Message: "",
+		},
+		{
 			Name: "containers.*.files.*.mode is not set",
 			Src: func() map[string]interface{} {
 				src := newTestDocument()
@@ -695,6 +705,16 @@ func TestSchema(t *testing.T) {
 				src := newTestDocument()
 				var hello = src["containers"].(map[string]interface{})["hello"].(map[string]interface{})
 				hello["volumes"] = map[string]interface{}{}
+				return src
+			}(),
+			Message: "",
+		},
+		{
+			Name: "containers.*.volumes supports shorthand string",
+			Src: func() map[string]interface{} {
+				src := newTestDocument()
+				var volumes = src["containers"].(map[string]interface{})["hello"].(map[string]interface{})["volumes"].(map[string]interface{})
+				volumes["/mnt/data"] = "${resources.data}"
 				return src
 			}(),
 			Message: "",
