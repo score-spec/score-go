@@ -41,9 +41,40 @@ func SplitRefParts(ref string) []string {
 // function is _required_ and the substituter will not function without it, but the UnEscaper is optional and will
 // default to simply replacing sequences of $$ with a $.
 // Overriding the UnEscaper may be necessary if non default behavior is required.
+//
+// CustomRegex, when non-nil, replaces the default ${...} placeholder pattern with the given regular
+// expression. The first capture group of CustomRegex must contain the placeholder content, which is
+// passed verbatim to Replacer. When CustomRegex is set, no escape handling is performed (UnEscaper
+// is ignored): every match is treated as a placeholder. Use NewSubstituterWithDelimiters to obtain
+// a Substituter with custom start/end delimiters.
 type Substituter struct {
-	Replacer  func(string) (string, error)
-	UnEscaper func(string) (string, error)
+	Replacer    func(string) (string, error)
+	UnEscaper   func(string) (string, error)
+	CustomRegex *regexp.Regexp
+}
+
+// NewSubstituterWithDelimiters returns a Substituter that matches placeholders bounded by the given
+// start and end delimiters instead of the default "${" and "}". The placeholder content (everything
+// between start and end, matched non-greedily) is passed to Replacer.
+//
+// No escape mechanism is provided in this mode: choose delimiters that do not appear literally in
+// the input text that should be left unmodified. Both start and end must be non-empty.
+//
+// The returned Substituter has CustomRegex set but no Replacer; callers must assign Replacer before
+// invoking SubstituteString or Substitute.
+func NewSubstituterWithDelimiters(start, end string) (*Substituter, error) {
+	if start == "" {
+		return nil, errors.New("start delimiter must not be empty")
+	}
+	if end == "" {
+		return nil, errors.New("end delimiter must not be empty")
+	}
+	pattern := regexp.QuoteMeta(start) + "(.*?)" + regexp.QuoteMeta(end)
+	re, err := regexp.Compile(pattern)
+	if err != nil {
+		return nil, fmt.Errorf("failed to build delimiter regex from start=%q end=%q: %w", start, end, err)
+	}
+	return &Substituter{CustomRegex: re}, nil
 }
 
 func DefaultUnEscaper(original string) (string, error) {
@@ -53,6 +84,9 @@ func DefaultUnEscaper(original string) (string, error) {
 func (s *Substituter) SubstituteString(src string) (string, error) {
 	if s.Replacer == nil {
 		return "", errors.New("replacer function is nil")
+	}
+	if s.CustomRegex != nil {
+		return s.substituteWithCustomRegex(src)
 	}
 	var err error
 	result := placeholderRegEx.ReplaceAllStringFunc(src, func(str string) string {
@@ -82,6 +116,23 @@ func (s *Substituter) SubstituteString(src string) (string, error) {
 		result, subErr := s.Replacer(matches[2])
 		err = errors.Join(err, subErr)
 		return result
+	})
+	return result, err
+}
+
+// substituteWithCustomRegex performs substitution using the user-supplied CustomRegex. No escape
+// handling is applied; every match is passed straight to Replacer using the first capture group.
+func (s *Substituter) substituteWithCustomRegex(src string) (string, error) {
+	var err error
+	result := s.CustomRegex.ReplaceAllStringFunc(src, func(str string) string {
+		matches := s.CustomRegex.FindStringSubmatch(str)
+		if len(matches) < 2 {
+			err = errors.Join(err, fmt.Errorf("custom placeholder regex must define at least one capture group for the placeholder content"))
+			return str
+		}
+		res, subErr := s.Replacer(matches[1])
+		err = errors.Join(err, subErr)
+		return res
 	})
 	return result, err
 }
@@ -127,6 +178,18 @@ func SubstituteString(src string, inner func(string) (string, error)) (string, e
 // Substitute does the same thing as SubstituteString but recursively through a map. It returns a copy of the original map.
 func Substitute(source interface{}, inner func(string) (string, error)) (interface{}, error) {
 	return (&Substituter{Replacer: inner, UnEscaper: DefaultUnEscaper}).Substitute(source)
+}
+
+// SubstituteStringWithDelimiters replaces all matches of the given start/end delimiter pair in the
+// source string with the result of the inner function. No escape mechanism is provided: choose
+// delimiters that do not appear literally in input that should be left unmodified.
+func SubstituteStringWithDelimiters(src, start, end string, inner func(string) (string, error)) (string, error) {
+	s, err := NewSubstituterWithDelimiters(start, end)
+	if err != nil {
+		return "", err
+	}
+	s.Replacer = inner
+	return s.SubstituteString(src)
 }
 
 func mapLookupOutput(ctx map[string]interface{}) func(keys ...string) (interface{}, error) {

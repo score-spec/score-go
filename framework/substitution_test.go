@@ -183,3 +183,163 @@ func TestCustomerUnescaper(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, "$$$$ $${thing}$${thing}", x)
 }
+
+func TestNewSubstituterWithDelimiters_validation(t *testing.T) {
+	for _, tc := range []struct {
+		Name          string
+		Start         string
+		End           string
+		ExpectedError string
+	}{
+		{Name: "empty start", Start: "", End: "}", ExpectedError: "start delimiter must not be empty"},
+		{Name: "empty end", Start: "${", End: "", ExpectedError: "end delimiter must not be empty"},
+		{Name: "both empty", Start: "", End: "", ExpectedError: "start delimiter must not be empty"},
+	} {
+		t.Run(tc.Name, func(t *testing.T) {
+			s, err := NewSubstituterWithDelimiters(tc.Start, tc.End)
+			assert.Nil(t, s)
+			assert.EqualError(t, err, tc.ExpectedError)
+		})
+	}
+}
+
+// TestSubstituterWithDelimiters_pairs runs a set of (start, end) pairs through the substituter
+// and checks that placeholders match, surrounding text is preserved, and literal ${...} (the
+// default Score syntax) is left alone whenever custom delimiters are in use.
+func TestSubstituterWithDelimiters_pairs(t *testing.T) {
+	upper := func(s string) (string, error) { return strings.ToUpper(s), nil }
+	for _, tc := range []struct {
+		Name     string
+		Start    string
+		End      string
+		Input    string
+		Expected string
+	}{
+		{
+			Name:     "default-style ${ }",
+			Start:    "${",
+			End:      "}",
+			Input:    "hello ${name}",
+			Expected: "hello NAME",
+		},
+		{
+			Name:     "percent %{ }",
+			Start:    "%{",
+			End:      "}",
+			Input:    "hello %{name} and ${untouched}",
+			Expected: "hello NAME and ${untouched}",
+		},
+		{
+			Name:     "angle << >>",
+			Start:    "<<",
+			End:      ">>",
+			Input:    "echo <<USER>> ${HOME}",
+			Expected: "echo USER ${HOME}",
+		},
+		{
+			Name:     "asymmetric <%{ }%>",
+			Start:    "<%{",
+			End:      "}%>",
+			Input:    "value=<%{resources.db.host}%>; literal=${DB_PORT}",
+			Expected: "value=RESOURCES.DB.HOST; literal=${DB_PORT}",
+		},
+		{
+			Name:     "double-brace [[ ]]",
+			Start:    "[[",
+			End:      "]]",
+			Input:    "a [[x]] b [[y]] c",
+			Expected: "a X b Y c",
+		},
+		{
+			Name:     "no matches leaves input untouched",
+			Start:    "%{",
+			End:      "}",
+			Input:    "no placeholders here, just ${dollar} and {bare}",
+			Expected: "no placeholders here, just ${dollar} and {bare}",
+		},
+		{
+			Name:     "empty content is matched",
+			Start:    "%{",
+			End:      "}",
+			Input:    "before %{} after",
+			Expected: "before  after",
+		},
+		{
+			Name:     "regex metacharacters in delimiters are escaped",
+			Start:    "$(",
+			End:      ")",
+			Input:    "shell $(cmd) here",
+			Expected: "shell CMD here",
+		},
+		{
+			Name:     "non-greedy matching across multiple placeholders",
+			Start:    "<<",
+			End:      ">>",
+			Input:    "<<a>> middle <<b>>",
+			Expected: "A middle B",
+		},
+	} {
+		t.Run(tc.Name, func(t *testing.T) {
+			s, err := NewSubstituterWithDelimiters(tc.Start, tc.End)
+			if !assert.NoError(t, err) {
+				return
+			}
+			s.Replacer = upper
+			res, err := s.SubstituteString(tc.Input)
+			assert.NoError(t, err)
+			assert.Equal(t, tc.Expected, res)
+		})
+	}
+}
+
+// TestSubstituterWithDelimiters_propagatesReplacerError ensures that errors returned by the
+// replacer are surfaced (not swallowed) when running with custom delimiters.
+func TestSubstituterWithDelimiters_propagatesReplacerError(t *testing.T) {
+	s, err := NewSubstituterWithDelimiters("%{", "}")
+	assert.NoError(t, err)
+	s.Replacer = func(string) (string, error) { return "", fmt.Errorf("nope") }
+	_, err = s.SubstituteString("a %{x} b")
+	assert.EqualError(t, err, "nope")
+}
+
+// TestSubstituterWithDelimiters_nilReplacer: a nil Replacer should produce an error, not a
+// panic, same as the default-mode path.
+func TestSubstituterWithDelimiters_nilReplacer(t *testing.T) {
+	s, err := NewSubstituterWithDelimiters("%{", "}")
+	assert.NoError(t, err)
+	_, err = s.SubstituteString("%{x}")
+	assert.EqualError(t, err, "replacer function is nil")
+}
+
+// TestSubstituteStringWithDelimiters covers the package-level convenience function.
+func TestSubstituteStringWithDelimiters(t *testing.T) {
+	out, err := SubstituteStringWithDelimiters("hi %{x} %{y}", "%{", "}",
+		func(s string) (string, error) { return "<" + s + ">", nil })
+	assert.NoError(t, err)
+	assert.Equal(t, "hi <x> <y>", out)
+
+	_, err = SubstituteStringWithDelimiters("anything", "", "}", nil)
+	assert.EqualError(t, err, "start delimiter must not be empty")
+}
+
+// TestDefaultPathUnchanged is a regression guard: when CustomRegex is not set, output must match
+// the previous SubstituteString behavior for a representative sample of inputs.
+func TestDefaultPathUnchanged(t *testing.T) {
+	for _, tc := range []struct {
+		Input    string
+		Expected string
+	}{
+		{Input: "", Expected: ""},
+		{Input: "abc", Expected: "abc"},
+		{Input: "$abc", Expected: "$abc"},
+		{Input: "abc $$ abc", Expected: "abc $ abc"},
+		{Input: "$${abc}", Expected: "${abc}"},
+		{Input: "my name is ${metadata.name}", Expected: "my name is test-name"},
+	} {
+		t.Run(tc.Input, func(t *testing.T) {
+			res, err := SubstituteString(tc.Input, substitutionFunction)
+			assert.NoError(t, err)
+			assert.Equal(t, tc.Expected, res)
+		})
+	}
+}
