@@ -42,11 +42,8 @@ func SplitRefParts(ref string) []string {
 // default to simply replacing sequences of $$ with a $.
 // Overriding the UnEscaper may be necessary if non default behavior is required.
 //
-// CustomRegex, when non-nil, replaces the default ${...} placeholder pattern with the given regular
-// expression. The first capture group of CustomRegex must contain the placeholder content, which is
-// passed verbatim to Replacer. When CustomRegex is set, no escape handling is performed (UnEscaper
-// is ignored): every match is treated as a placeholder. Use NewSubstituterWithDelimiters to obtain
-// a Substituter with custom start/end delimiters.
+// CustomRegex, when non-nil, replaces the default ${...} pattern. Its first capture group is the
+// placeholder content passed to Replacer, and UnEscaper is ignored in this mode.
 type Substituter struct {
 	Replacer    func(string) (string, error)
 	UnEscaper   func(string) (string, error)
@@ -54,14 +51,9 @@ type Substituter struct {
 }
 
 // NewSubstituterWithDelimiters returns a Substituter that matches placeholders bounded by the given
-// start and end delimiters instead of the default "${" and "}". The placeholder content (everything
-// between start and end, matched non-greedily) is passed to Replacer.
-//
-// No escape mechanism is provided in this mode: choose delimiters that do not appear literally in
-// the input text that should be left unmodified. Both start and end must be non-empty.
-//
-// The returned Substituter has CustomRegex set but no Replacer; callers must assign Replacer before
-// invoking SubstituteString or Substitute.
+// start and end delimiters (matched non-greedily) instead of the default "${" and "}". Both must be
+// non-empty. There is no escape mechanism, so choose delimiters that do not appear literally in the
+// input. The returned Substituter has no Replacer; callers must assign one before use.
 func NewSubstituterWithDelimiters(start, end string) (*Substituter, error) {
 	if start == "" {
 		return nil, errors.New("start delimiter must not be empty")
@@ -120,8 +112,6 @@ func (s *Substituter) SubstituteString(src string) (string, error) {
 	return result, err
 }
 
-// substituteWithCustomRegex performs substitution using the user-supplied CustomRegex. No escape
-// handling is applied; every match is passed straight to Replacer using the first capture group.
 func (s *Substituter) substituteWithCustomRegex(src string) (string, error) {
 	var err error
 	result := s.CustomRegex.ReplaceAllStringFunc(src, func(str string) string {
@@ -180,9 +170,8 @@ func Substitute(source interface{}, inner func(string) (string, error)) (interfa
 	return (&Substituter{Replacer: inner, UnEscaper: DefaultUnEscaper}).Substitute(source)
 }
 
-// SubstituteStringWithDelimiters replaces all matches of the given start/end delimiter pair in the
-// source string with the result of the inner function. No escape mechanism is provided: choose
-// delimiters that do not appear literally in input that should be left unmodified.
+// SubstituteStringWithDelimiters is like SubstituteString but uses the given start/end delimiter
+// pair instead of "${" and "}". No escape handling; the delimiters must not appear in the input.
 func SubstituteStringWithDelimiters(src, start, end string, inner func(string) (string, error)) (string, error) {
 	s, err := NewSubstituterWithDelimiters(start, end)
 	if err != nil {

@@ -203,9 +203,8 @@ func TestNewSubstituterWithDelimiters_validation(t *testing.T) {
 	}
 }
 
-// TestSubstituterWithDelimiters_pairs runs a set of (start, end) pairs through the substituter
-// and checks that placeholders match, surrounding text is preserved, and literal ${...} (the
-// default Score syntax) is left alone whenever custom delimiters are in use.
+// TestSubstituterWithDelimiters_pairs covers a matrix of delimiter pairs and confirms that the
+// default ${...} syntax is left alone when custom delimiters are in use.
 func TestSubstituterWithDelimiters_pairs(t *testing.T) {
 	upper := func(s string) (string, error) { return strings.ToUpper(s), nil }
 	for _, tc := range []struct {
@@ -292,8 +291,6 @@ func TestSubstituterWithDelimiters_pairs(t *testing.T) {
 	}
 }
 
-// TestSubstituterWithDelimiters_propagatesReplacerError ensures that errors returned by the
-// replacer are surfaced (not swallowed) when running with custom delimiters.
 func TestSubstituterWithDelimiters_propagatesReplacerError(t *testing.T) {
 	s, err := NewSubstituterWithDelimiters("%{", "}")
 	assert.NoError(t, err)
@@ -302,8 +299,6 @@ func TestSubstituterWithDelimiters_propagatesReplacerError(t *testing.T) {
 	assert.EqualError(t, err, "nope")
 }
 
-// TestSubstituterWithDelimiters_nilReplacer: a nil Replacer should produce an error, not a
-// panic, same as the default-mode path.
 func TestSubstituterWithDelimiters_nilReplacer(t *testing.T) {
 	s, err := NewSubstituterWithDelimiters("%{", "}")
 	assert.NoError(t, err)
@@ -311,7 +306,6 @@ func TestSubstituterWithDelimiters_nilReplacer(t *testing.T) {
 	assert.EqualError(t, err, "replacer function is nil")
 }
 
-// TestSubstituteStringWithDelimiters covers the package-level convenience function.
 func TestSubstituteStringWithDelimiters(t *testing.T) {
 	out, err := SubstituteStringWithDelimiters("hi %{x} %{y}", "%{", "}",
 		func(s string) (string, error) { return "<" + s + ">", nil })
@@ -322,8 +316,8 @@ func TestSubstituteStringWithDelimiters(t *testing.T) {
 	assert.EqualError(t, err, "start delimiter must not be empty")
 }
 
-// TestDefaultPathUnchanged is a regression guard: when CustomRegex is not set, output must match
-// the previous SubstituteString behavior for a representative sample of inputs.
+// TestDefaultPathUnchanged is a regression guard: when CustomRegex is unset, output must match
+// the previous SubstituteString behavior.
 func TestDefaultPathUnchanged(t *testing.T) {
 	for _, tc := range []struct {
 		Input    string
