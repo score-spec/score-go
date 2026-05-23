@@ -41,9 +41,8 @@ func SplitRefParts(ref string) []string {
 // function is _required_ and the substituter will not function without it, but the UnEscaper is optional and will
 // default to simply replacing sequences of $$ with a $.
 // Overriding the UnEscaper may be necessary if non default behavior is required.
-//
-// CustomRegex, when non-nil, replaces the default ${...} pattern. Its first capture group is the
-// placeholder content passed to Replacer, and UnEscaper is ignored in this mode.
+
+// Add a CustomRegex option that overrides the default ${...} matching first capture group is the placeholder, and UnEscaper is skipped when it's set.
 type Substituter struct {
 	Replacer    func(string) (string, error)
 	UnEscaper   func(string) (string, error)
@@ -167,8 +166,7 @@ func Substitute(source interface{}, inner func(string) (string, error)) (interfa
 	return (&Substituter{Replacer: inner, UnEscaper: DefaultUnEscaper}).Substitute(source)
 }
 
-// SubstituteStringWithDelimiters is like SubstituteString but uses the given start/end delimiter
-// pair instead of "${" and "}". No escape handling; the delimiters must not appear in the input.
+// Add SubstituteStringWithDelimiters, a version of SubstituteString that takes custom delimiters instead of ${ / } (no escaping, so the delimiters can't appear in the input).
 func SubstituteStringWithDelimiters(src, start, end string, inner func(string) (string, error)) (string, error) {
 	s, err := NewSubstituterWithDelimiters(start, end)
 	if err != nil {
