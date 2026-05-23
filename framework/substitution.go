@@ -50,10 +50,7 @@ type Substituter struct {
 	CustomRegex *regexp.Regexp
 }
 
-// NewSubstituterWithDelimiters returns a Substituter that matches placeholders bounded by the given
-// start and end delimiters (matched non-greedily) instead of the default "${" and "}". Both must be
-// non-empty. There is no escape mechanism, so choose delimiters that do not appear literally in the
-// input. The returned Substituter has no Replacer; callers must assign one before use.
+// Add a Substituter constructor that takes custom start/end delimiters instead of the hardcoded ${ and }.
 func NewSubstituterWithDelimiters(start, end string) (*Substituter, error) {
 	if start == "" {
 		return nil, errors.New("start delimiter must not be empty")
