@@ -27,31 +27,33 @@ containers:
     variables:
       SOME_VAR: some content here
     files:
-      - target: /my/file
+      /my/file:
         mode: "0600"
         source: file.txt
-      - target: /my/other/file
+      /my/other/file:
         content: |
           some multiline
           content
-      - target: /my/other/binaryfile
+      /my/other/binaryfile:
         binaryContent: ADBgwpA=
+      /my/other/file-short: "some content here"
     volumes:
-      - source: volume-name
-        target: /mnt/something
+      /mnt/something:
+        source: volume-name
         path: /sub/path
         readOnly: false
-      - source: volume-two
-        target: /mnt/something-else
+      /mnt/something-else:
+        source: volume-two
+      /mnt/something-short: "volume-short"
     livenessProbe:
       httpGet:
         port: 8080
         path: /livez
       exec:
         command:
-          - /bin/curl
-          - -f
-          - "http://localhost:8080/livez"
+        - /bin/curl
+        - -f
+        - "http://localhost:8080/livez"
     readinessProbe:
       httpGet:
         host: 127.0.0.1
@@ -59,8 +61,8 @@ containers:
         scheme: HTTP
         path: /readyz
         httpHeaders:
-          - name: SOME_HEADER
-            value: some-value-here
+        - name: SOME_HEADER
+          value: some-value-here
   container-two2:
     image: .
 resources:

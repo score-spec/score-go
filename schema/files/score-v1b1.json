@@ -310,7 +310,7 @@
           }
         },
         "files": {
-          "description": "The extra files to mount into the container. Described as a map of target paths to file details. A shorthand string value is treated as the file content. The array form is deprecated.", 
+          "description": "The extra files to mount into the container. Described as a map of target paths to file details. The array form is deprecated.", 
           "oneOf": [
             {
               "type": "array",
@@ -346,7 +346,7 @@
           ]
         },
         "volumes": {
-          "description": "The volumes to mount. Described as a map of target paths to volume details. A shorthand string value is treated as the volume source. The array form is deprecated.",
+          "description": "The volumes to mount. Described as a map of target paths to volume details. The array form is deprecated.",
           "oneOf": [
             {
               "type": "array",
@@ -434,7 +434,7 @@
     },
     "containerProbe": {
       "type": "object",
-      "description": "The probe may be defined as either http, command execution, or both. The execProbe should be preferred if the Score implementation supports both types.",
+      "description": "The probe definition. At least one of 'httpGet' or 'exec' must be specified. The execProbe should be preferred if the Score implementation supports both types.",
       "additionalProperties": false,
       "properties": {
         "httpGet": {
@@ -443,7 +443,11 @@
         "exec": {
           "$ref": "#/$defs/execProbe"
         }
-      }
+      },
+      "anyOf": [
+        {"required": ["httpGet"]},
+        {"required": ["exec"]}
+      ]
     },
     "execProbe": {
       "description": "An executable health probe.",
