@@ -234,7 +234,9 @@ func TestValidatePlaceholders(t *testing.T) {
 func before(containers ...string) types.ContainerBefore {
 	b := types.ContainerBefore{}
 	for _, c := range containers {
-		b[c] = types.ContainerBeforeEntry{Ready: types.ContainerBeforeReadyStarted}
+		v := b[c]
+		v.Ready = types.ReadyStarted
+		b[c] = v
 	}
 	return b
 }
@@ -314,8 +316,8 @@ func TestValidateContainerBefore(t *testing.T) {
 			name: "unknown and cycle are both reported",
 			containers: types.WorkloadContainers{
 				"a": {Image: "img", Before: types.ContainerBefore{
-					"ghost": {Ready: types.ContainerBeforeReadyStarted},
-					"b":     {Ready: types.ContainerBeforeReadyStarted},
+					"ghost": {Ready: types.ReadyStarted},
+					"b":     {Ready: types.ReadyStarted},
 				}},
 				"b": {Image: "img", Before: before("a")},
 			},

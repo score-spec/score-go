@@ -32,7 +32,7 @@ func Normalize(w *types.Workload, baseDir string) error {
 		for target, f := range c.Files {
 			updated, changed, err := normalizeContainerFile(f, baseDir)
 			if err != nil {
-				return fmt.Errorf("embedding file for target '%s' in container '%s': %w", target, name, err)
+				return fmt.Errorf("embedding file '%s' for container '%s': %w", target, name, err)
 			}
 			if changed {
 				c.Files[target] = updated
