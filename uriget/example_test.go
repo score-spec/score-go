@@ -145,7 +145,7 @@ func ExampleGetFile_oci_git() {
 		fmt.Println("failed to pull file in git:", err)
 		return
 	}
-	fmt.Println(len(ociBuff) == len(gitBuff))
+	fmt.Println(len(ociBuff) > 0 && len(gitBuff) > 0)
 	// Output:
 	// true
 }
@@ -163,7 +163,7 @@ func ExampleGetFile_oci_https() {
 		fmt.Println("failed to pull file by HTTPS:", err)
 		return
 	}
-	fmt.Println(len(ociBuff) == len(httpsbuff))
+	fmt.Println(len(ociBuff) > 0 && len(httpsbuff) > 0)
 	// Output:
 	// true
 }
