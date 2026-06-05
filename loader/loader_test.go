@@ -91,6 +91,8 @@ containers:
         noExpand: true
       /etc/hello-world/binary:
         binaryContent: aGVsbG8=
+      /etc/hello-world/short: |
+        short content
     volumes:
       /mnt/data:
         source: ${resources.data}
@@ -165,18 +167,19 @@ resources:
 						Variables: map[string]string{
 							"FRIEND": "World!",
 						},
-						Files: map[string]types.ContainerFile{
-							"/etc/hello-world/config.yaml": {
+						Files: types.ContainerFiles{
+							"/etc/hello-world/config.yaml": types.ContainerFile{
 								Mode:     stringRef("666"),
 								Content:  stringRef("---\n${resources.env.APP_CONFIG}\n"),
 								NoExpand: boolRef(true),
 							},
-							"/etc/hello-world/binary": {
+							"/etc/hello-world/binary": types.ContainerFile{
 								BinaryContent: stringRef("aGVsbG8="),
 							},
+							"/etc/hello-world/short": stringRef("short content\n"),
 						},
-						Volumes: map[string]types.ContainerVolume{
-							"/mnt/data": {
+						Volumes: types.ContainerVolumes{
+							"/mnt/data": types.ContainerVolume{
 								Source:   "${resources.data}",
 								Path:     stringRef("sub/path"),
 								ReadOnly: boolRef(true),

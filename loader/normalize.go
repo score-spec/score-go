@@ -19,6 +19,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"reflect"
 	"unicode/utf8"
 
 	"github.com/score-spec/score-go/types"
@@ -29,24 +30,110 @@ import (
 func Normalize(w *types.Workload, baseDir string) error {
 	for name, c := range w.Containers {
 		for target, f := range c.Files {
-			if f.Source != nil {
-				raw, err := readFile(baseDir, *f.Source)
-				if err != nil {
-					return fmt.Errorf("embedding file '%s' for container '%s': %w", *f.Source, name, err)
-				}
-				f.Source = nil
-				if utf8.Valid(raw) {
-					content := string(raw)
-					f.Content = &content
-				} else {
-					content := base64.StdEncoding.EncodeToString(raw)
-					f.BinaryContent = &content
-				}
-				c.Files[target] = f
+			updated, changed, err := normalizeContainerFile(f, baseDir)
+			if err != nil {
+				return fmt.Errorf("embedding file '%s' for container '%s': %w", target, name, err)
+			}
+			if changed {
+				c.Files[target] = updated
 			}
 		}
 	}
 
+	return nil
+}
+
+func normalizeContainerFile(file any, baseDir string) (any, bool, error) {
+	switch f := file.(type) {
+	case string:
+		raw, err := readFile(baseDir, f)
+		if err != nil {
+			return nil, false, fmt.Errorf("'%s': %w", f, err)
+		}
+		if utf8.Valid(raw) {
+			return map[string]any{"content": string(raw)}, true, nil
+		}
+		return map[string]any{"binaryContent": base64.StdEncoding.EncodeToString(raw)}, true, nil
+	case map[string]any:
+		source, ok := f["source"].(string)
+		if !ok || source == "" {
+			return file, false, nil
+		}
+		raw, err := readFile(baseDir, source)
+		if err != nil {
+			return nil, false, fmt.Errorf("'%s': %w", source, err)
+		}
+		delete(f, "source")
+		if utf8.Valid(raw) {
+			f["content"] = string(raw)
+		} else {
+			f["binaryContent"] = base64.StdEncoding.EncodeToString(raw)
+		}
+		return f, true, nil
+	}
+
+	v := reflect.ValueOf(file)
+	if !v.IsValid() {
+		return file, false, nil
+	}
+
+	if v.Kind() == reflect.Ptr {
+		if v.IsNil() || v.Elem().Kind() != reflect.Struct {
+			return file, false, nil
+		}
+		copy := reflect.New(v.Elem().Type())
+		copy.Elem().Set(v.Elem())
+		changed, err := normalizeContainerFileValue(copy.Elem(), baseDir)
+		if err != nil || !changed {
+			return file, changed, err
+		}
+		return copy.Interface(), true, nil
+	}
+
+	if v.Kind() != reflect.Struct {
+		return file, false, nil
+	}
+
+	copy := reflect.New(v.Type()).Elem()
+	copy.Set(v)
+	changed, err := normalizeContainerFileValue(copy, baseDir)
+	if err != nil || !changed {
+		return file, changed, err
+	}
+	return copy.Interface(), true, nil
+}
+
+func normalizeContainerFileValue(v reflect.Value, baseDir string) (bool, error) {
+	sourceField := v.FieldByName("Source")
+	if !sourceField.IsValid() || sourceField.Kind() != reflect.Ptr || sourceField.IsNil() {
+		return false, nil
+	}
+
+	sourceValue := sourceField.Elem()
+	if sourceValue.Kind() != reflect.String {
+		return false, nil
+	}
+
+	source := sourceValue.String()
+	raw, err := readFile(baseDir, source)
+	if err != nil {
+		return false, fmt.Errorf("'%s': %w", source, err)
+	}
+
+	sourceField.Set(reflect.Zero(sourceField.Type()))
+	if utf8.Valid(raw) {
+		return true, setStringPtrField(v.FieldByName("Content"), string(raw))
+	}
+	return true, setStringPtrField(v.FieldByName("BinaryContent"), base64.StdEncoding.EncodeToString(raw))
+}
+
+func setStringPtrField(field reflect.Value, value string) error {
+	if !field.IsValid() || field.Kind() != reflect.Ptr || field.Type().Elem().Kind() != reflect.String {
+		return nil
+	}
+	v := reflect.New(field.Type().Elem())
+	v.Elem().SetString(value)
+	field.Set(v)
 	return nil
 }
 

@@ -41,15 +41,16 @@ func TestNormalize(t *testing.T) {
 				},
 				Containers: types.WorkloadContainers{
 					"hello": types.Container{
-						Files: map[string]types.ContainerFile{
-							"/etc/hello-world/config.yaml": {
+						Files: types.ContainerFiles{
+							"/etc/hello-world/config.yaml": types.ContainerFile{
 								Source:   stringRef("./test_file.txt"),
 								Mode:     stringRef("666"),
 								NoExpand: boolRef(true),
 							},
-							"/etc/hello-world/binary": {
+							"/etc/hello-world/binary": types.ContainerFile{
 								Source: stringRef("./test_binary_file"),
 							},
+							"/etc/hello-world/short.txt": stringRef("short content"),
 						},
 					},
 				},
@@ -61,15 +62,16 @@ func TestNormalize(t *testing.T) {
 				},
 				Containers: types.WorkloadContainers{
 					"hello": types.Container{
-						Files: map[string]types.ContainerFile{
-							"/etc/hello-world/config.yaml": {
+						Files: types.ContainerFiles{
+							"/etc/hello-world/config.yaml": types.ContainerFile{
 								Mode:     stringRef("666"),
 								Content:  stringRef("Hello World\n"),
 								NoExpand: boolRef(true),
 							},
-							"/etc/hello-world/binary": {
+							"/etc/hello-world/binary": types.ContainerFile{
 								BinaryContent: stringRef("XVLOjEyq5FKgHDGMAYMdp+crq4I="),
 							},
+							"/etc/hello-world/short.txt": stringRef("short content"),
 						},
 					},
 				},
@@ -84,8 +86,8 @@ func TestNormalize(t *testing.T) {
 				},
 				Containers: types.WorkloadContainers{
 					"hello": types.Container{
-						Files: map[string]types.ContainerFile{
-							"/etc/hello-world/config.yaml": {
+						Files: types.ContainerFiles{
+							"/etc/hello-world/config.yaml": types.ContainerFile{
 								Source:   stringRef("./not_existing.txt"),
 								Mode:     stringRef("666"),
 								NoExpand: boolRef(true),
@@ -94,7 +96,7 @@ func TestNormalize(t *testing.T) {
 					},
 				},
 			},
-			Error: errors.New("embedding file './not_existing.txt' for container 'hello': open fixtures/not_existing.txt: no such file or directory"),
+			Error: errors.New("embedding file '/etc/hello-world/config.yaml' for container 'hello': './not_existing.txt': open fixtures/not_existing.txt: no such file or directory"),
 		},
 	}
 
