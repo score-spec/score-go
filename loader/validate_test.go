@@ -339,3 +339,90 @@ func TestValidateContainerBefore(t *testing.T) {
 	}
 }
 
+func TestValidateMetadataName(t *testing.T) {
+	testCases := []struct {
+		name          string
+		workload      *types.Workload
+		errorContains []string
+	}{
+		{
+			name: "nil metadata",
+			workload: &types.Workload{
+				ApiVersion: "score.dev/v1b1",
+				Metadata:   nil,
+				Containers: types.WorkloadContainers{
+					"hello": {Image: "busybox"},
+				},
+			},
+			errorContains: []string{"metadata.name is required"},
+		},
+		{
+			name: "empty metadata map",
+			workload: &types.Workload{
+				ApiVersion: "score.dev/v1b1",
+				Metadata:   types.WorkloadMetadata{},
+				Containers: types.WorkloadContainers{
+					"hello": {Image: "busybox"},
+				},
+			},
+			errorContains: []string{"metadata.name is required"},
+		},
+		{
+			name: "metadata without name key",
+			workload: &types.Workload{
+				ApiVersion: "score.dev/v1b1",
+				Metadata:   types.WorkloadMetadata{"other": "value"},
+				Containers: types.WorkloadContainers{
+					"hello": {Image: "busybox"},
+				},
+			},
+			errorContains: []string{"metadata.name is required"},
+		},
+		{
+			name: "metadata with empty string name",
+			workload: &types.Workload{
+				ApiVersion: "score.dev/v1b1",
+				Metadata:   types.WorkloadMetadata{"name": ""},
+				Containers: types.WorkloadContainers{
+					"hello": {Image: "busybox"},
+				},
+			},
+			errorContains: []string{"metadata.name is required"},
+		},
+		{
+			name: "metadata with non-string name",
+			workload: &types.Workload{
+				ApiVersion: "score.dev/v1b1",
+				Metadata:   types.WorkloadMetadata{"name": 123},
+				Containers: types.WorkloadContainers{
+					"hello": {Image: "busybox"},
+				},
+			},
+			errorContains: []string{"metadata.name is required"},
+		},
+		{
+			name: "metadata with valid name",
+			workload: &types.Workload{
+				ApiVersion: "score.dev/v1b1",
+				Metadata:   types.WorkloadMetadata{"name": "my-workload"},
+				Containers: types.WorkloadContainers{
+					"hello": {Image: "busybox"},
+				},
+			},
+		},
+	}
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			err := Validate(testCase.workload)
+			if len(testCase.errorContains) == 0 {
+				assert.NoError(t, err)
+				return
+			}
+			require.Error(t, err)
+			for _, msg := range testCase.errorContains {
+				assert.ErrorContains(t, err, msg)
+			}
+		})
+	}
+}
+
