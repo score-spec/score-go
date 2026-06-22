@@ -387,7 +387,7 @@ func TestValidateMetadataName(t *testing.T) {
 					"hello": {Image: "busybox"},
 				},
 			},
-			errorContains: []string{"metadata.name is required"},
+			errorContains: []string{"metadata.name must be a non-empty string"},
 		},
 		{
 			name: "metadata with non-string name",
@@ -398,7 +398,7 @@ func TestValidateMetadataName(t *testing.T) {
 					"hello": {Image: "busybox"},
 				},
 			},
-			errorContains: []string{"metadata.name is required"},
+			errorContains: []string{"metadata.name must be a non-empty string"},
 		},
 		{
 			name: "metadata with valid name",

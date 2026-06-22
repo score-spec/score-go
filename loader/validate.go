@@ -133,7 +133,7 @@ func Validate(workload *types.Workload) error {
 	} else if name, ok := workload.Metadata["name"]; !ok {
 		errMsgs = append(errMsgs, "metadata.name is required")
 	} else if nameStr, ok := name.(string); !ok || nameStr == "" {
-		errMsgs = append(errMsgs, "metadata.name is required")
+		errMsgs = append(errMsgs, "metadata.name must be a non-empty string")
 	}
 
 	placeholders := listAllPlaceholders(workload)
