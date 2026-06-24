@@ -100,22 +100,23 @@ func TestValidatePlaceholders(t *testing.T) {
 		{
 			name: "valid",
 			files: types.ContainerFiles{
-				"/usr/local/one": {
+				"/usr/local/one": types.ContainerFile{
 					Content: stringRef("Placeholder ${resources.res-one.value}"),
 				},
-				"/usr/local/two": {
+				"/usr/local/two": types.ContainerFile{
 					Content: stringRef("Placeholder ${resources.res-two.value} ${resources.res-two.other}"),
 				},
-				"/usr/local/three": {
+				"/usr/local/three": types.ContainerFile{
 					Content: stringRef("No placeholders"),
 				},
-				"/usr/local/four": {
+				"/usr/local/four": types.ContainerFile{
 					Content: stringRef("Escaped $${placeholder}"),
 				},
-				"/usr/local/five": {
+				"/usr/local/five": types.ContainerFile{
 					Content:  stringRef("Invalid placeholder with NoExpand: ${this is invalid}"),
 					NoExpand: boolRef(true),
 				},
+				"/usr/local/six": stringRef("Placeholder ${resources.res-one.value}"),
 			},
 			variables: types.ContainerVariables{
 				"VAR_ONE":   "Placeholder ${resources.res-one.value}",
@@ -124,15 +125,16 @@ func TestValidatePlaceholders(t *testing.T) {
 				"VAR_FOUR":  "Escaped $${resources.no-exists.value}",
 			},
 			volumes: types.ContainerVolumes{
-				"/mnt/one": {
+				"/mnt/one": types.ContainerVolume{
 					Source: "${resources.res-one}",
 				},
+				"/mnt/two": "${resources.res-one}",
 			},
 			resources: types.WorkloadResources{
-				"res-one": {
+				"res-one": types.Resource{
 					Type: "type-one",
 				},
-				"res-two": {
+				"res-two": types.Resource{
 					Type: "type-two",
 					Params: types.ResourceParams{
 						"var": "${resources.res-one.value}",
@@ -179,10 +181,10 @@ func TestValidatePlaceholders(t *testing.T) {
 		{
 			name: "multiple errors",
 			files: types.ContainerFiles{
-				"/usr/local/one": {
+				"/usr/local/one": types.ContainerFile{
 					Content: stringRef("Placeholder ${resources.res-one.value}"),
 				},
-				"/usr/local/two": {
+				"/usr/local/two": types.ContainerFile{
 					Content: stringRef("Placeholder ${resources.no-exist.value}"),
 				},
 			},
@@ -190,15 +192,15 @@ func TestValidatePlaceholders(t *testing.T) {
 				"VAR_ONE": "Placeholder ${invalid!}",
 			},
 			volumes: types.ContainerVolumes{
-				"/mnt/one": {
+				"/mnt/one": types.ContainerVolume{
 					Source: "${resources.another-no-exist}",
 				},
 			},
 			resources: types.WorkloadResources{
-				"res-one": {
+				"res-one": types.Resource{
 					Type: "type-one",
 				},
-				"res-two": {
+				"res-two": types.Resource{
 					Type: "type-two",
 					Params: types.ResourceParams{
 						"var": "${resources.yet-another-no-exist.value}",
@@ -232,7 +234,9 @@ func TestValidatePlaceholders(t *testing.T) {
 func before(containers ...string) types.ContainerBefore {
 	b := types.ContainerBefore{}
 	for _, c := range containers {
-		b[c] = types.ContainerBeforeEntry{Ready: types.ContainerBeforeReadyStarted}
+		v := b[c]
+		v.Ready = types.ReadyStarted
+		b[c] = v
 	}
 	return b
 }
@@ -312,8 +316,8 @@ func TestValidateContainerBefore(t *testing.T) {
 			name: "unknown and cycle are both reported",
 			containers: types.WorkloadContainers{
 				"a": {Image: "img", Before: types.ContainerBefore{
-					"ghost": {Ready: types.ContainerBeforeReadyStarted},
-					"b":     {Ready: types.ContainerBeforeReadyStarted},
+					"ghost": {Ready: types.ReadyStarted},
+					"b":     {Ready: types.ReadyStarted},
 				}},
 				"b": {Image: "img", Before: before("a")},
 			},
@@ -338,4 +342,3 @@ func TestValidateContainerBefore(t *testing.T) {
 		})
 	}
 }
-

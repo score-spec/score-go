@@ -322,16 +322,23 @@
             {
               "type": "object",
               "additionalProperties": {
-                "allOf": [
+                "oneOf": [
                   {
-                    "not": {
-                      "type": "object",
-                      "additionalProperties": true,
-                      "required": ["target"]
-                    }
+                    "allOf": [
+                      {
+                        "not": {
+                          "type": "object",
+                          "additionalProperties": true,
+                          "required": ["target"]
+                        }
+                      },
+                      {
+                        "$ref": "#/$defs/containerFile"
+                      }
+                    ]
                   },
                   {
-                    "$ref": "#/$defs/containerFile"
+                    "type": "string"
                   }
                 ]
               }
@@ -351,16 +358,23 @@
             {
               "type": "object",
               "additionalProperties": {
-                "allOf": [
+                "oneOf": [
                   {
-                    "not": {
-                      "type": "object",
-                      "additionalProperties": true,
-                      "required": ["target"]
-                    }
+                    "allOf": [
+                      {
+                        "not": {
+                          "type": "object",
+                          "additionalProperties": true,
+                          "required": ["target"]
+                        }
+                      },
+                      {
+                        "$ref": "#/$defs/containerVolume"
+                      }
+                    ]
                   },
                   {
-                    "$ref": "#/$defs/containerVolume"
+                    "type": "string"
                   }
                 ]
               }
@@ -420,7 +434,7 @@
     },
     "containerProbe": {
       "type": "object",
-      "description": "The probe may be defined as either http, command execution, or both. The execProbe should be preferred if the Score implementation supports both types.",
+      "description": "The probe definition. At least one of 'httpGet' or 'exec' must be specified. The execProbe should be preferred if the Score implementation supports both types.",
       "additionalProperties": false,
       "properties": {
         "httpGet": {
@@ -429,7 +443,11 @@
         "exec": {
           "$ref": "#/$defs/execProbe"
         }
-      }
+      },
+      "anyOf": [
+        {"required": ["httpGet"]},
+        {"required": ["exec"]}
+      ]
     },
     "execProbe": {
       "description": "An executable health probe.",
