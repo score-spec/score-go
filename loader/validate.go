@@ -110,6 +110,8 @@ func listAllPlaceholders(workload *types.Workload) []string {
 //
 // The following validation rules are applied:
 //
+// - metadata must exist and contain a non-empty "name" key
+//
 // - Placeholders must be well formed (contain at least two elements separated
 // by ".", each element must be alphanumeric or contain "_" or "-")
 //
@@ -124,6 +126,16 @@ func listAllPlaceholders(workload *types.Workload) []string {
 // - The before relationships must not contain cycles
 func Validate(workload *types.Workload) error {
 	errMsgs := []string{}
+
+	// Validate that metadata.name is present and non-empty.
+	if workload.Metadata == nil {
+		errMsgs = append(errMsgs, "metadata.name is required")
+	} else if name, ok := workload.Metadata["name"]; !ok {
+		errMsgs = append(errMsgs, "metadata.name is required")
+	} else if nameStr, ok := name.(string); !ok || nameStr == "" {
+		errMsgs = append(errMsgs, "metadata.name must be a non-empty string")
+	}
+
 	placeholders := listAllPlaceholders(workload)
 	for _, placeholder := range placeholders {
 		if !validplaceholderContent.MatchString(placeholder) {
