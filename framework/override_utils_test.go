@@ -107,6 +107,20 @@ func TestWritePathInStruct(t *testing.T) {
 			ExpectedError: fmt.Errorf("a: cannot set '2' in array: out of range"),
 		},
 		{
+			Name:          "nested index out of range",
+			Spec:          `{"a": [{}]}`,
+			Path:          []string{"a", "2", "c"},
+			Value:         "hello",
+			ExpectedError: fmt.Errorf("a: cannot set '2' in array: out of range"),
+		},
+		{
+			Name:          "nested negative index",
+			Spec:          `{"a": [{}]}`,
+			Path:          []string{"a", "-1", "c"},
+			Value:         "hello",
+			ExpectedError: fmt.Errorf("a: cannot set '-1' in array: out of range"),
+		},
+		{
 			Name:     "no append nested arrays",
 			Spec:     `{"a":[[0]]}`,
 			Path:     []string{"a", "0", "-1"},
