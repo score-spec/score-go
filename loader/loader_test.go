@@ -165,18 +165,19 @@ resources:
 						Variables: map[string]string{
 							"FRIEND": "World!",
 						},
-						Files: map[string]types.ContainerFile{
-							"/etc/hello-world/config.yaml": {
+						Files: types.ContainerFiles{
+							"/etc/hello-world/config.yaml": types.ContainerFile{
 								Mode:     stringRef("666"),
 								Content:  stringRef("---\n${resources.env.APP_CONFIG}\n"),
 								NoExpand: boolRef(true),
 							},
-							"/etc/hello-world/binary": {
+							"/etc/hello-world/binary": types.ContainerFile{
 								BinaryContent: stringRef("aGVsbG8="),
 							},
+							"/etc/hello-world/short": types.ContainerFileShort("short content\n"),
 						},
-						Volumes: map[string]types.ContainerVolume{
-							"/mnt/data": {
+						Volumes: types.ContainerVolumes{
+							"/mnt/data": types.ContainerVolume{
 								Source:   "${resources.data}",
 								Path:     stringRef("sub/path"),
 								ReadOnly: boolRef(true),
@@ -260,6 +261,18 @@ resources:
 				// On Success
 				//
 				assert.NoError(t, err)
+				for name, c := range spec.Containers {
+					for target, f := range c.Files {
+						if cf, isMap := f.(types.ContainerFile); isMap {
+							assert.NotNil(t, cf.Content)
+							assert.Equal(t, "Hello World\n", *cf.Content)
+						} else if cfShort, isShort := f.(types.ContainerFileShort); isShort {
+							assert.Equal(t, "short content\n", string(cfShort))
+						} else {
+							t.Errorf("file '%s' in container '%s' has unexpected type %T", target, name, f)
+						}
+					}
+				}
 				assert.Equal(t, tt.Output, spec)
 			}
 		})

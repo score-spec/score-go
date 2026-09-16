@@ -11,9 +11,8 @@ type Container struct {
 	// If specified, overrides the arguments passed to the container entrypoint.
 	Args []string `json:"args,omitempty" yaml:"args,omitempty" mapstructure:"args,omitempty"`
 
-	// Defines before which other containers this container should be started.
+	// Containers which should be started before this container.
 	Before ContainerBefore `json:"before,omitempty" yaml:"before,omitempty" mapstructure:"before,omitempty"`
-
 
 	// If specified, overrides the entrypoint defined in the container image.
 	Command []string `json:"command,omitempty" yaml:"command,omitempty" mapstructure:"command,omitempty"`
@@ -40,23 +39,11 @@ type Container struct {
 	Volumes ContainerVolumes `json:"volumes,omitempty" yaml:"volumes,omitempty" mapstructure:"volumes,omitempty"`
 }
 
-// ContainerBefore is a mapping of container names to their ready conditions,
-// defining which containers must reach a certain state before this container starts.
-type ContainerBefore map[string]ContainerBeforeEntry
-
-// ContainerBeforeEntry defines the ready condition for a container in the before mapping.
-type ContainerBeforeEntry struct {
-	// The status of the container before the next containers are started.
-	Ready ContainerBeforeReady `json:"ready" yaml:"ready" mapstructure:"ready"`
+// Containers which should be started before this container.
+type ContainerBefore map[string]struct {
+	// The status of the container before the next container is started.
+	Ready Ready `json:"ready" yaml:"ready" mapstructure:"ready"`
 }
-
-// ContainerBeforeReady represents the ready condition for ordered container start.
-type ContainerBeforeReady string
-
-const ContainerBeforeReadyStarted  ContainerBeforeReady = "started"
-const ContainerBeforeReadyHealthy  ContainerBeforeReady = "healthy"
-const ContainerBeforeReadyComplete ContainerBeforeReady = "complete"
-
 
 // The details of a file to mount in the container. One of 'source', 'content', or
 // 'binaryContent' must be provided.
@@ -79,9 +66,13 @@ type ContainerFile struct {
 	Source *string `json:"source,omitempty" yaml:"source,omitempty" mapstructure:"source,omitempty"`
 }
 
-type ContainerFiles map[string]ContainerFile
+// The short form of a container file, where the value is the source and the target
+// is the key.
+type ContainerFileShort string
 
-// The probe may be defined as either http, command execution, or both. The
+type ContainerFiles map[string]interface{}
+
+// The probe definition. At least one of 'httpGet' or 'exec' must be specified. The
 // execProbe should be preferred if the Score implementation supports both types.
 type ContainerProbe struct {
 	// Exec corresponds to the JSON schema field "exec".
@@ -114,7 +105,11 @@ type ContainerVolume struct {
 	Source string `json:"source" yaml:"source" mapstructure:"source"`
 }
 
-type ContainerVolumes map[string]ContainerVolume
+// The short form of a container volume, where the value is the source and the
+// target is the key.
+type ContainerVolumeShort string
+
+type ContainerVolumes map[string]interface{}
 
 // An executable health probe.
 type ExecProbe struct {
@@ -153,6 +148,12 @@ type HttpProbeScheme string
 
 const HttpProbeSchemeHTTP HttpProbeScheme = "HTTP"
 const HttpProbeSchemeHTTPS HttpProbeScheme = "HTTPS"
+
+type Ready string
+
+const ReadyComplete Ready = "complete"
+const ReadyHealthy Ready = "healthy"
+const ReadyStarted Ready = "started"
 
 // The set of Resources associated with this Workload.
 type Resource struct {
@@ -208,27 +209,66 @@ type ServicePort struct {
 type ServicePortProtocol string
 
 const ServicePortProtocolTCP ServicePortProtocol = "TCP"
-const ServicePortProtocolUDP ServicePortProtocol = "UDP"
 
 // UnmarshalJSON implements json.Unmarshaler.
-func (j *ExecProbe) UnmarshalJSON(b []byte) error {
+func (j *ServicePortProtocol) UnmarshalJSON(b []byte) error {
+	var v string
+	if err := json.Unmarshal(b, &v); err != nil {
+		return err
+	}
+	var ok bool
+	for _, expected := range enumValues_ServicePortProtocol {
+		if reflect.DeepEqual(v, expected) {
+			ok = true
+			break
+		}
+	}
+	if !ok {
+		return fmt.Errorf("invalid value (expected one of %#v): %#v", enumValues_ServicePortProtocol, v)
+	}
+	*j = ServicePortProtocol(v)
+	return nil
+}
+
+// UnmarshalJSON implements json.Unmarshaler.
+func (j *Ready) UnmarshalJSON(b []byte) error {
+	var v string
+	if err := json.Unmarshal(b, &v); err != nil {
+		return err
+	}
+	var ok bool
+	for _, expected := range enumValues_Ready {
+		if reflect.DeepEqual(v, expected) {
+			ok = true
+			break
+		}
+	}
+	if !ok {
+		return fmt.Errorf("invalid value (expected one of %#v): %#v", enumValues_Ready, v)
+	}
+	*j = Ready(v)
+	return nil
+}
+
+// UnmarshalJSON implements json.Unmarshaler.
+func (j *ContainerVolume) UnmarshalJSON(b []byte) error {
 	var raw map[string]interface{}
 	if err := json.Unmarshal(b, &raw); err != nil {
 		return err
 	}
-	if v, ok := raw["command"]; !ok || v == nil {
-		return fmt.Errorf("field command in ExecProbe: required")
+	if v, ok := raw["source"]; !ok || v == nil {
+		return fmt.Errorf("field source in ContainerVolume: required")
 	}
-	type Plain ExecProbe
+	type Plain ContainerVolume
 	var plain Plain
 	if err := json.Unmarshal(b, &plain); err != nil {
 		return err
 	}
-	*j = ExecProbe(plain)
+	*j = ContainerVolume(plain)
 	return nil
 }
 
-var enumValues_ContainerBeforeReady = []interface{}{
+var enumValues_Ready = []interface{}{
 	"started",
 	"healthy",
 	"complete",
@@ -256,88 +296,45 @@ func (j *Container) UnmarshalJSON(b []byte) error {
 }
 
 // UnmarshalJSON implements json.Unmarshaler.
-func (j *ContainerVolume) UnmarshalJSON(b []byte) error {
+func (j *ExecProbe) UnmarshalJSON(b []byte) error {
 	var raw map[string]interface{}
 	if err := json.Unmarshal(b, &raw); err != nil {
 		return err
 	}
-	if v, ok := raw["source"]; !ok || v == nil {
-		return fmt.Errorf("field source in ContainerVolume: required")
+	if v, ok := raw["command"]; !ok || v == nil {
+		return fmt.Errorf("field command in ExecProbe: required")
 	}
-	type Plain ContainerVolume
+	type Plain ExecProbe
 	var plain Plain
 	if err := json.Unmarshal(b, &plain); err != nil {
 		return err
 	}
-	*j = ContainerVolume(plain)
+	*j = ExecProbe(plain)
 	return nil
 }
 
 // UnmarshalJSON implements json.Unmarshaler.
-func (j *ContainerFile) UnmarshalJSON(b []byte) error {
+func (j *HttpProbeHttpHeadersElem) UnmarshalJSON(b []byte) error {
 	var raw map[string]interface{}
 	if err := json.Unmarshal(b, &raw); err != nil {
 		return err
 	}
-	type Plain ContainerFile
+	if v, ok := raw["name"]; !ok || v == nil {
+		return fmt.Errorf("field name in HttpProbeHttpHeadersElem: required")
+	}
+	if v, ok := raw["value"]; !ok || v == nil {
+		return fmt.Errorf("field value in HttpProbeHttpHeadersElem: required")
+	}
+	type Plain HttpProbeHttpHeadersElem
 	var plain Plain
 	if err := json.Unmarshal(b, &plain); err != nil {
 		return err
 	}
-	if plain.Source != nil && len(*plain.Source) < 1 {
-		return fmt.Errorf("field %s length: must be >= %d", "source", 1)
+	if len(plain.Value) < 1 {
+		return fmt.Errorf("field %s length: must be >= %d", "value", 1)
 	}
-	*j = ContainerFile(plain)
+	*j = HttpProbeHttpHeadersElem(plain)
 	return nil
-}
-
-// UnmarshalJSON implements json.Unmarshaler.
-func (j *HttpProbeScheme) UnmarshalJSON(b []byte) error {
-	var v string
-	if err := json.Unmarshal(b, &v); err != nil {
-		return err
-	}
-	var ok bool
-	for _, expected := range enumValues_HttpProbeScheme {
-		if reflect.DeepEqual(v, expected) {
-			ok = true
-			break
-		}
-	}
-	if !ok {
-		return fmt.Errorf("invalid value (expected one of %#v): %#v", enumValues_HttpProbeScheme, v)
-	}
-	*j = HttpProbeScheme(v)
-	return nil
-}
-
-// UnmarshalJSON implements json.Unmarshaler.
-func (j *HttpProbe) UnmarshalJSON(b []byte) error {
-	var raw map[string]interface{}
-	if err := json.Unmarshal(b, &raw); err != nil {
-		return err
-	}
-	if v, ok := raw["path"]; !ok || v == nil {
-		return fmt.Errorf("field path in HttpProbe: required")
-	}
-	if v, ok := raw["port"]; !ok || v == nil {
-		return fmt.Errorf("field port in HttpProbe: required")
-	}
-	type Plain HttpProbe
-	var plain Plain
-	if err := json.Unmarshal(b, &plain); err != nil {
-		return err
-	}
-	if plain.Host != nil && len(*plain.Host) < 1 {
-		return fmt.Errorf("field %s length: must be >= %d", "host", 1)
-	}
-	*j = HttpProbe(plain)
-	return nil
-}
-
-var enumValues_ServicePortProtocol = []interface{}{
-	"TCP",
-	"UDP",
 }
 
 // UnmarshalJSON implements json.Unmarshaler.
@@ -376,73 +373,77 @@ func (j *Resource) UnmarshalJSON(b []byte) error {
 	return nil
 }
 
-// UnmarshalJSON implements json.Unmarshaler.
-func (j *ServicePortProtocol) UnmarshalJSON(b []byte) error {
-	var v string
-	if err := json.Unmarshal(b, &v); err != nil {
-		return err
-	}
-	var ok bool
-	for _, expected := range enumValues_ServicePortProtocol {
-		if reflect.DeepEqual(v, expected) {
-			ok = true
-			break
-		}
-	}
-	if !ok {
-		return fmt.Errorf("invalid value (expected one of %#v): %#v", enumValues_ServicePortProtocol, v)
-	}
-	*j = ServicePortProtocol(v)
-	return nil
+var enumValues_HttpProbeScheme = []interface{}{
+	"HTTP",
+	"HTTPS",
+}
+var enumValues_ServicePortProtocol = []interface{}{
+	"TCP",
+	"UDP",
 }
 
 // UnmarshalJSON implements json.Unmarshaler.
-func (j *ContainerBeforeReady) UnmarshalJSON(b []byte) error {
-	var v string
-	if err := json.Unmarshal(b, &v); err != nil {
-		return err
-	}
-	var ok bool
-	for _, expected := range enumValues_ContainerBeforeReady {
-		if reflect.DeepEqual(v, expected) {
-			ok = true
-			break
-		}
-	}
-	if !ok {
-		return fmt.Errorf("invalid value (expected one of %#v): %#v", enumValues_ContainerBeforeReady, v)
-	}
-	*j = ContainerBeforeReady(v)
-	return nil
-}
-
-// UnmarshalJSON implements json.Unmarshaler.
-func (j *HttpProbeHttpHeadersElem) UnmarshalJSON(b []byte) error {
+func (j *ContainerFile) UnmarshalJSON(b []byte) error {
 	var raw map[string]interface{}
 	if err := json.Unmarshal(b, &raw); err != nil {
 		return err
 	}
-	if v, ok := raw["name"]; !ok || v == nil {
-		return fmt.Errorf("field name in HttpProbeHttpHeadersElem: required")
-	}
-	if v, ok := raw["value"]; !ok || v == nil {
-		return fmt.Errorf("field value in HttpProbeHttpHeadersElem: required")
-	}
-	type Plain HttpProbeHttpHeadersElem
+	type Plain ContainerFile
 	var plain Plain
 	if err := json.Unmarshal(b, &plain); err != nil {
 		return err
 	}
-	if len(plain.Value) < 1 {
-		return fmt.Errorf("field %s length: must be >= %d", "value", 1)
+	if plain.Source != nil && len(*plain.Source) < 1 {
+		return fmt.Errorf("field %s length: must be >= %d", "source", 1)
 	}
-	*j = HttpProbeHttpHeadersElem(plain)
+	*j = ContainerFile(plain)
 	return nil
 }
 
-var enumValues_HttpProbeScheme = []interface{}{
-	"HTTP",
-	"HTTPS",
+// UnmarshalJSON implements json.Unmarshaler.
+func (j *HttpProbe) UnmarshalJSON(b []byte) error {
+	var raw map[string]interface{}
+	if err := json.Unmarshal(b, &raw); err != nil {
+		return err
+	}
+	if v, ok := raw["path"]; !ok || v == nil {
+		return fmt.Errorf("field path in HttpProbe: required")
+	}
+	if v, ok := raw["port"]; !ok || v == nil {
+		return fmt.Errorf("field port in HttpProbe: required")
+	}
+	type Plain HttpProbe
+	var plain Plain
+	if err := json.Unmarshal(b, &plain); err != nil {
+		return err
+	}
+	if plain.Host != nil && len(*plain.Host) < 1 {
+		return fmt.Errorf("field %s length: must be >= %d", "host", 1)
+	}
+	*j = HttpProbe(plain)
+	return nil
+}
+
+const ServicePortProtocolUDP ServicePortProtocol = "UDP"
+
+// UnmarshalJSON implements json.Unmarshaler.
+func (j *HttpProbeScheme) UnmarshalJSON(b []byte) error {
+	var v string
+	if err := json.Unmarshal(b, &v); err != nil {
+		return err
+	}
+	var ok bool
+	for _, expected := range enumValues_HttpProbeScheme {
+		if reflect.DeepEqual(v, expected) {
+			ok = true
+			break
+		}
+	}
+	if !ok {
+		return fmt.Errorf("invalid value (expected one of %#v): %#v", enumValues_HttpProbeScheme, v)
+	}
+	*j = HttpProbeScheme(v)
+	return nil
 }
 
 // UnmarshalJSON implements json.Unmarshaler.

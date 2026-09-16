@@ -245,6 +245,11 @@
         }
       ]
     },
+    "containerFileShort": {
+      "description": "The short form of a container file, where the value is the source and the target is the key.",
+      "type": "string",
+      "minLength": 1
+    },
     "containerVolume": {
       "type": "object",
       "additionalProperties": false,
@@ -270,6 +275,11 @@
           "type": "boolean"
         }
       }
+    },
+    "containerVolumeShort": {
+      "description": "The short form of a container volume, where the value is the source and the target is the key.",
+      "type": "string",
+      "minLength": 1
     },
     "container": {
       "description": "The specification of a Container within the Workload.",
@@ -322,16 +332,23 @@
             {
               "type": "object",
               "additionalProperties": {
-                "allOf": [
+                "oneOf": [
                   {
-                    "not": {
-                      "type": "object",
-                      "additionalProperties": true,
-                      "required": ["target"]
-                    }
+                    "allOf": [
+                      {
+                        "not": {
+                          "type": "object",
+                          "additionalProperties": true,
+                          "required": ["target"]
+                        }
+                      },
+                      {
+                        "$ref": "#/$defs/containerFile"
+                      }
+                    ]
                   },
                   {
-                    "$ref": "#/$defs/containerFile"
+                    "$ref": "#/$defs/containerFileShort"
                   }
                 ]
               }
@@ -351,16 +368,23 @@
             {
               "type": "object",
               "additionalProperties": {
-                "allOf": [
+                "oneOf": [
                   {
-                    "not": {
-                      "type": "object",
-                      "additionalProperties": true,
-                      "required": ["target"]
-                    }
+                    "allOf": [
+                      {
+                        "not": {
+                          "type": "object",
+                          "additionalProperties": true,
+                          "required": ["target"]
+                        }
+                      },
+                      {
+                        "$ref": "#/$defs/containerVolume"
+                      }
+                    ]
                   },
                   {
-                    "$ref": "#/$defs/containerVolume"
+                    "$ref": "#/$defs/containerVolumeShort"
                   }
                 ]
               }
@@ -420,7 +444,7 @@
     },
     "containerProbe": {
       "type": "object",
-      "description": "The probe may be defined as either http, command execution, or both. The execProbe should be preferred if the Score implementation supports both types.",
+      "description": "The probe definition. At least one of 'httpGet' or 'exec' must be specified. The execProbe should be preferred if the Score implementation supports both types.",
       "additionalProperties": false,
       "properties": {
         "httpGet": {
@@ -429,7 +453,11 @@
         "exec": {
           "$ref": "#/$defs/execProbe"
         }
-      }
+      },
+      "anyOf": [
+        {"required": ["httpGet"]},
+        {"required": ["exec"]}
+      ]
     },
     "execProbe": {
       "description": "An executable health probe.",

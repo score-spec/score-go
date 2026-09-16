@@ -16,6 +16,7 @@ package loader
 
 import (
 	"fmt"
+	"reflect"
 	"regexp"
 	"strings"
 
@@ -71,8 +72,59 @@ func listAllPlaceholders(workload *types.Workload) []string {
 	placeholderSet := map[string]struct{}{}
 	for _, container := range workload.Containers {
 		for _, file := range container.Files {
-			if (file.NoExpand == nil || !*file.NoExpand) && file.Content != nil {
-				for _, placeholder := range allPlaceholdersInString(*file.Content) {
+			noExpand := false
+			var content *string
+
+			switch f := file.(type) {
+			case string:
+				c := f
+				content = &c
+			case map[string]any:
+				if v, ok := f["noExpand"].(bool); ok {
+					noExpand = v
+				}
+				if v, ok := f["content"].(string); ok {
+					c := v
+					content = &c
+				}
+			default:
+				rv := reflect.ValueOf(file)
+				if rv.IsValid() {
+					if rv.Kind() == reflect.Ptr {
+						if rv.IsNil() {
+							break
+						}
+						rv = rv.Elem()
+					}
+					if rv.Kind() == reflect.Struct {
+						if nf := rv.FieldByName("NoExpand"); nf.IsValid() {
+							switch nf.Kind() {
+							case reflect.Bool:
+								noExpand = nf.Bool()
+							case reflect.Ptr:
+								if !nf.IsNil() && nf.Elem().Kind() == reflect.Bool {
+									noExpand = nf.Elem().Bool()
+								}
+							}
+						}
+						if cf := rv.FieldByName("Content"); cf.IsValid() {
+							switch cf.Kind() {
+							case reflect.String:
+								c := cf.String()
+								content = &c
+							case reflect.Ptr:
+								if !cf.IsNil() && cf.Elem().Kind() == reflect.String {
+									c := cf.Elem().String()
+									content = &c
+								}
+							}
+						}
+					}
+				}
+			}
+
+			if !noExpand && content != nil {
+				for _, placeholder := range allPlaceholdersInString(*content) {
 					placeholderSet[placeholder] = struct{}{}
 				}
 			}
@@ -83,8 +135,46 @@ func listAllPlaceholders(workload *types.Workload) []string {
 			}
 		}
 		for _, volume := range container.Volumes {
-			for _, placeholder := range allPlaceholdersInString(volume.Source) {
-				placeholderSet[placeholder] = struct{}{}
+			var source *string
+
+			switch v := volume.(type) {
+			case string:
+				s := v
+				source = &s
+			case map[string]any:
+				if s, ok := v["source"].(string); ok {
+					source = &s
+				}
+			default:
+				rv := reflect.ValueOf(volume)
+				if rv.IsValid() {
+					if rv.Kind() == reflect.Ptr {
+						if rv.IsNil() {
+							break
+						}
+						rv = rv.Elem()
+					}
+					if rv.Kind() == reflect.Struct {
+						if sf := rv.FieldByName("Source"); sf.IsValid() {
+							switch sf.Kind() {
+							case reflect.String:
+								s := sf.String()
+								source = &s
+							case reflect.Ptr:
+								if !sf.IsNil() && sf.Elem().Kind() == reflect.String {
+									s := sf.Elem().String()
+									source = &s
+								}
+							}
+						}
+					}
+				}
+			}
+
+			if source != nil {
+				for _, placeholder := range allPlaceholdersInString(*source) {
+					placeholderSet[placeholder] = struct{}{}
+				}
 			}
 		}
 	}
