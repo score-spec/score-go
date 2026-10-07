@@ -68,7 +68,7 @@ type ContainerFile struct {
 
 type ContainerFiles map[string]ContainerFile
 
-// The probe may be defined as either http, command execution, or both. The
+// The probe definition. At least one of 'httpGet' or 'exec' must be specified. The
 // execProbe should be preferred if the Score implementation supports both types.
 type ContainerProbe struct {
 	// Exec corresponds to the JSON schema field "exec".
