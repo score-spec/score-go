@@ -145,6 +145,10 @@ func overridePathInArray(input []interface{}, path []string, isDelete bool, valu
 		return output, nil
 	}
 
+	if pathIndex < 0 || pathIndex >= len(output) {
+		return nil, fmt.Errorf("cannot set '%d' in array: out of range", pathIndex)
+	}
+
 	switch typed := output[pathIndex].(type) {
 	case map[string]interface{}:
 		subOutput, err := overridePathInMap(typed, path[1:], isDelete, value)
