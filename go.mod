@@ -2,7 +2,7 @@ module github.com/score-spec/score-go
 
 go 1.26.0
 
-toolchain go1.26.9
+toolchain go1.26.10
 
 require (
 	github.com/go-viper/mapstructure/v2 v2.5.0
