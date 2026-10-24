@@ -182,9 +182,9 @@
       "additionalProperties": false,
       "properties": {
         "memory": {
-          "description": "The memory limit in bytes with optional unit specifier. For example 125M or 1.5Gi.",
+          "description": "The memory limit in bytes with optional unit specifier. For example 125M or 1Gi.",
           "type": "string",
-          "pattern": "^(0\\.\\d+|[1-9]\\d*(\\.\\d+)?)(K|M|G|T|P|E|Ki|Mi|Gi|Ti|Pi|Ei)?$"
+          "pattern": "^[1-9]\\d*(K|M|G|T|Ki|Mi|Gi|Ti)?$"
         },
         "cpu": {
           "description": "The CPU limit as whole or fractional CPUs. 'm' indicates milli-CPUs. For example 2 or 125m.",
@@ -301,13 +301,53 @@
         "files": {
           "type": "object",
           "additionalProperties": {
-            "$ref": "#/$defs/containerFile"
+            "oneOf": [
+              {
+                "allOf": [
+                  {
+                    "not": {
+                      "type": "object",
+                      "additionalProperties": true,
+                      "required": [
+                        "target"
+                      ]
+                    }
+                  },
+                  {
+                    "$ref": "#/$defs/containerFile"
+                  }
+                ]
+              },
+              {
+                "type": "string"
+              }
+            ]
           }
         },
         "volumes": {
           "type": "object",
           "additionalProperties": {
-            "$ref": "#/$defs/containerVolume"
+            "oneOf": [
+              {
+                "allOf": [
+                  {
+                    "not": {
+                      "type": "object",
+                      "additionalProperties": true,
+                      "required": [
+                        "target"
+                      ]
+                    }
+                  },
+                  {
+                    "$ref": "#/$defs/containerVolume"
+                  }
+                ]
+              },
+              {
+                "type": "string"
+              }
+            ]
           }
         },
         "before": {
@@ -365,7 +405,7 @@
     },
     "containerProbe": {
       "type": "object",
-      "description": "The probe may be defined as either http, command execution, or both. The execProbe should be preferred if the Score implementation supports both types.",
+      "description": "The probe definition. At least one of 'httpGet' or 'exec' must be specified. The execProbe should be preferred if the Score implementation supports both types.",
       "additionalProperties": false,
       "properties": {
         "httpGet": {
@@ -374,7 +414,19 @@
         "exec": {
           "$ref": "#/$defs/execProbe"
         }
-      }
+      },
+      "anyOf": [
+        {
+          "required": [
+            "httpGet"
+          ]
+        },
+        {
+          "required": [
+            "exec"
+          ]
+        }
+      ]
     },
     "execProbe": {
       "description": "An executable health probe.",
