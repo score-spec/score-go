@@ -72,6 +72,27 @@ func TestWritePathInStruct(t *testing.T) {
 			Expected: `{"a":["hello"]}`,
 		},
 		{
+			Name:          "delete missing key reports the path",
+			Spec:          `{"a":{"b":"c"}}`,
+			Path:          []string{"a", "missing"},
+			Delete:        true,
+			ExpectedError: fmt.Errorf("a: cannot remove 'missing' in map: not found"),
+		},
+		{
+			Name:          "delete with missing parent reports the path and adds nothing",
+			Spec:          `{"a":{"b":"c"}}`,
+			Path:          []string{"a", "x", "y"},
+			Delete:        true,
+			ExpectedError: fmt.Errorf("a: cannot remove 'x' in map: not found"),
+		},
+		{
+			Name:          "set through an out-of-range array index says out of range",
+			Spec:          `{"a":[1]}`,
+			Path:          []string{"a", "5", "c"},
+			Value:         "hello",
+			ExpectedError: fmt.Errorf("a: cannot set '5' in array: out of range"),
+		},
+		{
 			Name:     "simple array append",
 			Spec:     `{"a":["hello"]}`,
 			Path:     []string{"a", "-1"},
