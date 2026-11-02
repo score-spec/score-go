@@ -1,5 +1,5 @@
 [![ci](https://github.com/score-spec/score-go/actions/workflows/ci.yml/badge.svg)](https://github.com/score-spec/score-go/actions/workflows/ci.yml)
-[![Go Reference](https://pkg.go.dev/badge/github.com/score-spec/score-go.svg)](https://pkg.go.dev/github.com/score-spec/score-go)
+[![Go Reference](https://pkg.go.dev/badge/github.com/score-spec/score-go/v2.svg)](https://pkg.go.dev/github.com/score-spec/score-go/v2)
 [![good first issues](https://img.shields.io/github/issues-search/score-spec/score-go?query=type%3Aissue%20is%3Aopen%20label%3A%22good%20first%20issue%22&label=good%20first%20issues&style=flat&logo=github)](https://github.com/score-spec/score-go/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22)
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 [![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fscore-spec%2Fscore-go.svg?type=shield&issueType=license)](https://app.fossa.com/projects/git%2Bgithub.com%2Fscore-spec%2Fscore-go?ref=badge_shield&issueType=license)
@@ -14,7 +14,7 @@ Reference library containing common types and functions for building Score imple
 This can be added to your project via:
 
 ```sh
-go get -u github.com/score-spec/score-go@latest
+go get -u github.com/score-spec/score-go/v2@latest
 ```
 
 **NOTE**: if you project is still using the hand-written types, you will need to stay on `github.com/score-spec/score-go@v0.0.1`
@@ -22,10 +22,9 @@ and any important fixes to the schema may be back-ported to that branch.
 
 ## Packages
 
-- `github.com/score-spec/score-go/schema` - Go constant with the json schema, and methods for validating a json or yaml structure against the schema.
-- `github.com/score-spec/score-go/types` - Go types for Score workloads, services, and resources generated from the json schema.
-- `github.com/score-spec/score-go/loader` - Go functions for loading the validated json or yaml structure into a workload struct. 
-- `github.com/score-spec/score-go/framework`  - Common types and functions for Score implementations.
+- `github.com/score-spec/score-go/v2/schema` - Go constant with the json schema, and methods for validating a json or yaml structure against the schema.
+- `github.com/score-spec/score-go/v2/types` - Go types for Score workloads, services, and resources generated from the json schema.
+- `github.com/score-spec/score-go/v2/loader` - Go functions for loading the validated json or yaml structure into a workload struct. 
 
 ## Parsing SCORE files
 
@@ -37,9 +36,9 @@ import (
 
     "gopkg.in/yaml.v3"
 	
-    scoreloader "github.com/score-spec/score-go/loader"
-    scoreschema "github.com/score-spec/score-go/schema"
-    scoretypes "github.com/score-spec/score-go/types"
+    scoreloader "github.com/score-spec/score-go/v2/loader"
+    scoreschema "github.com/score-spec/score-go/v2/schema"
+    scoretypes "github.com/score-spec/score-go/v2/types"
 )
 
 func main() {
@@ -63,10 +62,6 @@ func main() {
         panic(err)
     }
     
-    if err := scoreloader.Normalize(&spec, "."); err != nil {
-        panic(err)
-    }
-
     // Do something with the spec
     // ...
 }

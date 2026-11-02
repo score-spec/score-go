@@ -21,7 +21,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"gopkg.in/yaml.v3"
 
-	"github.com/score-spec/score-go/types"
+	"github.com/score-spec/score-go/v2/types"
 )
 
 func TestValidateYaml(t *testing.T) {

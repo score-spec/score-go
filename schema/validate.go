@@ -24,7 +24,7 @@ import (
 	"github.com/santhosh-tekuri/jsonschema/v5"
 	"gopkg.in/yaml.v3"
 
-	"github.com/score-spec/score-go/types"
+	"github.com/score-spec/score-go/v2/types"
 )
 
 // ValidateJson validates a json structure read from the given reader source. Generally, you must call

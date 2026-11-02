@@ -16,19 +16,10 @@ package loader
 
 import (
 	"fmt"
-	"io"
 
 	"github.com/go-viper/mapstructure/v2"
-	"gopkg.in/yaml.v3"
-
-	"github.com/score-spec/score-go/types"
+	"github.com/score-spec/score-go/v2/types"
 )
-
-// ParseYAML parses YAML into the target mapping structure.
-// Deprecated. Please use the yaml/v3 library directly rather than calling this method.
-func ParseYAML(dest *map[string]interface{}, r io.Reader) error {
-	return yaml.NewDecoder(r).Decode(dest)
-}
 
 // MapSpec converts the source mapping structure into the target WorkloadSpec.
 func MapSpec(dest *types.Workload, src map[string]interface{}) error {
