@@ -23,8 +23,7 @@ and any important fixes to the schema may be back-ported to that branch.
 ## Packages
 
 - `github.com/score-spec/score-go/v2/schema` - Go constant with the json schema, and methods for validating a json or yaml structure against the schema.
-- `github.com/score-spec/score-go/v2/types` - Go types for Score workloads, services, and resources generated from the json schema.
-- `github.com/score-spec/score-go/v2/loader` - Go functions for loading the validated json or yaml structure into a workload struct. 
+- `github.com/score-spec/score-go/v2/score` - Go types for Score workloads, services, and resources generated from the json schema, plus the common interfaces and types shared by Score implementations (generators, provisioners, substitutions).
 
 ## Parsing SCORE files
 
@@ -32,13 +31,13 @@ This library includes a few utility methods to parse source SCORE files.
 
 ```go
 import (
+    "encoding/json"
     "os"
 
     "gopkg.in/yaml.v3"
-	
-    scoreloader "github.com/score-spec/score-go/v2/loader"
+
     scoreschema "github.com/score-spec/score-go/v2/schema"
-    scoretypes "github.com/score-spec/score-go/v2/types"
+    "github.com/score-spec/score-go/v2/score"
 )
 
 func main() {
@@ -57,8 +56,12 @@ func main() {
         panic(err)
     }
 
-    var spec scoretypes.Workload
-    if err := scoreloader.MapSpec(&spec, srcMap); err != nil {
+    raw, err := json.Marshal(srcMap)
+    if err != nil {
+        panic(err)
+    }
+    var spec score.Workload
+    if err := json.Unmarshal(raw, &spec); err != nil {
         panic(err)
     }
     

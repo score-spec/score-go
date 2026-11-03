@@ -21,7 +21,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"gopkg.in/yaml.v3"
 
-	"github.com/score-spec/score-go/v2/types"
+	"github.com/score-spec/score-go/v2/score"
 )
 
 func TestValidateYaml(t *testing.T) {
@@ -410,22 +410,22 @@ containers:
 }
 
 func TestValidateWorkload_nominal(t *testing.T) {
-	assert.NoError(t, ValidateSpec(&types.Workload{
+	assert.NoError(t, ValidateSpec(&score.Workload{
 		ApiVersion: "score.dev/v1b1",
 		Metadata: map[string]interface{}{
 			"name": "my-workload",
 		},
-		Containers: map[string]types.Container{
+		Containers: map[string]score.Container{
 			"example": {Image: "busybox"},
 		},
 	}))
 }
 
 func TestValidateWorkload_error(t *testing.T) {
-	assert.EqualError(t, ValidateSpec(&types.Workload{
+	assert.EqualError(t, ValidateSpec(&score.Workload{
 		ApiVersion: "score.dev/v1b1",
 		Metadata:   map[string]interface{}{},
-		Containers: map[string]types.Container{
+		Containers: map[string]score.Container{
 			"example": {Image: "busybox"},
 		},
 	}), "jsonschema: '/metadata' does not validate with https://score.dev/schemas/score#/properties/metadata/required: missing properties: 'name'")

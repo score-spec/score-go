@@ -1,4 +1,4 @@
-// Copyright 2025 The Score Authors
+// Copyright 2024 Humanitec
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,23 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package loader
+package score
 
-import (
-	"fmt"
-
-	"github.com/go-viper/mapstructure/v2"
-	"github.com/score-spec/score-go/v2/types"
-)
-
-// MapSpec converts the source mapping structure into the target WorkloadSpec.
-func MapSpec(dest *types.Workload, src map[string]interface{}) error {
-	mapper, err := mapstructure.NewDecoder(&mapstructure.DecoderConfig{
-		Result:  dest,
-		TagName: "json",
-	})
-	if err != nil {
-		return fmt.Errorf("initializing decoder: %w", err)
-	}
-	return mapper.Decode(src)
-}
+//go:generate go run github.com/atombender/go-jsonschema@v0.15.0 -v --schema-output=https://score.dev/schemas/score=types.gen.go --schema-package=https://score.dev/schemas/score=score --schema-root-type=https://score.dev/schemas/score=Workload ../schema/files/score-v1b1.json.for-generation
