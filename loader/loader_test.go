@@ -91,11 +91,13 @@ containers:
         noExpand: true
       /etc/hello-world/binary:
         binaryContent: aGVsbG8=
+      /etc/hello-world/short: hello-world
     volumes:
       /mnt/data:
         source: ${resources.data}
         path: sub/path
         readOnly: true
+      /mnt/data/short: "short-data"
     resources:
       limits:
         memory: "128Mi"
@@ -174,12 +176,18 @@ resources:
 							"/etc/hello-world/binary": {
 								BinaryContent: stringRef("aGVsbG8="),
 							},
+							"/etc/hello-world/short": {
+								Content: stringRef("hello-world"),
+							},
 						},
 						Volumes: map[string]types.ContainerVolume{
 							"/mnt/data": {
 								Source:   "${resources.data}",
 								Path:     stringRef("sub/path"),
 								ReadOnly: boolRef(true),
+							},
+							"/mnt/data/short": {
+								Source: "short-data",
 							},
 						},
 						Resources: &types.ContainerResources{
