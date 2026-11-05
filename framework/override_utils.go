@@ -79,6 +79,9 @@ func overridePathInMap(input map[string]interface{}, path []string, isDelete boo
 	output := maps.Clone(input)
 	if len(path) == 1 {
 		if isDelete || value == nil {
+			if _, ok := output[path[0]]; !ok {
+				return nil, fmt.Errorf("cannot remove '%s' in map: not found", path[0])
+			}
 			delete(output, path[0])
 		} else {
 			output[path[0]] = value
@@ -87,6 +90,10 @@ func overridePathInMap(input map[string]interface{}, path []string, isDelete boo
 	}
 
 	if _, ok := output[path[0]]; !ok {
+		if isDelete {
+			// A delete must never create intermediate maps (#234): name the missing path instead.
+			return nil, fmt.Errorf("cannot remove '%s' in map: not found", path[0])
+		}
 		next := make(map[string]interface{})
 		subOutput, err := overridePathInMap(next, path[1:], isDelete, value)
 		if err != nil {
@@ -143,6 +150,13 @@ func overridePathInArray(input []interface{}, path []string, isDelete bool, valu
 		}
 		output[pathIndex] = value
 		return output, nil
+	}
+
+	if pathIndex < 0 || pathIndex >= len(output) {
+		if isDelete {
+			return nil, fmt.Errorf("cannot remove '%d' in array: out of range", pathIndex)
+		}
+		return nil, fmt.Errorf("cannot set '%d' in array: out of range", pathIndex)
 	}
 
 	switch typed := output[pathIndex].(type) {
