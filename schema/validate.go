@@ -24,7 +24,7 @@ import (
 	"github.com/santhosh-tekuri/jsonschema/v5"
 	"gopkg.in/yaml.v3"
 
-	"github.com/score-spec/score-go/types"
+	"github.com/score-spec/score-go/v2/score"
 )
 
 // ValidateJson validates a json structure read from the given reader source. Generally, you must call
@@ -57,7 +57,7 @@ func ValidateYaml(r io.Reader) error {
 }
 
 // ValidateSpec validates a workload spec structure by serializing it to yaml and calling ValidateYaml.
-func ValidateSpec(spec *types.Workload) error {
+func ValidateSpec(spec *score.Workload) error {
 	intermediate, err := yaml.Marshal(spec)
 	if err != nil {
 		return fmt.Errorf("failed to marshal to yaml: %w", err)

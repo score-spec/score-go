@@ -30,4 +30,4 @@ jobs:
       - name: Install license check tool
         run: go install github.com/google/addlicense@b289835c0741ba2fb92dd5f61af070e79c69a55e # v1.2.0
       - name: Check licenses
-        run: addlicense -l apache -check -v -ignore '**/*.yaml' -c 'The Score Authors' ./formatter ./framework ./loader ./schema ./types ./uriget
+        run: addlicense -l apache -check -v -ignore '**/*.yaml' -c 'The Score Authors' ./schema ./score
