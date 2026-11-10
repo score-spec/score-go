@@ -49,8 +49,8 @@ const (
 // If both are nil, the value is assumed to be nil and not secret.
 // (A secret nil value requires Secret to be non-nil.)
 type SubValue struct {
-	Value  any        `json:"value,omitzero"`
-	Secret *SecretRef `json:"secret,omitzero"`
+	Value  any        `json:"value,omitempty" yaml:"value,omitempty" mapstructure:"value,omitempty"`
+	Secret *SecretRef `json:"secret,omitempty" yaml:"secret,omitempty" mapstructure:"secret,omitempty"`
 }
 
 // SecretRef represents a secret value to be used in substitutions.
@@ -63,7 +63,7 @@ type SecretRef struct {
 	//
 	// The type defines the secret store flavour and the format of the
 	// reference. Required.
-	Type SecretType `json:"type"`
+	Type SecretType `json:"type" yaml:"type" mapstructure:"type"`
 
 	// Name of the secret store the secret is associated with.
 	//
@@ -71,18 +71,18 @@ type SecretRef struct {
 	// secret reference. Not used when raw secret values are provided
 	// (Type is SecretTypeDirect).
 	// Optional.
-	Store string `json:"store,omitempty"`
+	Store string `json:"store,omitempty" yaml:"store,omitempty" mapstructure:"store,omitempty"`
 
 	// Identification of the secret in the secret store.
 	//
 	// It is opaque and interpreted according to Type. Where the store supports versions,
 	// the version is encoded in Ref. If empty, Value must be supplied.
-	Ref string `json:"ref,omitempty"`
+	Ref string `json:"ref,omitempty" yaml:"ref,omitempty" mapstructure:"ref,omitempty"`
 
 	// If the secret does not reside in a store, the "plaintext" of the
 	// secret can be provided. If Value is provided, Type should be SecretTypeDirect.
 	// Type==SecretTypeDirect, Ref=="" and Value==nil implies a secret value of nil.
-	Value any `json:"value,omitempty"`
+	Value any `json:"value,omitempty" yaml:"value,omitempty" mapstructure:"value,omitempty"`
 }
 
 // Resolve resolves a placeholder expression to a SubValue from the substitutions map.
