@@ -32,6 +32,7 @@ func ParseYAML(dest *map[string]interface{}, r io.Reader) error {
 
 // MapSpec converts the source mapping structure into the target WorkloadSpec.
 func MapSpec(dest *types.Workload, src map[string]interface{}) error {
+	src = normalizeShortFileAndVolumeForms(src)
 	mapper, err := mapstructure.NewDecoder(&mapstructure.DecoderConfig{
 		Result:  dest,
 		TagName: "json",
@@ -40,4 +41,71 @@ func MapSpec(dest *types.Workload, src map[string]interface{}) error {
 		return fmt.Errorf("initializing decoder: %w", err)
 	}
 	return mapper.Decode(src)
+}
+
+func normalizeShortFileAndVolumeForms(src map[string]interface{}) map[string]interface{} {
+	containers, ok := src["containers"].(map[string]interface{})
+	if !ok {
+		return src
+	}
+
+	normalizedContainers := make(map[string]interface{}, len(containers))
+	containersChanged := false
+	for name, rawContainer := range containers {
+		container, ok := rawContainer.(map[string]interface{})
+		if !ok {
+			normalizedContainers[name] = rawContainer
+			continue
+		}
+
+		var normalizedContainer map[string]interface{}
+		for _, field := range []string{"files", "volumes"} {
+			shortFormProperty := "source"
+			if field == "files" {
+				shortFormProperty = "content"
+			}
+			entries, ok := container[field].(map[string]interface{})
+			if !ok {
+				continue
+			}
+
+			normalizedEntries := make(map[string]interface{}, len(entries))
+			entriesChanged := false
+			for target, rawEntry := range entries {
+				if source, ok := rawEntry.(string); ok {
+					normalizedEntries[target] = map[string]interface{}{shortFormProperty: source}
+					entriesChanged = true
+				} else {
+					normalizedEntries[target] = rawEntry
+				}
+			}
+			if entriesChanged {
+				if normalizedContainer == nil {
+					normalizedContainer = cloneMap(container)
+				}
+				normalizedContainer[field] = normalizedEntries
+			}
+		}
+		if normalizedContainer != nil {
+			normalizedContainers[name] = normalizedContainer
+			containersChanged = true
+		} else {
+			normalizedContainers[name] = rawContainer
+		}
+	}
+	if !containersChanged {
+		return src
+	}
+
+	normalizedSource := cloneMap(src)
+	normalizedSource["containers"] = normalizedContainers
+	return normalizedSource
+}
+
+func cloneMap(source map[string]interface{}) map[string]interface{} {
+	clone := make(map[string]interface{}, len(source))
+	for key, value := range source {
+		clone[key] = value
+	}
+	return clone
 }
