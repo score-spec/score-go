@@ -16,15 +16,10 @@ package loader
 
 import (
 	"fmt"
-	"regexp"
 	"strings"
 
 	"github.com/score-spec/score-go/framework"
 	"github.com/score-spec/score-go/types"
-)
-
-var (
-	validplaceholderContent = regexp.MustCompile(`^[a-zA-Z0-9_-]+(\.[a-zA-Z0-9_-]+)+$`)
 )
 
 // ValidationError represets the set of non-schema validation issues with a
@@ -112,8 +107,9 @@ func listAllPlaceholders(workload *types.Workload) []string {
 //
 // - metadata must exist and contain a non-empty "name" key
 //
-// - Placeholders must be well formed (contain at least two elements separated
-// by ".", each element must be alphanumeric or contain "_" or "-")
+// - Placeholders must be well formed: at least two path elements when split
+// with framework.SplitRefParts (so escaped dots like \. stay in one element),
+// with no empty or whitespace-only elements
 //
 // - The first element in a placeholder must be "resources" or "metadata"
 //
@@ -138,12 +134,13 @@ func Validate(workload *types.Workload) error {
 
 	placeholders := listAllPlaceholders(workload)
 	for _, placeholder := range placeholders {
-		if !validplaceholderContent.MatchString(placeholder) {
-			errMsgs = append(errMsgs, fmt.Sprintf("placeholder ${%s} is malformed, must contain at least two elements separated by \".\", each element must be alphanumeric or contain \"_\" or \"-\"", placeholder))
+		// Same path splitting as substitution so keys with escaped dots or '/'
+		// (for example metadata.annotations.key\.com/foo-bar) are accepted.
+		placeholderParts := framework.SplitRefParts(placeholder)
+		if isMalformedPlaceholder(placeholderParts) {
+			errMsgs = append(errMsgs, fmt.Sprintf("placeholder ${%s} is malformed, must contain at least two elements separated by \".\", each element must be non-empty and must not contain whitespace", placeholder))
 			continue
 		}
-		// guaranteed to have at least 1 "." due to check above
-		placeholderParts := strings.Split(placeholder, ".")
 		switch placeholderParts[0] {
 		case "resources":
 			if workload.Resources != nil {
@@ -215,4 +212,17 @@ func Validate(workload *types.Workload) error {
 		}
 	}
 	return nil
+}
+
+// isMalformedPlaceholder reports whether the SplitRefParts result is not a usable placeholder path.
+func isMalformedPlaceholder(parts []string) bool {
+	if len(parts) < 2 {
+		return true
+	}
+	for _, part := range parts {
+		if part == "" || strings.TrimSpace(part) != part || strings.ContainsAny(part, " \t\n\r") {
+			return true
+		}
+	}
+	return false
 }

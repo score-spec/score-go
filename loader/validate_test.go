@@ -141,6 +141,34 @@ func TestValidatePlaceholders(t *testing.T) {
 			},
 		},
 		{
+			name: "valid metadata annotation placeholders with escaped dots and slash",
+			variables: types.ContainerVariables{
+				"REF_ONE":   "${metadata.annotations.key\\.com/foo-bar}",
+				"REF_TWO":   "${metadata.annotations.score\\.dev/workload-name}",
+				"REF_THREE": "${metadata.annotations.compose\\.score\\.dev/route-provisioner}",
+				"REF_FOUR":  "${metadata.annotations.prefix\\.com/Another-Key_Annotation\\.2}",
+				"REF_FIVE":  "${metadata.annotations.simple}",
+			},
+			files: types.ContainerFiles{
+				"/etc/note": {
+					Content: stringRef("from file ${metadata.annotations.key\\.com/foo-bar}"),
+				},
+			},
+			volumes: types.ContainerVolumes{
+				"/mnt/cfg": {
+					Source: "${metadata.annotations.score\\.dev/workload-name}",
+				},
+			},
+			resources: types.WorkloadResources{
+				"res-one": {
+					Type: "type-one",
+					Params: types.ResourceParams{
+						"label": "${metadata.annotations.compose\\.score\\.dev/route-provisioner}",
+					},
+				},
+			},
+		},
+		{
 			name: "invalid placeholder",
 			variables: types.ContainerVariables{
 				"INVALID": "Placeholder ${resources.res-one.this has spaces!}",
